@@ -141,16 +141,20 @@
 //comms monitor -> F1 = UART, F2 = SPI, F3 = I2C
 //GPIO -> F1 = debounced sw, F2 = clock bits program like cpld, F3 = PWM channels
 //PWM audio -> F1 = osc, F2 scope, F3 nodes
-//script ?
+//ws28xx ?
+
+//current stats:
+//rom 40% 26.2kb / 64kb 
+//ram 63% 13kb / 20.4kb r= 7.5kb
 
 #include <MapleFreeRTOS900.h>
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <SPI.h>
 #include <Wire.h>
-#include <Serial.h>
 #include <USBComposite.h>
 #include "defs.h"
+#define DEBUG
 
 U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 SPIClass SPI_2(2);
@@ -158,6 +162,23 @@ SPIClass SPI_2(2);
 USBHID HID;
 HIDKeyboard Keyboard(HID);
 
+void midiNoteOffHandle(int ch, int note, int vel){
+
+}
+void midiNoteOnHandle(int ch, int note, int vel){
+
+}
+class USBMIDI_Recv: public USBMIDI {
+ virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity) {
+    midiNoteOffHandle(channel,note,velocity);
+ }
+ virtual void handleNoteOn(unsigned int channel, unsigned int note, unsigned int velocity) {
+    midiNoteOnHandle(channel,note,velocity);
+  }
+};
+USBMIDI_Recv usbm;
+
+uint8_t cmode = 0;
 
 typedef struct t_menu_item{
   char* text;
@@ -172,7 +193,7 @@ typedef struct t_menu {
 } cmenu;
 
 typedef struct t_io {
-  uint8_t target[4] = 0;
+  uint8_t target[4];
   uint8_t state = 0;
   uint8_t old_state = 0;
 };
@@ -183,14 +204,93 @@ int8_t enc_turns, enc_turns_old;
 uint8_t ok, oko;
 
 uint8_t k = 0;
-const uint8_t rows[5] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E};
-const uint8_t cols[4] = {SEG_A, SEG_B, SEG_C, SEG_D};
+const uint8_t rows[] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E, ROW_F};
+const uint8_t cols[] = {SEG_A, SEG_B, SEG_C, SEG_D};
+
+void vTaskFunction(void* params){
+  while(1){
+    vTaskDelay(100);
+  }
+}
+
+void vTaskScreen(void* params){
+
+  u8g2.begin();
+  u8g2.setContrast(80);
+
+  while(1){
+    vTaskDelay(100);
+    u8g2.clearBuffer();					// clear the internal memory
+    u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
+    u8g2.drawStr(i%30,i%30,"Hello World!");	// write something to the internal memory
+    u8g2.sendBuffer();	
+  }
+}
+
+void vTaskKeyMux(void* params){
+  while(1){
+    ok = digitalRead(B_OK);
+    if(ok != oko){
+      oko = ok;
+      if(!ok) continue;
+
+      //if(cmenu != 1) cmenu = 1;
+      Serial.println("ok");
+    }
+    
+    for(int r=0; r<5; r++){
+      digitalWrite(rows[r],HIGH);
+      for(int c=0; c<4; c++){
+        int I = c + (r*4);
+        if(io[I].target[cmode]){
+          io[I].state = digitalRead(cols[c]);
+
+          if(io[I].state && !io[I].old_state){
+            Keyboard.press(io[I].target[cmode]);
+          }
+          else if(!io[I].state && io[I].old_state){
+            Keyboard.release(io[I].target[cmode]);
+          }
+          
+          if(io[I].state != io[I].old_state)
+            io[I].old_state = io[I].state;
+        }
+      }
+      digitalWrite(rows[r],LOW);
+    }
+
+    digitalWrite(ROW_F, HIGH);
+    
+      enc_a_old = enc_a;
+      enc_b_old = enc_b;
+      enc_a = digitalRead(SEG_A);
+      enc_b = digitalRead(SEG_B);
+      //if(cmenu == 0) goto enc_clean;
+
+      if(enc_a && !enc_b && !enc_a_old && !enc_b_old){
+  #ifdef DEBUG
+        Serial.println("LEFT turn");
+  #endif
+        
+      }
+      else if(!enc_a && enc_b && !enc_a_old && !enc_b_old){    
+  #ifdef DEBUG
+        Serial.println("RIGHT turn");
+  #endif
+      }
+    digitalWrite(ROW_F, LOW);
+
+    vTaskDelay(10);
+    //delay(10);
+  }
+}
 
 void setup(){
   disableDebugPorts();
   USBComposite.setProductId(0x0031);
   HID.begin(HID_KEYBOARD);
   Serial.begin(9600);
+  Wire.begin();
 
   io[13].target[0] = KEY_UP_ARROW;
   io[8].target[0] = KEY_LEFT_ARROW;
@@ -200,6 +300,7 @@ void setup(){
   io[0].target[0] = KEY_LEFT_ARROW;
   io[1].target[0] = KEY_DOWN_ARROW;
   io[2].target[0] = KEY_RIGHT_ARROW;
+  cmode = 0;
 
   for(int i=0; i<4; i++)
     pinMode(cols[i], INPUT_PULLDOWN);
@@ -214,62 +315,14 @@ void setup(){
   digitalWrite(LCD_LIGHT, HIGH);
   
   pinMode(B_OK,INPUT_PULLDOWN);
+  
+  delay(2000);
+  Serial.println("Starting scheduler");
+  xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  xTaskCreate(vTaskFunction,"function",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  xTaskCreate(vTaskScreen,"screen",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  vTaskStartScheduler();
+  //vTaskKeyMux(nullptr);
 }
 
-void loop(){
-  ok = digitalRead(B_OK);
-  if(ok != oko){
-    oko = ok;
-    if(!ok) return;
-
-    if(cmenu != 1) cmenu = 1;
-
-  }
-  
-  for(int r=0; r<5; r++){
-    digitalWrite(rows[r],HIGH);
-    for(int c=0; c<4; c++){
-      int I = c + (r*4);
-      if(io[I].target[cmode]){
-        io[I].state = digitalRead(cols[c]);
-
-        if(io[I].state && !io[I].old_state){
-          Keyboard.press(io[I].target[cmode]);
-        }
-        else if(!io[I].state && io[I].old_state){
-          Keyboard.release(io[I].target[cmode]);
-        }
-        
-        if(io[I].state != io[I].old_state)
-          io[I].old_state = io[I].state;
-      }
-    }
-    digitalWrite(rows[r],LOW);
-  }
-
-  digitalWrite(ROW_F, HIGH);
-  
-    enc_a_old = enc_a;
-    enc_b_old = enc_b;
-    enc_a = digitalRead(SEG_A);
-    enc_b = digitalRead(SEG_B);
-    if(cmenu == 0) goto enc_clean;
-
-    if(enc_a && !enc_b && !enc_a_old && !enc_b_old){
-#ifdef DEBUG
-      Serial.println("Right turn");
-#endif
-      
-    }
-    else if(!enc_a && enc_b && !enc_a_old && !enc_b_old){    
-#ifdef DEBUG
-      Serial.println("Left turn");
-#endif
-      
-    }
-  
-enc_clean:
-  digitalWrite(ROW_F, LOW);
-
-  delay(5);
-}
+void loop(){ }
