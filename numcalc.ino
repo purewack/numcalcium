@@ -135,6 +135,14 @@
 //  delay(100);  
 //}
 
+//calculator -> F1 = basic, F2 = sci, F3 = comp
+//numpad -> F1 = normal, F2 = Arrows, F3 = phone ascii
+//midi -> F1 = launchpad, F2 = seq usb, F3 = seq uart midi
+//comms monitor -> F1 = UART, F2 = SPI, F3 = I2C
+//GPIO -> F1 = debounced sw, F2 = clock bits program like cpld, F3 = PWM channels
+//PWM audio -> F1 = osc, F2 scope, F3 nodes
+//script ?
+
 #define SYS_PDOWN PB5
 #define LCD_LIGHT PA6
 
@@ -158,17 +166,32 @@ USBHID HID;
 HIDKeyboard Keyboard(HID);
 
 
-typedef struct t_io {
-  byte target = 0;
+typedef struct t_menu_item{
+  char* text;
+  void (*on_action)(void);
+};
 
-  int state = 0;
-  int old_state = 0;
+typedef struct t_menu {
+  t_menu_item* items;
+  uint8_t items_c;
+  uint8_t items_i;
+  uint8_t visible;
+} cmenu;
+
+typedef struct t_io {
+  uint8_t target[4] = 0;
+  uint8_t state = 0;
+  uint8_t old_state = 0;
 };
 
 t_io io[20];
-int k = 0;
-const int rows[6] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E, ROW_F};
-const int cols[4] = {SEG_A, SEG_B, SEG_C, SEG_D};
+uint8_t enc_a, enc_b,enc_a_old,enc_b_old;
+int8_t enc_turns, enc_turns_old;
+uint8_t ok, oko;
+
+uint8_t k = 0;
+const uint8_t rows[5] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E};
+const uint8_t cols[4] = {SEG_A, SEG_B, SEG_C, SEG_D};
 
 void setup(){
   disableDebugPorts();
@@ -176,14 +199,14 @@ void setup(){
   HID.begin(HID_KEYBOARD);
   Serial.begin(9600);
 
-  io[13].target = KEY_UP_ARROW;
-  io[8].target = KEY_LEFT_ARROW;
-  io[9].target = KEY_DOWN_ARROW;
-  io[10].target = KEY_RIGHT_ARROW;
-  io[5].target = KEY_UP_ARROW;
-  io[0].target = KEY_LEFT_ARROW;
-  io[1].target = KEY_DOWN_ARROW;
-  io[2].target = KEY_RIGHT_ARROW;
+  io[13].target[0] = KEY_UP_ARROW;
+  io[8].target[0] = KEY_LEFT_ARROW;
+  io[9].target[0] = KEY_DOWN_ARROW;
+  io[10].target[0] = KEY_RIGHT_ARROW;
+  io[5].target[0] = KEY_UP_ARROW;
+  io[0].target[0] = KEY_LEFT_ARROW;
+  io[1].target[0] = KEY_DOWN_ARROW;
+  io[2].target[0] = KEY_RIGHT_ARROW;
 
   for(int i=0; i<4; i++)
     pinMode(cols[i], INPUT_PULLDOWN);
@@ -200,29 +223,29 @@ void setup(){
   pinMode(B_OK,INPUT_PULLDOWN);
 }
 
-int ok, oko;
 void loop(){
   ok = digitalRead(B_OK);
   if(ok != oko){
     oko = ok;
     if(!ok) return;
-    Serial.println("Shutting down");
-    digitalWrite(SYS_PDOWN,HIGH);
-    delay(1000);
-    digitalWrite(SYS_PDOWN,LOW);
+
+    if(cmenu != 1) cmenu = 1;
+
   }
   
   for(int r=0; r<5; r++){
     digitalWrite(rows[r],HIGH);
     for(int c=0; c<4; c++){
       int I = c + (r*4);
-      if(io[I].target){
+      if(io[I].target[cmode]){
         io[I].state = digitalRead(cols[c]);
 
-        if(io[I].state && !io[I].old_state)
-          Keyboard.press(io[I].target);
-        else if(!io[I].state && io[I].old_state)
-          Keyboard.release(io[I].target);
+        if(io[I].state && !io[I].old_state){
+          Keyboard.press(io[I].target[cmode]);
+        }
+        else if(!io[I].state && io[I].old_state){
+          Keyboard.release(io[I].target[cmode]);
+        }
         
         if(io[I].state != io[I].old_state)
           io[I].old_state = io[I].state;
@@ -230,5 +253,30 @@ void loop(){
     }
     digitalWrite(rows[r],LOW);
   }
+
+  digitalWrite(ROW_F, HIGH);
+  
+    enc_a_old = enc_a;
+    enc_b_old = enc_b;
+    enc_a = digitalRead(SEG_A);
+    enc_b = digitalRead(SEG_B);
+    if(cmenu == 0) goto enc_clean;
+
+    if(enc_a && !enc_b && !enc_a_old && !enc_b_old){
+#ifdef DEBUG
+      Serial.println("Right turn");
+#endif
+      
+    }
+    else if(!enc_a && enc_b && !enc_a_old && !enc_b_old){    
+#ifdef DEBUG
+      Serial.println("Left turn");
+#endif
+      
+    }
+  
+enc_clean:
+  digitalWrite(ROW_F, LOW);
+
   delay(5);
 }
