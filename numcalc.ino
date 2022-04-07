@@ -150,28 +150,10 @@
 #include <Wire.h>
 #include <Serial.h>
 #include <USBComposite.h>
+#include "defs.h"
 
-U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ PA4, /* dc=*/ PA3, /* reset=*/ PA2);
+U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 SPIClass SPI_2(2);
-
-#define SYS_PDOWN PB5
-#define LCD_LIGHT PA6
-
-#define SEG_A PB11
-#define SEG_B PB10
-#define SEG_C PB1
-#define SEG_D PB0
-
-#define ROW_A PA14
-#define ROW_B PA15
-#define ROW_C PB3
-#define ROW_D PB4
-#define ROW_E PB8
-#define ROW_F PB9
-
-#define B_OK PA8
-
-#include <USBComposite.h>
 
 USBHID HID;
 HIDKeyboard Keyboard(HID);
