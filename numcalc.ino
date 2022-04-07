@@ -143,6 +143,17 @@
 //PWM audio -> F1 = osc, F2 scope, F3 nodes
 //script ?
 
+#include <MapleFreeRTOS900.h>
+#include <Arduino.h>
+#include <U8g2lib.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <Serial.h>
+#include <USBComposite.h>
+
+U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ PA4, /* dc=*/ PA3, /* reset=*/ PA2);
+SPIClass SPI_2(2);
+
 #define SYS_PDOWN PB5
 #define LCD_LIGHT PA6
 
