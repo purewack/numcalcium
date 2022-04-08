@@ -44,11 +44,14 @@
 #define DEBUG
 #include "include/defs.h"
 #include "include/modes.h"
-#include "include/comms_usb.h"
+//#include "include/comms.h"
 
-U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
+//U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
+//U8G2_ST7565_64128N_F_4W_HW u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 
 Modes cmode = Modes::m_numpad;
+typedef struct t_menu;
+typedef struct t_menu_item;
 
 typedef struct t_menu_item{
   char* text;
@@ -102,17 +105,25 @@ void vTaskWorker(void* params){
 
 void vTaskScreen(void* params){
 
+  // u8g2.begin();
+  // u8g2.setContrast(82);
+  // u8g2.setFlipMode(1);
+  // u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
 
-  u8g2.begin();
-  u8g2.setContrast(80);
+  SPI.begin();
+    pinMode(LCD_LIGHT, OUTPUT);
+    digitalWrite(LCD_LIGHT, HIGH);
+  
+  vTaskDelay(2000);
+
 
   uint8_t i = 0;
   while(1){
     vTaskDelay(100);
-    u8g2.clearBuffer();					// clear the internal memory
-    u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
-    u8g2.drawStr(i%30,i%30,"Hello World!");	// write something to the internal memory
-    u8g2.sendBuffer();
+    // u8g2.clearBuffer();					// clear the internal memory
+    // u8g2.drawStr(i%30,i%30,"Hello World!");	// write something to the internal memory
+    // u8g2.sendBuffer();
+    SPI.transfer(0xff);
     i++;	
   }
 }
@@ -133,7 +144,7 @@ void vTaskKeyMux(void* params){
       digitalWrite(rows[r],HIGH);
       for(int c=0; c<4; c++){
         int I = c + (r*4);
-        if(io[I].target[cmode]){
+        //if(io[I].target[cmode]){
           io[I].state = digitalRead(cols[c]);
 
           if(io[I].state && !io[I].old_state){
@@ -148,7 +159,7 @@ void vTaskKeyMux(void* params){
             io[I].old_state = io[I].state;
 
           if(io[I].state) io[I].dt += 1;
-        }
+//        }
       }
       digitalWrite(rows[r],LOW);
     }
@@ -182,20 +193,9 @@ void vTaskKeyMux(void* params){
 
 void setup(){
   disableDebugPorts();
-  USBComposite.setProductId(0x0031);
-  HID.begin(HID_KEYBOARD);
+  // USBComposite.setProductId(0x0031);
+  // HID.begin(HID_KEYBOARD);
   Serial.begin(9600);
-  Wire.begin();
-
-  // io[13].target[0] = KEY_UP_ARROW;
-  // io[8].target[0] = KEY_LEFT_ARROW;
-  // io[9].target[0] = KEY_DOWN_ARROW;
-  // io[10].target[0] = KEY_RIGHT_ARROW;
-  // io[5].target[0] = KEY_UP_ARROW;
-  // io[0].target[0] = KEY_LEFT_ARROW;
-  // io[1].target[0] = KEY_DOWN_ARROW;
-  // io[2].target[0] = KEY_RIGHT_ARROW;
-  cmode = 0;
 
   for(int i=0; i<4; i++)
     pinMode(cols[i], INPUT_PULLDOWN);
@@ -208,22 +208,12 @@ void setup(){
 
   pinMode(B_OK,INPUT_PULLDOWN);
   
-  pinMode(LCD_LIGHT, OUTPUT);
-  // for(int j=0; j<256; j++){
-  //   delayMicroseconds(j);
-  //   digitalWrite(LCD_LIGHT, HIGH);
-  //   delayMicroseconds(256-j);
-  //   digitalWrite(LCD_LIGHT, LOW);
-  // }
-  digitalWrite(LCD_LIGHT, HIGH);
-  
-  delay(2000);
+  delay(1000);
   Serial.println("Starting scheduler");
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   xTaskCreate(vTaskScreen,"screen",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   vTaskStartScheduler();
-  //vTaskKeyMux(nullptr);
 }
 
 void loop(){ }
