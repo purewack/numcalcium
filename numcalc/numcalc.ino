@@ -215,15 +215,18 @@ void vTaskFunction(void* params){
 
 void vTaskScreen(void* params){
 
+
   u8g2.begin();
   u8g2.setContrast(80);
 
+  uint8_t i = 0;
   while(1){
     vTaskDelay(100);
     u8g2.clearBuffer();					// clear the internal memory
     u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
     u8g2.drawStr(i%30,i%30,"Hello World!");	// write something to the internal memory
-    u8g2.sendBuffer();	
+    u8g2.sendBuffer();
+    i++;	
   }
 }
 
@@ -310,11 +313,17 @@ void setup(){
 
   pinMode(SYS_PDOWN, OUTPUT);
   digitalWrite(SYS_PDOWN, LOW);
+
+  pinMode(B_OK,INPUT_PULLDOWN);
   
   pinMode(LCD_LIGHT, OUTPUT);
+  //   for(int j=0; j<256; j++){
+  //   delayMicroseconds(j);
+  //   digitalWrite(LCD_LIGHT, HIGH);
+  //   delayMicroseconds(256-j);
+  //   digitalWrite(LCD_LIGHT, LOW);
+  // }
   digitalWrite(LCD_LIGHT, HIGH);
-  
-  pinMode(B_OK,INPUT_PULLDOWN);
   
   delay(2000);
   Serial.println("Starting scheduler");
