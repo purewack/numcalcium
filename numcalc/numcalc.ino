@@ -36,16 +36,13 @@
 //rom 40% 26.2kb / 64kb 
 //ram 63% 13kb / 20.4kb r= 7.5kb
 
-#include <MapleFreeRTOS900.h>
-#include <Arduino.h>
-#include <U8g2lib.h>
-#include <SPI.h>
-
 #define DEBUG
-#include "include/defs.h"
+#include "include/sys.h"
 #include "include/modes.h"
-//#include "include/comms.h"
+#include "include/comms.h"
 
+
+//conflicting miso pin being pinmoded to input after ::sendBuffer()
 //U8G2_ST7565_ERC12864_ALT_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 //U8G2_ST7565_64128N_F_4W_HW u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 
@@ -57,45 +54,21 @@ typedef struct t_menu_item{
   char* text;
   uint8_t has_sub_menu;
   t_menu* next;
-  void (*on_action)(void);
 };
 
 typedef struct t_menu {
   t_menu_item* items;
   uint8_t items_c;
   uint8_t items_i;
-  uint8_t visible;
-} cmenu;
-
-typedef struct t_io {
-  //uint8_t target[4];
-  uint8_t state = 0;
-  uint8_t old_state = 0;
-  uint8_t dt;
-};
-
-t_io io[21];
-uint8_t enc_a, enc_b,enc_a_old,enc_b_old;
-int8_t enc_turns, enc_turns_old;
-uint8_t ok, oko;
-
-uint8_t k = 0;
-const uint8_t rows[] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E, ROW_F};
-const uint8_t cols[] = {SEG_A, SEG_B, SEG_C, SEG_D};
-
-void sys_on_ok(){
-
-}
-void sys_on_nav(int8_t r){
-  //r > 0 = right
-  //r < 0 = left
-}
-void sys_on_press(uint8_t i){
-
-}
-void sys_on_release(uint8_t i){
+  uint8_t visible;  
   
-}
+  void (*on_ok)(void);
+  void (*on_nav)(int);
+  void (*on_press)(int);
+  void (*on_release)(int);
+} cmenu[6];
+int ci = 0;
+
 
 void vTaskWorker(void* params){
   while(1){
@@ -110,11 +83,11 @@ void vTaskScreen(void* params){
   // u8g2.setFlipMode(1);
   // u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
 
-  SPI.begin();
-    pinMode(LCD_LIGHT, OUTPUT);
-    digitalWrite(LCD_LIGHT, HIGH);
+  // SPI.begin();
+  //   pinMode(LCD_LIGHT, OUTPUT);
+  //   digitalWrite(LCD_LIGHT, HIGH);
   
-  vTaskDelay(2000);
+  // vTaskDelay(2000);
 
 
   uint8_t i = 0;
@@ -123,7 +96,7 @@ void vTaskScreen(void* params){
     // u8g2.clearBuffer();					// clear the internal memory
     // u8g2.drawStr(i%30,i%30,"Hello World!");	// write something to the internal memory
     // u8g2.sendBuffer();
-    SPI.transfer(0xff);
+    //SPI.transfer(0xff);
     i++;	
   }
 }
@@ -137,7 +110,7 @@ void vTaskKeyMux(void* params){
 
       //if(cmenu != 1) cmenu = 1;
       Serial.println("ok");
-      sys_on_ok();
+      cmenu[ci].on_ok();
     }
     
     for(int r=0; r<5; r++){
@@ -149,10 +122,10 @@ void vTaskKeyMux(void* params){
 
           if(io[I].state && !io[I].old_state){
             io[I].dt = 0;
-            sys_on_press(I);
+            cmenu[ci].on_press(I);
           }
           else if(!io[I].state && io[I].old_state){
-            sys_on_release(I);
+            cmenu[ci].on_release(I);
           }
           
           if(io[I].state != io[I].old_state)
@@ -176,13 +149,13 @@ void vTaskKeyMux(void* params){
   #ifdef DEBUG
         Serial.println("LEFT turn");
   #endif
-        sys_on_nav(-1);
+        cmenu[ci].on_nav(-1);
       }
       else if(!enc_a && enc_b && !enc_a_old && !enc_b_old){    
   #ifdef DEBUG
         Serial.println("RIGHT turn");
   #endif
-        sys_on_nav(1);
+        cmenu[ci].on_nav(1);
       }
     digitalWrite(ROW_F, LOW);
 
