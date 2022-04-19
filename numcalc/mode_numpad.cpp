@@ -1,11 +1,12 @@
-#include "include/comms.h"
+
 #include "include/sys.h"
+#include "include/comms.h"
 #include "include/modes.h"
 
 char numpad_keys[20*2] = {
-    0,'0','.','=',
+    KEY_BACKSPACE,'0','.','=',
     '1','2','3','+',
-    '4'.'5','6','-',
+    '4','5','6','-',
     '7','8','9','/',
     0,0,0,'*',
 
@@ -14,10 +15,10 @@ char numpad_keys[20*2] = {
     0,0,0,0,
     0,0,0,0,
     0,0,0,KEY_BACKSPACE
-} 
+};
 
 volatile int numpad_inactive_time;
-#define INACTIVE_TIME_LIMIT 400;
+#define INACTIVE_TIME_LIMIT 400
 
 void mode_numpad_on_begin(){
     Serial.println("USB HID Setup");
@@ -34,29 +35,29 @@ void mode_numpad_on_end(){
 }
 
 void mode_numpad_on_press(int i){
-    if(fmode == 2){
+    if(stats.fmode == 2){
         return;
     }
-    int ii = i + fmode*20;
+    int ii = i + stats.fmode*20;
     char key = numpad_keys[ii];
     if(key) Keyboard.press(key);
 }
 
 void mode_numpad_on_release(int i){
     if(i == K_F1) {
-        fmode = 0; 
+        stats.fmode = 0; 
         numpad_inactive_time = 0;
         return;
     }
     if(i == K_F2) {
-        fmode = 1; 
+        stats.fmode = 1; 
         numpad_inactive_time = 0;
         return;
     }
-    if(fmode == 2){
+    if(stats.fmode == 2){
         return;
     }
-    int ii = i + fmode*20;
+    int ii = i + stats.fmode*20;
     char key = numpad_keys[ii];
     if(key) Keyboard.release(key);
 }
@@ -75,6 +76,6 @@ void mode_numpad_on_work(){
 
 void mode_numpad_on_gfx(){
     u8g2.setCursor(16, 32);
-    if(fmode == 0) u8g2.print(">Stock Numpad");
+    if(stats.fmode == 0) u8g2.print(">Stock Numpad");
     else u8g2.print(">Directional Keys");
 }
