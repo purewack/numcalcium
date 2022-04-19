@@ -60,9 +60,11 @@
 #define K_F3 18
 #define K_X 19
 
+//conflicting miso pin being pinmoded to input after ::sendBuffer()
+U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ LCD_CK, /* data=*/ LCD_MOSI, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
+//U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 
 typedef struct t_io {
-  //uint8_t target[4];
   uint8_t state = 0;
   uint8_t old_state = 0;
   uint8_t dt;
@@ -76,5 +78,27 @@ uint8_t ok, oko;
 uint8_t k = 0;
 const uint8_t rows[] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E, ROW_F};
 const uint8_t cols[] = {SEG_A, SEG_B, SEG_C, SEG_D};
+
+
+typedef struct Program prog_t;
+
+typedef struct Program {
+  char* title;
+  void (*on_begin)(void);
+  void (*on_end)(void);
+  void (*on_ok)(void);
+  void (*on_nav)(int);
+  void (*on_press)(int);
+  void (*on_release)(int);
+  void (*on_gfx)(void);
+  void (*on_work)(void);
+} prog_t; 
+
+prog_t* cprog;
+prog_t progs[6];
+int c_i = 0;
+int fmode = 0;
+
+void changeToMenu(int i);
 
 #endif
