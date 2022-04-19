@@ -1,7 +1,6 @@
 #pragma once
 
 #include <MapleFreeRTOS900.h>
-#include <Arduino.h>
 #include <U8g2lib.h>
 
 #define SYS_PDOWN PB5

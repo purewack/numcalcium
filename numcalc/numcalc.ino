@@ -40,7 +40,7 @@
 #include "include/sys.h"
 #include "include/modes.h"
 #include "include/comms.h"
-
+#include <EEPROM.h>
 
 
 void changeToProg(int i){
@@ -154,6 +154,12 @@ void vTaskKeyMux(void* params){
           u8g2.clearBuffer();
           u8g2.sendBuffer();
           lcdFade(0);
+          int pp = 0;
+          for(auto a : stats.progs){
+            if(&a == stats.cprog) break;
+            pp++;
+          }
+          EEPROM.write(0,pp);
           digitalWrite(SYS_PDOWN, HIGH);
         }
         changeToProg(stats.c_i);
@@ -306,7 +312,10 @@ void setup(){
   stats.progs[P_COMMS].inactive_inc = 0;
   stats.progs[P_COMMS].inactive_lim = 800;
 
-  changeToProg(P_NUMPAD);
+  uint16_t p = 0;
+  EEPROM.read(0,&p);
+  if(p >= P_COUNT) p = 0;
+  changeToProg(p);
 
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
