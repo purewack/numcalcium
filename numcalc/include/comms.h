@@ -4,11 +4,10 @@
 #include <SPI.h>
 //#include <Serial.h>
 
-// void midiNoteOffHandle(int ch, int note, int vel);
-// void midiNoteOnHandle(int ch, int note, int vel);
-// class USBMIDI_Recv: public USBMIDI;
-// USBMIDI_Recv usbm;
+
 extern USBHID HID;
-extern HIDKeyboard Keyboard;
+extern HIDKeyboard USB_keyboard;
+extern USBMIDI USB_midi;
+extern USBAUDIO USB_audio;
 
 // SPIClass SPI_2(2);

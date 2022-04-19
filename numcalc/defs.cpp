@@ -5,7 +5,9 @@
 U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ LCD_CK, /* data=*/ LCD_MOSI, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 //U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 USBHID HID;
-HIDKeyboard Keyboard(HID);
+HIDKeyboard USB_keyboard(HID);
+USBMIDI USB_midi;
+USBAUDIO USB_audio;
 
 hw_t hw = {
     {0},
