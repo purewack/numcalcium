@@ -19,14 +19,11 @@ char numpad_keys[20*2] = {
 
 
 void mode_numpad_on_begin(){
-    USBComposite.setProductId(0x0031);
-    HID.begin(HID_KEYBOARD);
-    Keyboard.begin();
+
 }
 
 void mode_numpad_on_end(){
-    HID.end();
-    Keyboard.end();
+
 }
 
 
@@ -36,7 +33,7 @@ void mode_numpad_on_press(int i){
     }
     int ii = i + stats.fmode*20;
     char key = numpad_keys[ii];
-    if(key) Keyboard.press(key);
+    if(key) USB_keyboard.press(key);
 }
 
 void mode_numpad_on_release(int i){
@@ -55,7 +52,7 @@ void mode_numpad_on_release(int i){
     }
     int ii = i + stats.fmode*20;
     char key = numpad_keys[ii];
-    if(key) Keyboard.release(key);
+    if(key) USB_keyboard.release(key);
 }
 
 void mode_numpad_on_gfx(){

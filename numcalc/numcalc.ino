@@ -44,7 +44,7 @@
 
 
 void changeToProg(int i){
-  if(stats.c_i == i) return;
+  if(&stats.progs[i] == stats.cprog) return;
 
   if(stats.cprog) stats.cprog->on_end();
   stats.cprog = &stats.progs[i];
@@ -263,27 +263,49 @@ void setup(){
   pinMode(LCD_LIGHT, OUTPUT);
   lcdFade(1);
 
+  USBComposite.clear();
+  USBComposite.setProductId(0x0031);
+  HID.setTXPacketSize(64);
+  HID.registerComponent();
+  HID.setReportDescriptor(HID_KEYBOARD); 
+  // USB_audio.setParameters(MIC_STEREO,32000);
+  // USB_audio.registerComponent();
+  USB_midi.setTXPacketSize(64);
+  USB_midi.registerComponent();
+  bool usb = USBComposite.begin();
+  if(!usb) Serial.println("usb begin failed");
+  else Serial.println("usb begin succ");
+
   stats.progs[P_NUMPAD].on_begin = mode_numpad_on_begin;
   stats.progs[P_NUMPAD].on_end = mode_numpad_on_end;
   stats.progs[P_NUMPAD].on_press = mode_numpad_on_press;
   stats.progs[P_NUMPAD].on_release = mode_numpad_on_release;
   stats.progs[P_NUMPAD].on_gfx = mode_numpad_on_gfx;
   stats.progs[P_NUMPAD].title = "Numpad";
-  stats.progs[P_NUMPAD].footer = "NUM     DIR     --";
+  stats.progs[P_NUMPAD].footer = "NUM      DIR         --";
   stats.progs[P_NUMPAD].inactive_inc = 1;
   stats.progs[P_NUMPAD].inactive_lim = 800;
 
-  stats.progs[P_NUMPAD+1].on_begin = mode_numpad_on_begin;
-  stats.progs[P_NUMPAD+1].on_end = mode_numpad_on_end;
-  stats.progs[P_NUMPAD+1].on_press = mode_numpad_on_press;
-  stats.progs[P_NUMPAD+1].on_release = mode_numpad_on_release;
-  stats.progs[P_NUMPAD+1].on_gfx = mode_numpad_on_gfx;
-  stats.progs[P_NUMPAD+1].title = "Numpad2";
-  stats.progs[P_NUMPAD+1].footer = "NUM     DIR     --";
-  stats.progs[P_NUMPAD+1].inactive_inc = 1;
-  stats.progs[P_NUMPAD+1].inactive_lim = 800;
+  stats.progs[P_MIDI].on_begin = mode_midi_on_begin;
+  stats.progs[P_MIDI].on_end = mode_midi_on_end;
+  stats.progs[P_MIDI].on_press = mode_midi_on_press;
+  stats.progs[P_MIDI].on_release = mode_midi_on_release;
+  stats.progs[P_MIDI].on_gfx = mode_midi_on_gfx;
+  stats.progs[P_MIDI].title = "MIDI";
+  stats.progs[P_MIDI].footer = "--       --       --";
+  stats.progs[P_MIDI].inactive_inc = 1;
+  stats.progs[P_MIDI].inactive_lim = 400;
 
-  stats.c_i = -1;
+  stats.progs[P_COMMS].on_begin = mode_comms_on_begin;
+  stats.progs[P_COMMS].on_end = mode_comms_on_end;
+  stats.progs[P_COMMS].on_press = mode_comms_on_press;
+  stats.progs[P_COMMS].on_release = mode_comms_on_release;
+  stats.progs[P_COMMS].on_gfx = mode_comms_on_gfx;
+  stats.progs[P_COMMS].title = "Comms";
+  stats.progs[P_COMMS].footer = "UART      SPI       I2C";
+  stats.progs[P_COMMS].inactive_inc = 0;
+  stats.progs[P_COMMS].inactive_lim = 800;
+
   changeToProg(P_NUMPAD);
 
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
