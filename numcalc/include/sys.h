@@ -59,8 +59,6 @@
 #define K_F3 18
 #define K_X 19
 
-
-//conflicting miso pin being pinmoded to input after ::sendBuffer()
 extern U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2;
 
 typedef struct t_io {
@@ -81,6 +79,7 @@ typedef struct HW
 
 typedef struct Program {
   char* title;
+  char* footer;
   void (*on_begin)(void);
   void (*on_end)(void);
   void (*on_ok)(void);
@@ -88,7 +87,9 @@ typedef struct Program {
   void (*on_press)(int);
   void (*on_release)(int);
   void (*on_gfx)(void);
-  void (*on_work)(void);
+
+  int inactive_inc;
+  int inactive_lim;
 } prog_t; 
 
 typedef struct Stats {
@@ -96,9 +97,12 @@ typedef struct Stats {
   prog_t progs[6];
   int c_i;
   int fmode;
+  int cprog_sel;
+  int inactive_time;
 } stats_t;
 
 extern stats_t stats;
 extern hw_t hw;
 
 void changeToProg(int i);
+void resetInactiveTime();

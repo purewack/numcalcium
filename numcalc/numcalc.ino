@@ -44,10 +44,13 @@
 
 
 void changeToProg(int i){
+  if(stats.c_i == i) return;
+
   if(stats.cprog) stats.cprog->on_end();
   stats.cprog = &stats.progs[i];
   stats.cprog->on_begin(); 
   stats.fmode = 0;
+  stats.c_i = i;
 }
 
 void lcdFade(int in){
@@ -60,12 +63,17 @@ void lcdFade(int in){
   digitalWrite(LCD_LIGHT, in);
 }
 
-void vTaskWorker(void* params){
-  while(1){
-    vTaskDelay(10);
-    if(stats.cprog->on_work) stats.cprog->on_work();
-  }
+void resetInactiveTime(){
+  stats.inactive_time = 0;
 }
+
+// void vTaskWorker(void* params){
+//   while(1){
+//     vTaskDelay(10);
+//     if(stats.cprog->on_work)
+//       stats.cprog->on_work();
+//   }
+// }
 
 void vTaskScreen(void* params){
 //
@@ -83,17 +91,41 @@ void vTaskScreen(void* params){
       continue; 
     }
 
-    if(stats.cprog->on_gfx) {
+    if(stats.cprog_sel){
       u8g2.clearBuffer();
       u8g2.setCursor(0,15);
-      u8g2.print(stats.cprog->title);
+      u8g2.print("~~Programs~~");
       u8g2.drawHLine(0,16,128);
+      u8g2.drawHLine(0,18,128);
+      if(stats.c_i > -1){
+        u8g2.setCursor(120,14);
+        u8g2.print("^");
+      }
 
-
-      u8g2.setCursor(0,64);
-      u8g2.print("NUM    DIR");
-      u8g2.drawHLine(0,64-16,128);
+      int ii = 0;
+      for(int i=(stats.c_i); i<(stats.c_i + 3); i++){
+        if(i >= P_COUNT) continue;
+        u8g2_uint_t sel = (i == stats.c_i ? U8G2_BTN_INV|U8G2_BTN_BW1|U8G2_BTN_HCENTER : U8G2_BTN_BW1|U8G2_BTN_HCENTER);
+        
+        const char* text = (i==-1 ? "Power Off" : stats.progs[i].title);
+        u8g2.drawButtonUTF8(64,32 + (16*ii), sel, 128, 0, 0, text);
+        ii++;
+      }
       
+      u8g2.sendBuffer();
+    }
+    else{
+      u8g2.clearBuffer();
+      u8g2.setCursor(0,8);
+      u8g2.print(stats.cprog->title);
+      u8g2.drawHLine(0,9,128);
+      u8g2.setCursor(0,64);
+
+      if(stats.cprog->footer){
+        u8g2.print(stats.cprog->footer);
+        u8g2.drawHLine(0,64-9,128);
+      }
+
       stats.cprog->on_gfx();
       u8g2.sendBuffer();
     }
@@ -110,13 +142,25 @@ void vTaskKeyMux(void* params){
 #ifdef DEBUG
       Serial.println("ok");
 #endif
+      resetInactiveTime();
 
-//       vTaskEndScheduler();
-// //      delay(1000);
-//       lcdFade(0);
-//       digitalWrite(SYS_PDOWN, HIGH);
-//      
-      if(stats.cprog->on_ok) stats.cprog->on_ok();
+      if(!stats.cprog_sel) {
+        stats.cprog_sel = 1;
+      }
+      else {
+        if(stats.c_i == -1) {
+          //system shut down
+          vTaskEndScheduler();
+          u8g2.clearBuffer();
+          u8g2.sendBuffer();
+          lcdFade(0);
+          digitalWrite(SYS_PDOWN, HIGH);
+        }
+        changeToProg(stats.c_i);
+        stats.cprog_sel = 0;
+      }
+
+
     }
     
     for(int r=0; r<5; r++){
@@ -159,17 +203,44 @@ void vTaskKeyMux(void* params){
   #ifdef DEBUG
         Serial.println("LEFT turn");
   #endif
-        if(stats.cprog->on_nav)
+        
+        resetInactiveTime();
+        if(stats.cprog_sel){
+          stats.c_i = stats.c_i > 0 ? stats.c_i-1 : -1;
+        }
+        else if(stats.cprog->on_nav)
           stats.cprog->on_nav(-1);
+
       }
       else if(!hw.enc_a && hw.enc_b && !hw.enc_a_old && !hw.enc_b_old){    
   #ifdef DEBUG
         Serial.println("RIGHT turn");
   #endif
-        if(stats.cprog->on_nav)
+
+        resetInactiveTime();
+        if(stats.cprog_sel){
+          stats.c_i = stats.c_i < P_COUNT-1 ? stats.c_i+1 : P_COUNT-1;
+        }
+        else if(stats.cprog->on_nav)
           stats.cprog->on_nav(1);
+
       }
     digitalWrite(ROW_F, LOW);
+
+    if(stats.inactive_time == 0){
+        digitalWrite(LCD_LIGHT, 1);
+    }
+    if(stats.inactive_time == stats.cprog->inactive_lim){
+        if(stats.cprog_sel) {
+          stats.cprog_sel = 0;
+          stats.inactive_time = 0;
+        }
+        else
+          digitalWrite(LCD_LIGHT, 0);
+    }
+    if(stats.inactive_time < stats.cprog->inactive_lim){
+        stats.inactive_time += stats.cprog_sel ? 1 : stats.cprog->inactive_inc;
+    }
 
     vTaskDelay(5);
     //delay(10);
@@ -192,17 +263,31 @@ void setup(){
   pinMode(LCD_LIGHT, OUTPUT);
   lcdFade(1);
 
-  stats.progs[0].on_begin = mode_numpad_on_begin;
-  stats.progs[0].on_end = mode_numpad_on_end;
-  stats.progs[0].on_press = mode_numpad_on_press;
-  stats.progs[0].on_release = mode_numpad_on_release;
-  stats.progs[0].on_gfx = mode_numpad_on_gfx;
-  stats.progs[0].on_work = mode_numpad_on_work;
-  stats.progs[0].title = "Numpad";
-  changeToProg(0);
+  stats.progs[P_NUMPAD].on_begin = mode_numpad_on_begin;
+  stats.progs[P_NUMPAD].on_end = mode_numpad_on_end;
+  stats.progs[P_NUMPAD].on_press = mode_numpad_on_press;
+  stats.progs[P_NUMPAD].on_release = mode_numpad_on_release;
+  stats.progs[P_NUMPAD].on_gfx = mode_numpad_on_gfx;
+  stats.progs[P_NUMPAD].title = "Numpad";
+  stats.progs[P_NUMPAD].footer = "NUM     DIR     --";
+  stats.progs[P_NUMPAD].inactive_inc = 1;
+  stats.progs[P_NUMPAD].inactive_lim = 800;
+
+  stats.progs[P_NUMPAD+1].on_begin = mode_numpad_on_begin;
+  stats.progs[P_NUMPAD+1].on_end = mode_numpad_on_end;
+  stats.progs[P_NUMPAD+1].on_press = mode_numpad_on_press;
+  stats.progs[P_NUMPAD+1].on_release = mode_numpad_on_release;
+  stats.progs[P_NUMPAD+1].on_gfx = mode_numpad_on_gfx;
+  stats.progs[P_NUMPAD+1].title = "Numpad2";
+  stats.progs[P_NUMPAD+1].footer = "NUM     DIR     --";
+  stats.progs[P_NUMPAD+1].inactive_inc = 1;
+  stats.progs[P_NUMPAD+1].inactive_lim = 800;
+
+  stats.c_i = -1;
+  changeToProg(P_NUMPAD);
 
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
-  xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   xTaskCreate(vTaskScreen,"screen",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   vTaskStartScheduler();
 }
