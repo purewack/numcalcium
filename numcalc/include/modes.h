@@ -1,5 +1,4 @@
-#ifndef H_MODES
-#define H_MODES
+#pragma once
 //CMODE:
 //numpad -> F1 = normal, F2 = Arrows, F3 = phone ascii
 //calculator -> F1 = basic, F2 = sci, F3 = comp
@@ -15,5 +14,3 @@ void mode_numpad_on_press(int i);
 void mode_numpad_on_release(int i);
 void mode_numpad_on_gfx();
 void mode_numpad_on_work();
-
-#endif

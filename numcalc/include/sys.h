@@ -1,5 +1,4 @@
-#ifndef H_SYS
-#define H_SYS
+#pragma once
 
 #include <MapleFreeRTOS900.h>
 #include <Arduino.h>
@@ -60,27 +59,25 @@
 #define K_F3 18
 #define K_X 19
 
+
 //conflicting miso pin being pinmoded to input after ::sendBuffer()
-U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ LCD_CK, /* data=*/ LCD_MOSI, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
-//U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
+extern U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2;
 
 typedef struct t_io {
-  uint8_t state = 0;
-  uint8_t old_state = 0;
+  uint8_t state;
+  uint8_t old_state;
   uint8_t dt;
 };
 
-t_io io[21];
-uint8_t enc_a, enc_b,enc_a_old,enc_b_old;
-int8_t enc_turns, enc_turns_old;
-uint8_t ok, oko;
-
-uint8_t k = 0;
-const uint8_t rows[] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E, ROW_F};
-const uint8_t cols[] = {SEG_A, SEG_B, SEG_C, SEG_D};
-
-
-typedef struct Program prog_t;
+typedef struct HW
+{
+  t_io io[21];
+  uint8_t enc_a, enc_b,enc_a_old,enc_b_old;
+  int8_t enc_turns, enc_turns_old;
+  uint8_t ok, oko;
+  const uint8_t rows[6];
+  const uint8_t cols[4];
+} hw_t;
 
 typedef struct Program {
   char* title;
@@ -94,11 +91,14 @@ typedef struct Program {
   void (*on_work)(void);
 } prog_t; 
 
-prog_t* cprog;
-prog_t progs[6];
-int c_i = 0;
-int fmode = 0;
+typedef struct Stats {
+  prog_t* cprog;
+  prog_t progs[6];
+  int c_i;
+  int fmode;
+} stats_t;
 
-void changeToMenu(int i);
+extern stats_t stats;
+extern hw_t hw;
 
-#endif
+void changeToProg(int i);
