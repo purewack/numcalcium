@@ -2,6 +2,23 @@
 #include "include/sys.h"
 #include "include/modes.h"
 
+char numpad_keys[20*2] = {
+    0,'0','.','=',
+    '1','2','3','+',
+    '4'.'5','6','-',
+    '7','8','9','/',
+    0,0,0,'*',
+
+    KEY_LEFT_ARROW,KEY_DOWN_ARROW,KEY_RIGHT_ARROW,KEY_RETURN,
+    ' ',KEY_UP_ARROW,0,0,
+    0,0,0,0,
+    0,0,0,0,
+    0,0,0,KEY_BACKSPACE
+} 
+
+volatile int numpad_inactive_time;
+#define INACTIVE_TIME_LIMIT 400;
+
 void mode_numpad_on_begin(){
     Serial.println("USB HID Setup");
     USBComposite.setProductId(0x0031);
@@ -11,42 +28,53 @@ void mode_numpad_on_begin(){
     Serial.println("USB HID Done");
 }
 
+void mode_numpad_on_end(){
+    HID.end();
+    Keyboard.end();
+}
+
 void mode_numpad_on_press(int i){
-    Serial.println("press");
-    switch(i){
-        case K_Y:
-            Keyboard.press(KEY_LEFT_ARROW);
-        break; 
-        
-        case K_0:
-            Keyboard.press(KEY_DOWN_ARROW);
-        break;
-
-        case K_DOT:
-            Keyboard.press(KEY_RIGHT_ARROW);
-        break;
-
-        case K_2:
-            Keyboard.press(KEY_UP_ARROW);
-        break;
+    if(fmode == 2){
+        return;
     }
+    int ii = i + fmode*20;
+    char key = numpad_keys[ii];
+    if(key) Keyboard.press(key);
 }
 
 void mode_numpad_on_release(int i){
-    switch(i){
-        case K_Y:
-            Keyboard.release(KEY_LEFT_ARROW);
-        break; 
-        
-        case K_0:
-            Keyboard.release(KEY_DOWN_ARROW);
-        break;
+    if(i == K_F1) {
+        fmode = 0; 
+        numpad_inactive_time = 0;
+        return;
+    }
+    if(i == K_F2) {
+        fmode = 1; 
+        numpad_inactive_time = 0;
+        return;
+    }
+    if(fmode == 2){
+        return;
+    }
+    int ii = i + fmode*20;
+    char key = numpad_keys[ii];
+    if(key) Keyboard.release(key);
+}
 
-        case K_DOT:
-            Keyboard.release(KEY_RIGHT_ARROW);
-        break;
+void mode_numpad_on_work(){
+    if(numpad_inactive_time == 0){
+        digitalWrite(LCD_LIGHT, 1);
+    }
+    if(numpad_inactive_time == INACTIVE_TIME_LIMIT){
+        digitalWrite(LCD_LIGHT, 0);
+    }
+    if(numpad_inactive_time < INACTIVE_TIME_LIMIT){
+        numpad_inactive_time++;
+    }
+}
 
-        case K_2:
-            Keyboard.release(KEY_UP_ARROW);
-        break;
-    }}
+void mode_numpad_on_gfx(){
+    u8g2.setCursor(16, 32);
+    if(fmode == 0) u8g2.print(">Stock Numpad");
+    else u8g2.print(">Directional Keys");
+}

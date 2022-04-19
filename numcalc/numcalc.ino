@@ -42,33 +42,12 @@
 #include "include/comms.h"
 
 
-//conflicting miso pin being pinmoded to input after ::sendBuffer()
-U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ LCD_CK, /* data=*/ LCD_MOSI, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
-//U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
-
-Modes cmode = Modes::m_numpad;
-typedef struct Menu t_menu;
-typedef struct t_menu_item;
-
-typedef struct t_menu_item{
-  char* text;
-  uint8_t has_sub_menu;
-  t_menu* next;
-};
-
-typedef struct Menu {
-  t_menu_item* items;
-  uint8_t items_c;
-  uint8_t items_i;
-  uint8_t visible;  
-  
-  void (*on_ok)(void);
-  void (*on_nav)(int);
-  void (*on_press)(int);
-  void (*on_release)(int);
-} t_menu; 
-t_menu cmenu[6];
-int ci = 0;
+void changeToMenu(int i){
+  if(cprog) cprog->on_end();
+  cprog = menus[i];
+  cprog->on_begin(); 
+  fmode = 0;
+}
 
 void lcdFade(int in){
   for(int i=0; i<1000; i++){ 
@@ -82,8 +61,8 @@ void lcdFade(int in){
 
 void vTaskWorker(void* params){
   while(1){
-    vTaskDelay(1000);
-    Serial.println("Alive");
+    vTaskDelay(10);
+    if(cmenu->on_work) cmenu->on_work();
   }
 }
 
@@ -94,16 +73,28 @@ void vTaskScreen(void* params){
   u8g2.setFlipMode(1);
   u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
 
-
-
-
   uint8_t i = 0;
   while(1){
-    vTaskDelay(100);
-    u8g2.clearBuffer();					// clear the internal memory
-    u8g2.drawStr(i%30,i%30,"Hello World!");	// write something to the internal memory
-    u8g2.sendBuffer();
-    i++;	
+    if(digitalRead(LCD_LIGHT))
+      vTaskDelay(30);
+    else{
+      vTaskDelay(200);
+      continue; 
+    }
+
+    if(cmenu->on_gfx) {
+      u8g2.clearBuffer();
+      u8g2.setCursor(0,15);
+      u8g2.print(cmenu->title);
+      u8g2.drawHLine(0,16,128);
+
+      u8g2.setCursor(0,64);
+      u8g2.print("NUM    DIR");
+      u8g2.drawHLine(0,64-16,128);
+      
+      cmenu->on_gfx();
+      u8g2.sendBuffer();
+    }
   }
 }
 
@@ -114,18 +105,16 @@ void vTaskKeyMux(void* params){
       oko = ok;
       if(!ok) continue;
 
-      //if(cmenu != 1) cmenu = 1;
+#ifdef DEBUG
       Serial.println("ok");
-      
-      mode_numpad_on_begin();
-      
+#endif
+
 //       vTaskEndScheduler();
 // //      delay(1000);
 //       lcdFade(0);
 //       digitalWrite(SYS_PDOWN, HIGH);
 //      
-      if(cmenu[ci].on_ok)
-        cmenu[ci].on_ok();
+      if(cprog->on_ok) cprog->on_ok();
     }
     
     for(int r=0; r<5; r++){
@@ -137,12 +126,12 @@ void vTaskKeyMux(void* params){
 
           if(io[I].state && !io[I].old_state){
             io[I].dt = 0;
-            if(cmenu[ci].on_press)
-              cmenu[ci].on_press(I);
+            if(cprog->on_press)
+              cprog->on_press(I);
           }
           else if(!io[I].state && io[I].old_state){
-            if(cmenu[ci].on_release)
-              cmenu[ci].on_release(I);
+            if(cprog->on_release)
+              cprog->on_release(I);
           }
           
           if(io[I].state != io[I].old_state){
@@ -168,15 +157,15 @@ void vTaskKeyMux(void* params){
   #ifdef DEBUG
         Serial.println("LEFT turn");
   #endif
-        if(cmenu[ci].on_nav)
-          cmenu[ci].on_nav(-1);
+        if(cprog->on_nav)
+          cprog->on_nav(-1);
       }
       else if(!enc_a && enc_b && !enc_a_old && !enc_b_old){    
   #ifdef DEBUG
         Serial.println("RIGHT turn");
   #endif
-        if(cmenu[ci].on_nav)
-          cmenu[ci].on_nav(1);
+        if(cprog->on_nav)
+          cprog->on_nav(1);
       }
     digitalWrite(ROW_F, LOW);
 
@@ -201,9 +190,11 @@ void setup(){
   pinMode(LCD_LIGHT, OUTPUT);
   lcdFade(1);
 
-  //mode_numpad_on_begin();
-  cmenu[0].on_press = mode_numpad_on_press;
-  cmenu[0].on_release = mode_numpad_on_release;
+  menus[0].on_begin = mode_numpad_on_begin;
+  menus[0].on_press = mode_numpad_on_press;
+  menus[0].on_release = mode_numpad_on_release;
+  menus[0].title = "Numpad";
+  changeToMenu(0);
 
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);

@@ -9,20 +9,11 @@
 //PWM audio -> F1 = osc, F2 scope, F3 nodes
 //ws28xx ?
 
-enum Modes {
-    m_numpad, //normally numpad unless shift double pressed 
-    m_calc_sci,
-    m_calc_comp,
-    m_midi,
-    m_comms,
-    m_gpio,
-    m_pwm_audio,
-    m_ws28xx
-};
-
 void mode_numpad_on_begin();
 void mode_numpad_on_end();
 void mode_numpad_on_press(int i);
 void mode_numpad_on_release(int i);
+void mode_numpad_on_gfx();
+void mode_numpad_on_work();
 
 #endif
