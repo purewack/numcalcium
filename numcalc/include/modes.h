@@ -1,4 +1,5 @@
-#pragma once
+#ifndef H_MODES
+#define H_MODES
 //CMODE:
 //numpad -> F1 = normal, F2 = Arrows, F3 = phone ascii
 //calculator -> F1 = basic, F2 = sci, F3 = comp
@@ -18,3 +19,10 @@ enum Modes {
     m_pwm_audio,
     m_ws28xx
 };
+
+void mode_numpad_on_begin();
+void mode_numpad_on_end();
+void mode_numpad_on_press(int i);
+void mode_numpad_on_release(int i);
+
+#endif

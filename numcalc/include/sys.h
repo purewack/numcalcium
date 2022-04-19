@@ -1,4 +1,5 @@
-#pragma once
+#ifndef H_SYS
+#define H_SYS
 
 #include <MapleFreeRTOS900.h>
 #include <Arduino.h>
@@ -38,6 +39,27 @@
 #define COMMS_RX PA10
 #define COMMS_TX PA9
 
+#define K_Y 0
+#define K_0 1
+#define K_DOT 2
+#define K_R 3
+#define K_1 4
+#define K_2 5
+#define K_3 6
+#define K_P 7
+#define K_4 8
+#define K_5 9
+#define K_6 10
+#define K_N 11
+#define K_7 12
+#define K_8 13
+#define K_9 14
+#define K_D 15
+#define K_F1 16
+#define K_F2 17
+#define K_F3 18
+#define K_X 19
+
 
 typedef struct t_io {
   //uint8_t target[4];
@@ -55,3 +77,4 @@ uint8_t k = 0;
 const uint8_t rows[] = {ROW_A, ROW_B, ROW_C, ROW_D, ROW_E, ROW_F};
 const uint8_t cols[] = {SEG_A, SEG_B, SEG_C, SEG_D};
 
+#endif
