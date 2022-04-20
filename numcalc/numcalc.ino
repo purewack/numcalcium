@@ -65,6 +65,7 @@ void changeToProg(int i){
 
   if(stats.cprog) stats.cprog->on_end();
   stats.cprog = &stats.progs[i];
+  stats.gfx_text_count = 0;
   stats.cprog->on_begin(); 
   stats.fmode = 0;
   stats.c_i = i;
@@ -140,22 +141,28 @@ void vTaskScreen(void* params){
 
       if(stats.cprog->txt_f1){
         u8g2_uint_t sel = (stats.fmode == 0 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
-        u8g2.drawButtonUTF8(64, 0 , sel, 42, 0, 0, stats.cprog->txt_f1);
+        u8g2.drawButtonUTF8(0,64, sel, 41, 0, 0, stats.cprog->txt_f1);
       }
       if(stats.cprog->txt_f2){
         u8g2_uint_t sel = (stats.fmode == 1 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
-        u8g2.drawButtonUTF8(64, 42 , sel, 42, 0, 0, stats.cprog->txt_f2);
+        u8g2.drawButtonUTF8(42,64 , sel, 41, 0, 0, stats.cprog->txt_f2);
       }
       if(stats.cprog->txt_f3){
         u8g2_uint_t sel = (stats.fmode == 2 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
-        u8g2.drawButtonUTF8(64, 84 , sel, 42, 0, 0, stats.cprog->txt_f3);
+        u8g2.drawButtonUTF8(84,64 , sel, 41, 0, 0, stats.cprog->txt_f3);
       }
 
+      if(stats.gfx_text_count){
+        for(int i=0; i<7;i++){
+          if(i > stats.gfx_text_count-1) break;
+            u8g2.setCursor(0, 64-10-(9*i));
+            u8g2.print(stats.gfx_text[stats.gfx_text_count-1-i]);
+        }
+      }
+      
       if(stats.cprog->on_gfx)
         stats.cprog->on_gfx();
-      else{
         
-      }
       u8g2.sendBuffer();
     }
   }
@@ -287,7 +294,7 @@ void setup(){
   pinMode(LCD_LIGHT, OUTPUT);
   lcdFade(1);
 
-  stats.gfx_text = (char**)malloc(sizeof(char)*40*10);
+  stats.gfx_text = (char**)malloc(sizeof(char*)*40);
 
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
@@ -309,7 +316,7 @@ void setup(){
   //stats.progs[P_NUMPAD].on_gfx = mode_numpad_on_gfx;
   stats.progs[P_NUMPAD].title = "Numpad";
   stats.progs[P_NUMPAD].txt_f1 = "123";
-  stats.progs[P_NUMPAD].txt_f2 = "<^>";
+  stats.progs[P_NUMPAD].txt_f2 = "< ^ >";
   stats.progs[P_NUMPAD].inactive_inc = 1;
   stats.progs[P_NUMPAD].inactive_lim = 800;
 
@@ -339,9 +346,9 @@ void setup(){
   stats.progs[P_COMMS].on_release = mode_comms_on_release;
   //stats.progs[P_COMMS].on_gfx = mode_comms_on_gfx;
   stats.progs[P_COMMS].title = "Comms";
-  stats.progs[P_CALC].txt_f1 = "UART";
-  stats.progs[P_CALC].txt_f2 = "SPI";
-  stats.progs[P_CALC].txt_f3 = "I2C";
+  stats.progs[P_COMMS].txt_f1 = "UART";
+  stats.progs[P_COMMS].txt_f2 = "SPI";
+  stats.progs[P_COMMS].txt_f3 = "I2C";
   stats.progs[P_COMMS].inactive_inc = 0;
   stats.progs[P_COMMS].inactive_lim = 800;
 
@@ -351,8 +358,12 @@ void setup(){
   EEPROM.read(1,&f);
   if(p >= P_COUNT) p = 0;
   if(f > 2) f = 0;
+
+  Serial.println("seq start");
   changeToProg(p);
   stats.fmode = f;
+
+  Serial.println("sched start");
 
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);

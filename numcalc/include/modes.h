@@ -7,7 +7,7 @@
 //GPIO -> F1 = debounced sw, F2 = clock bits program like cpld, F3 = PWM channels
 //PWM audio -> F1 = osc, F2 scope, F3 nodes
 //ws28xx ?
-#define P_COUNT 3
+#define P_COUNT 4
 
 #define P_NUMPAD 0
 void mode_numpad_on_begin();
@@ -15,19 +15,19 @@ void mode_numpad_on_end();
 void mode_numpad_on_press(int i);
 void mode_numpad_on_release(int i);
 
-#define P_CALC 2
+#define P_CALC 1
 void mode_calc_on_begin();
 void mode_calc_on_end();
 void mode_calc_on_press(int i);
 void mode_calc_on_release(int i);
 
-#define P_MIDI 3
+#define P_MIDI 2
 void mode_midi_on_begin();
 void mode_midi_on_end();
 void mode_midi_on_press(int i);
 void mode_midi_on_release(int i);
 
-#define P_COMMS 4
+#define P_COMMS 3
 void mode_comms_on_begin();
 void mode_comms_on_end();
 void mode_comms_on_press(int i);
