@@ -21,6 +21,6 @@ hw_t hw = {
 stats_t stats = {
     nullptr,
     {0},
-    0,0,0,0,0,
+    0,0,0,0,0,0,
     nullptr
 };
