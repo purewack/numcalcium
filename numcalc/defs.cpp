@@ -9,6 +9,8 @@ HIDKeyboard USB_keyboard(HID);
 USBMIDI USB_midi;
 USBAUDIO USB_audio;
 
+SPIClass SPI2;
+
 hw_t hw = {
     {0},
     0,0,0,0,0,0,0,0,
