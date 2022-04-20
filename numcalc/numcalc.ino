@@ -97,7 +97,7 @@ void vTaskScreen(void* params){
   u8g2.begin();
   u8g2.setContrast(82);
   u8g2.setFlipMode(1);
-  u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
+  u8g2.setFont(u8g2_font_t0_12_tf   );	// choose a suitable font
 
   uint8_t i = 0;
   while(1){
@@ -274,6 +274,8 @@ void setup(){
   
   pinMode(LCD_LIGHT, OUTPUT);
   lcdFade(1);
+
+  stats.gfx_text = (char**)malloc(sizeof(char)*40*10);
 
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
