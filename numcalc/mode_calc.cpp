@@ -7,14 +7,14 @@ void mode_calc_on_begin(){
 
 }
 
-void mode_calc_on_begin(){
+void mode_calc_on_end(){
 
 }
 
-void mode_calc_on_begin(int i){
+void mode_calc_on_press(int i){
 
 }
 
-void mode_calc_on_begin(int i){
+void mode_calc_on_release(int i){
     
 }
