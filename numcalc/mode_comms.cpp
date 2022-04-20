@@ -27,6 +27,6 @@ void mode_comms_on_release(int i){
     
 }
 
-void mode_comms_on_gfx(){
+// void mode_comms_on_gfx(){
 
-}
+// }

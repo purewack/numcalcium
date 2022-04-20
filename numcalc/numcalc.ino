@@ -138,12 +138,24 @@ void vTaskScreen(void* params){
       u8g2.drawHLine(0,9,128);
       u8g2.setCursor(0,64);
 
-      if(stats.cprog->footer){
-        u8g2.print(stats.cprog->footer);
-        u8g2.drawHLine(0,64-9,128);
+      if(stats.cprog->txt_f1){
+        u8g2_uint_t sel = (stats.fmode == 0 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
+        u8g2.drawButtonUTF8(64, 0 , sel, 42, 0, 0, stats.cprog->txt_f1);
+      }
+      if(stats.cprog->txt_f2){
+        u8g2_uint_t sel = (stats.fmode == 1 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
+        u8g2.drawButtonUTF8(64, 42 , sel, 42, 0, 0, stats.cprog->txt_f2);
+      }
+      if(stats.cprog->txt_f3){
+        u8g2_uint_t sel = (stats.fmode == 2 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
+        u8g2.drawButtonUTF8(64, 84 , sel, 42, 0, 0, stats.cprog->txt_f3);
       }
 
-      stats.cprog->on_gfx();
+      if(stats.cprog->on_gfx)
+        stats.cprog->on_gfx();
+      else{
+        
+      }
       u8g2.sendBuffer();
     }
   }
@@ -294,19 +306,30 @@ void setup(){
   stats.progs[P_NUMPAD].on_end = mode_numpad_on_end;
   stats.progs[P_NUMPAD].on_press = mode_numpad_on_press;
   stats.progs[P_NUMPAD].on_release = mode_numpad_on_release;
-  stats.progs[P_NUMPAD].on_gfx = mode_numpad_on_gfx;
+  //stats.progs[P_NUMPAD].on_gfx = mode_numpad_on_gfx;
   stats.progs[P_NUMPAD].title = "Numpad";
-  stats.progs[P_NUMPAD].footer = "NUM      DIR         --";
+  stats.progs[P_NUMPAD].txt_f1 = "123";
+  stats.progs[P_NUMPAD].txt_f2 = "<^>";
   stats.progs[P_NUMPAD].inactive_inc = 1;
   stats.progs[P_NUMPAD].inactive_lim = 800;
+
+  stats.progs[P_CALC].on_begin = mode_calc_on_begin;
+  stats.progs[P_CALC].on_end = mode_calc_on_end;
+  stats.progs[P_CALC].on_press = mode_calc_on_press;
+  stats.progs[P_CALC].on_release = mode_calc_on_release;
+  //stats.progs[P_CALC].on_gfx = mode_numpad_on_gfx;
+  stats.progs[P_CALC].title = "Calculator";
+  stats.progs[P_CALC].txt_f1 = "SCI";
+  stats.progs[P_CALC].txt_f2 = "BIN";
+  stats.progs[P_CALC].inactive_inc = 1;
+  stats.progs[P_CALC].inactive_lim = 800;
 
   stats.progs[P_MIDI].on_begin = mode_midi_on_begin;
   stats.progs[P_MIDI].on_end = mode_midi_on_end;
   stats.progs[P_MIDI].on_press = mode_midi_on_press;
   stats.progs[P_MIDI].on_release = mode_midi_on_release;
-  stats.progs[P_MIDI].on_gfx = mode_midi_on_gfx;
+  //stats.progs[P_MIDI].on_gfx = mode_midi_on_gfx;
   stats.progs[P_MIDI].title = "MIDI";
-  stats.progs[P_MIDI].footer = "--       --       --";
   stats.progs[P_MIDI].inactive_inc = 1;
   stats.progs[P_MIDI].inactive_lim = 400;
 
@@ -314,9 +337,11 @@ void setup(){
   stats.progs[P_COMMS].on_end = mode_comms_on_end;
   stats.progs[P_COMMS].on_press = mode_comms_on_press;
   stats.progs[P_COMMS].on_release = mode_comms_on_release;
-  stats.progs[P_COMMS].on_gfx = mode_comms_on_gfx;
+  //stats.progs[P_COMMS].on_gfx = mode_comms_on_gfx;
   stats.progs[P_COMMS].title = "Comms";
-  stats.progs[P_COMMS].footer = "UART      SPI       I2C";
+  stats.progs[P_CALC].txt_f1 = "UART";
+  stats.progs[P_CALC].txt_f2 = "SPI";
+  stats.progs[P_CALC].txt_f3 = "I2C";
   stats.progs[P_COMMS].inactive_inc = 0;
   stats.progs[P_COMMS].inactive_lim = 800;
 

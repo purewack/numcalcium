@@ -55,8 +55,8 @@ void mode_numpad_on_release(int i){
     if(key) USB_keyboard.release(key);
 }
 
-void mode_numpad_on_gfx(){
-    u8g2.setCursor(8, 32);
-    if(stats.fmode == 0) u8g2.print("> Numpad");
-    else u8g2.print("> Arrow Keys");
-}
+// void mode_numpad_on_gfx(){
+//     u8g2.setCursor(8, 32);
+//     if(stats.fmode == 0) u8g2.print("> Numpad");
+//     else u8g2.print("> Arrow Keys");
+// }

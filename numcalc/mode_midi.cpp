@@ -21,6 +21,6 @@ void mode_midi_on_release(int i){
     USB_midi.sendNoteOff(0,60+i,127);
 }
 
-void mode_midi_on_gfx(){
+// void mode_midi_on_gfx(){
    
-}
+// }

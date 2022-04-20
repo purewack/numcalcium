@@ -78,7 +78,9 @@ typedef struct HW
 
 typedef struct Program {
   char* title;
-  char* footer;
+  char* txt_f1;
+  char* txt_f2;
+  char* txt_f3;
   void (*on_begin)(void);
   void (*on_end)(void);
   void (*on_ok)(void);
@@ -98,6 +100,7 @@ typedef struct Stats {
   int fmode;
   int cprog_sel;
   int inactive_time;
+  int gfx_text_count;
   char** gfx_text;
 } stats_t;
 
