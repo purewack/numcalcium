@@ -11,10 +11,10 @@ void mode_calc_on_end(){
 
 }
 
-void mode_calc_on_press(int i){
-
+int mode_calc_on_press(int i){
+    return 1;
 }
 
-void mode_calc_on_release(int i){
-    
+int mode_calc_on_release(int i){
+    return 1;
 }

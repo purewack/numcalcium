@@ -1,6 +1,5 @@
 #pragma once
 #include <Arduino.h>
-#include <MapleFreeRTOS900.h>
 #include <U8g2lib.h>
 
 #define SYS_PDOWN PB5
@@ -61,17 +60,17 @@
 extern U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2;
 
 typedef struct t_io {
-  uint8_t state;
-  uint8_t old_state;
-  uint8_t dt;
+  volatile uint8_t state;
+  volatile uint8_t old_state;
+  volatile uint8_t dt;
 };
 
 typedef struct HW
 {
-  t_io io[21];
-  uint8_t enc_a, enc_b,enc_a_old,enc_b_old;
-  int8_t enc_turns, enc_turns_old;
-  uint8_t ok, oko;
+  volatile t_io io[21];
+  volatile uint8_t enc_a, enc_b,enc_a_old,enc_b_old;
+  volatile int8_t enc_turns, enc_turns_old;
+  volatile uint8_t ok, oko;
   const uint8_t rows[6];
   const uint8_t cols[4];
 } hw_t;
@@ -85,22 +84,22 @@ typedef struct Program {
   void (*on_end)(void);
   void (*on_ok)(void);
   void (*on_nav)(int);
-  void (*on_press)(int);
-  void (*on_release)(int);
+  int (*on_press)(int);
+  int (*on_release)(int);
   void (*on_gfx)(void);
 
-  int inactive_inc;
-  int inactive_lim;
+  volatile int inactive_inc;
+  volatile int inactive_lim;
 } prog_t; 
 
 typedef struct Stats {
-  prog_t* cprog;
-  prog_t progs[6];
-  int c_i;
-  int fmode;
-  int cprog_sel;
-  int inactive_time;
-  int gfx_text_count;
+  volatile prog_t* cprog;
+  volatile prog_t progs[6];
+  volatile int c_i;
+  volatile int fmode;
+  volatile int cprog_sel;
+  volatile int inactive_time;
+  volatile int gfx_text_count;
   char** gfx_text;
 } stats_t;
 

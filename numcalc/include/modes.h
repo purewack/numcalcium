@@ -12,23 +12,23 @@
 #define P_NUMPAD 0
 void mode_numpad_on_begin();
 void mode_numpad_on_end();
-void mode_numpad_on_press(int i);
-void mode_numpad_on_release(int i);
+int mode_numpad_on_press(int i);
+int mode_numpad_on_release(int i);
 
 #define P_CALC 1
 void mode_calc_on_begin();
 void mode_calc_on_end();
-void mode_calc_on_press(int i);
-void mode_calc_on_release(int i);
+int mode_calc_on_press(int i);
+int mode_calc_on_release(int i);
 
 #define P_MIDI 2
 void mode_midi_on_begin();
 void mode_midi_on_end();
-void mode_midi_on_press(int i);
-void mode_midi_on_release(int i);
+int mode_midi_on_press(int i);
+int mode_midi_on_release(int i);
 
 #define P_COMMS 3
 void mode_comms_on_begin();
 void mode_comms_on_end();
-void mode_comms_on_press(int i);
-void mode_comms_on_release(int i);
+int mode_comms_on_press(int i);
+int mode_comms_on_release(int i);
