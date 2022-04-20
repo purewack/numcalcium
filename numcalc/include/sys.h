@@ -86,6 +86,7 @@ typedef struct Program {
   void (*on_nav)(int);
   int (*on_press)(int);
   int (*on_release)(int);
+  void (*on_loop)(unsigned long);
 
   volatile int inactive_inc;
   volatile int inactive_lim;

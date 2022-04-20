@@ -175,6 +175,8 @@ void vTaskScreen(void* params){
 }
 
 void vTaskKeyMux(void* params){
+  unsigned long dt = 0;
+
   while(1){
     
     hw.ok = digitalRead(B_OK);
@@ -289,7 +291,12 @@ void vTaskKeyMux(void* params){
     if(stats.gfx_refresh) vTaskScreen(nullptr);
     stats.gfx_refresh = 0;
 
-    vTaskDelay(5);
+    if(stats.cprog->on_loop && !stats.cprog_sel)
+      stats.cprog->on_loop(dt);
+    else
+      vTaskDelay(5);
+
+    dt++;
     //delay(10);
   }
 }
@@ -365,6 +372,7 @@ void setup(){
   stats.progs[P_COMMS].on_end = mode_comms_on_end;
   stats.progs[P_COMMS].on_press = mode_comms_on_press;
   stats.progs[P_COMMS].on_release = mode_comms_on_release;
+  stats.progs[P_COMMS].on_loop = mode_comms_on_loop;
   stats.progs[P_COMMS].title = "Comms";
   stats.progs[P_COMMS].txt_f1 = "UART";
   stats.progs[P_COMMS].txt_f2 = "SPI";
