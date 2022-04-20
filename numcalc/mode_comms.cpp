@@ -5,17 +5,17 @@
 
 void mode_comms_on_begin(){
 #ifndef DEBUG
-    Serial.begin()
+    Serial1.begin(9600);
 #endif
-    SPI2.begin();
+    SPI_2.begin();
     Wire.begin();
 }
 
 void mode_comms_on_end(){
 #ifndef DEBUG
-    Serial.end();
+    Serial1.end();
 #endif
-    SPI2.end();
+    SPI_2.end();
     Wire.end();
 }
 

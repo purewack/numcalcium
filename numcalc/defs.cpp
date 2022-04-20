@@ -9,7 +9,7 @@ HIDKeyboard USB_keyboard(HID);
 USBMIDI USB_midi;
 USBAUDIO USB_audio;
 
-SPIClass SPI2;
+SPIClass SPI_2(2);
 
 hw_t hw = {
     {0},
@@ -21,5 +21,6 @@ hw_t hw = {
 stats_t stats = {
     nullptr,
     {0},
-    0,0,0
+    0,0,0,0,
+    nullptr
 };

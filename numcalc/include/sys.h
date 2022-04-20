@@ -1,5 +1,5 @@
 #pragma once
-
+#include <Arduino.h>
 #include <MapleFreeRTOS900.h>
 #include <U8g2lib.h>
 
@@ -98,6 +98,7 @@ typedef struct Stats {
   int fmode;
   int cprog_sel;
   int inactive_time;
+  char** gfx_text;
 } stats_t;
 
 extern stats_t stats;
