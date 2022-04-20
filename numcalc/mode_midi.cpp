@@ -11,14 +11,16 @@ void mode_midi_on_end(){
 
 }
 
-void mode_midi_on_press(int i){
-    Serial.println("midi off");
+int mode_midi_on_press(int i){
+    Serial.println("midi on");
     USB_midi.sendNoteOn(0,60+i,127);
+    return 0;
 }
 
-void mode_midi_on_release(int i){
+int mode_midi_on_release(int i){
     Serial.println("midi off");
     USB_midi.sendNoteOff(0,60+i,127);
+    return 0;
 }
 
 // void mode_midi_on_gfx(){

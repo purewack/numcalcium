@@ -41,6 +41,13 @@
 #include "include/modes.h"
 #include "include/comms.h"
 #include <EEPROM.h>
+//#include <MapleFreeRTOS900.h>
+
+void vTaskEndScheduler(){
+}
+void vTaskDelay(int d){
+  delay(d);
+}
 
 void powerOff(){
   uint16_t pp = 0;
@@ -63,10 +70,15 @@ void powerOff(){
 void changeToProg(int i){
   if(&stats.progs[i] == stats.cprog) return;
 
-  if(stats.cprog) stats.cprog->on_end();
+  if(stats.cprog) 
+    if(stats.cprog->on_end) 
+      stats.cprog->on_end();
+
   stats.cprog = &stats.progs[i];
   stats.gfx_text_count = 0;
-  stats.cprog->on_begin(); 
+
+  if(stats.cprog->on_begin) 
+    stats.cprog->on_begin(); 
   stats.fmode = 0;
   stats.c_i = i;
 }
@@ -94,20 +106,15 @@ void resetInactiveTime(){
 // }
 
 void vTaskScreen(void* params){
+  if(!digitalRead(LCD_LIGHT)) return;
 //
-  u8g2.begin();
-  u8g2.setContrast(82);
-  u8g2.setFlipMode(1);
-  u8g2.setFont(u8g2_font_t0_12_tf   );	// choose a suitable font
-
-  uint8_t i = 0;
-  while(1){
-    if(digitalRead(LCD_LIGHT))
-      vTaskDelay(30);
-    else{
-      vTaskDelay(200);
-      continue; 
-    }
+  //while(1){
+    // if(digitalRead(LCD_LIGHT))
+    //   vTaskDelay(30);
+    // else{
+    //   //vTaskDelay(200);
+    //   return;
+    // }
 
     if(stats.cprog_sel){
       u8g2.clearBuffer();
@@ -162,22 +169,26 @@ void vTaskScreen(void* params){
       
       if(stats.cprog->on_gfx)
         stats.cprog->on_gfx();
-        
+
       u8g2.sendBuffer();
     }
-  }
+
+  Serial.println("REF");
+  // }
 }
 
 void vTaskKeyMux(void* params){
   while(1){
+    int ref = 0;
+
     hw.ok = digitalRead(B_OK);
     if(hw.ok != hw.oko){
       hw.oko = hw.ok;
       if(!hw.ok) continue;
 
-#ifdef DEBUG
+      #ifdef DEBUG
       Serial.println("ok");
-#endif
+      #endif
       resetInactiveTime();
 
       if(!stats.cprog_sel) {
@@ -191,7 +202,7 @@ void vTaskKeyMux(void* params){
         stats.cprog_sel = 0;
       }
 
-
+      ref |= 1;
     }
     
     for(int r=0; r<5; r++){
@@ -204,17 +215,17 @@ void vTaskKeyMux(void* params){
           if(hw.io[I].state && !hw.io[I].old_state){
             hw.io[I].dt = 0;
             if(stats.cprog->on_press)
-              stats.cprog->on_press(I);
+              ref |= stats.cprog->on_press(I);
           }
           else if(!hw.io[I].state && hw.io[I].old_state){
             if(stats.cprog->on_release)
-              stats.cprog->on_release(I);
+              ref |= stats.cprog->on_release(I);
           }
           
           if(hw.io[I].state != hw.io[I].old_state){
             hw.io[I].old_state = hw.io[I].state;
               #ifdef DEBUG
-                    Serial.println(I);
+              Serial.println(I);
               #endif
           }
           if(hw.io[I].state) hw.io[I].dt += 1;
@@ -231,9 +242,9 @@ void vTaskKeyMux(void* params){
       //if(stats.cprog == 0) goto enc_clean;
 
       if(hw.enc_a && !hw.enc_b && !hw.enc_a_old && !hw.enc_b_old){
-  #ifdef DEBUG
+        #ifdef DEBUG
         Serial.println("LEFT turn");
-  #endif
+        #endif
         
         resetInactiveTime();
         if(stats.cprog_sel){
@@ -242,11 +253,12 @@ void vTaskKeyMux(void* params){
         else if(stats.cprog->on_nav)
           stats.cprog->on_nav(-1);
 
+        ref |= 1;
       }
       else if(!hw.enc_a && hw.enc_b && !hw.enc_a_old && !hw.enc_b_old){    
-  #ifdef DEBUG
+        #ifdef DEBUG
         Serial.println("RIGHT turn");
-  #endif
+        #endif
 
         resetInactiveTime();
         if(stats.cprog_sel){
@@ -255,6 +267,7 @@ void vTaskKeyMux(void* params){
         else if(stats.cprog->on_nav)
           stats.cprog->on_nav(1);
 
+        ref |= 1;
       }
     digitalWrite(ROW_F, LOW);
 
@@ -268,10 +281,13 @@ void vTaskKeyMux(void* params){
         }
         else
           digitalWrite(LCD_LIGHT, 0);
+
     }
     if(stats.inactive_time < stats.cprog->inactive_lim){
         stats.inactive_time += stats.cprog_sel ? 1 : stats.cprog->inactive_inc;
     }
+
+    if(ref) vTaskScreen(nullptr);
 
     vTaskDelay(5);
     //delay(10);
@@ -294,16 +310,18 @@ void setup(){
   pinMode(LCD_LIGHT, OUTPUT);
   lcdFade(1);
 
+  u8g2.begin();
+  u8g2.setContrast(82);
+  u8g2.setFlipMode(1);
+  u8g2.setFont(u8g2_font_t0_12_tf   );	// choose a suitable font
   stats.gfx_text = (char**)malloc(sizeof(char*)*40);
 
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
-  HID.setTXPacketSize(64);
   HID.registerComponent();
   HID.setReportDescriptor(HID_KEYBOARD); 
   // USB_audio.setParameters(MIC_STEREO,32000);
   // USB_audio.registerComponent();
-  USB_midi.setTXPacketSize(64);
   USB_midi.registerComponent();
   bool usb = USBComposite.begin();
   if(!usb) Serial.println("usb begin failed");
@@ -317,6 +335,7 @@ void setup(){
   stats.progs[P_NUMPAD].title = "Numpad";
   stats.progs[P_NUMPAD].txt_f1 = "123";
   stats.progs[P_NUMPAD].txt_f2 = "< ^ >";
+  stats.progs[P_NUMPAD].txt_f3 = nullptr;
   stats.progs[P_NUMPAD].inactive_inc = 1;
   stats.progs[P_NUMPAD].inactive_lim = 800;
 
@@ -328,6 +347,7 @@ void setup(){
   stats.progs[P_CALC].title = "Calculator";
   stats.progs[P_CALC].txt_f1 = "SCI";
   stats.progs[P_CALC].txt_f2 = "BIN";
+  stats.progs[P_CALC].txt_f3 = nullptr;
   stats.progs[P_CALC].inactive_inc = 1;
   stats.progs[P_CALC].inactive_lim = 800;
 
@@ -337,6 +357,9 @@ void setup(){
   stats.progs[P_MIDI].on_release = mode_midi_on_release;
   //stats.progs[P_MIDI].on_gfx = mode_midi_on_gfx;
   stats.progs[P_MIDI].title = "MIDI";
+  stats.progs[P_MIDI].txt_f1 = nullptr;
+  stats.progs[P_MIDI].txt_f2 = nullptr;
+  stats.progs[P_MIDI].txt_f3 = nullptr;
   stats.progs[P_MIDI].inactive_inc = 1;
   stats.progs[P_MIDI].inactive_lim = 400;
 
@@ -365,10 +388,14 @@ void setup(){
 
   Serial.println("sched start");
 
-  xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
-  //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
-  xTaskCreate(vTaskScreen,"screen",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
-  vTaskStartScheduler();
+  // xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  // //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  // xTaskCreate(vTaskScreen,"screen",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
+  // vTaskStartScheduler();
+  vTaskScreen(nullptr);
+  vTaskKeyMux(nullptr);
 }
 
-void loop(){ }
+// void loop(){ 
+//   // vTaskScreen(nullptr);
+// }

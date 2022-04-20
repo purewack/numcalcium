@@ -30,32 +30,34 @@ void mode_numpad_on_end(){
 }
 
 
-void mode_numpad_on_press(int i){
+int mode_numpad_on_press(int i){
     if(stats.fmode == 2){
-        return;
+        return 1;
     }
     int ii = i + stats.fmode*20;
     char key = numpad_keys[ii];
     if(key) USB_keyboard.press(key);
+    return 0;
 }
 
-void mode_numpad_on_release(int i){
+int mode_numpad_on_release(int i){
     if(i == K_F1) {
         stats.fmode = 0; 
         resetInactiveTime();
-        return;
+        return 1;
     }
     if(i == K_F2) {
         stats.fmode = 1; 
         resetInactiveTime();
-        return;
+        return 1;
     }
     if(stats.fmode == 2){
-        return;
+        return 1;
     }
     int ii = i + stats.fmode*20;
     char key = numpad_keys[ii];
     if(key) USB_keyboard.release(key);
+    return 0;
 }
 
 // void mode_numpad_on_gfx(){
