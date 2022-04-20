@@ -11,7 +11,7 @@ char numpad_keys[20*2] = {
     0,0,0,'*',
 
     KEY_LEFT_ARROW,KEY_DOWN_ARROW,KEY_RIGHT_ARROW,KEY_RETURN,
-    ' ',KEY_UP_ARROW,0,0,
+    ' ',KEY_UP_ARROW,0,KEY_BACKSPACE,
     0,0,0,0,
     0,0,0,0,
     0,0,0,KEY_BACKSPACE
