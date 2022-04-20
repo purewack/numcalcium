@@ -99,8 +99,10 @@ typedef struct Stats {
   volatile int fmode;
   volatile int cprog_sel;
   volatile int inactive_time;
+  volatile int gfx_text_lim;
   volatile int gfx_text_count;
   char** gfx_text;
+  int gfx_refresh;
 } stats_t;
 
 extern stats_t stats;

@@ -179,17 +179,20 @@ void vTaskScreen(void* params){
 
 void vTaskKeyMux(void* params){
   while(1){
-    int ref = 0;
-
+    
     hw.ok = digitalRead(B_OK);
     if(hw.ok != hw.oko){
       hw.oko = hw.ok;
+      stats.gfx_refresh |= 1;
+
       if(!hw.ok) continue;
 
       #ifdef DEBUG
       Serial.println("ok");
       #endif
       resetInactiveTime();
+
+      if(!digitalRead(LCD_LIGHT)) continue;
 
       if(!stats.cprog_sel) {
         stats.cprog_sel = 1;
@@ -202,7 +205,6 @@ void vTaskKeyMux(void* params){
         stats.cprog_sel = 0;
       }
 
-      ref |= 1;
     }
     
     for(int r=0; r<5; r++){
@@ -215,11 +217,11 @@ void vTaskKeyMux(void* params){
           if(hw.io[I].state && !hw.io[I].old_state){
             hw.io[I].dt = 0;
             if(stats.cprog->on_press)
-              ref |= stats.cprog->on_press(I);
+              stats.gfx_refresh |= stats.cprog->on_press(I);
           }
           else if(!hw.io[I].state && hw.io[I].old_state){
             if(stats.cprog->on_release)
-              ref |= stats.cprog->on_release(I);
+              stats.gfx_refresh |= stats.cprog->on_release(I);
           }
           
           if(hw.io[I].state != hw.io[I].old_state){
@@ -253,7 +255,7 @@ void vTaskKeyMux(void* params){
         else if(stats.cprog->on_nav)
           stats.cprog->on_nav(-1);
 
-        ref |= 1;
+        stats.gfx_refresh |= 1;
       }
       else if(!hw.enc_a && hw.enc_b && !hw.enc_a_old && !hw.enc_b_old){    
         #ifdef DEBUG
@@ -267,7 +269,7 @@ void vTaskKeyMux(void* params){
         else if(stats.cprog->on_nav)
           stats.cprog->on_nav(1);
 
-        ref |= 1;
+        stats.gfx_refresh |= 1;
       }
     digitalWrite(ROW_F, LOW);
 
@@ -287,7 +289,8 @@ void vTaskKeyMux(void* params){
         stats.inactive_time += stats.cprog_sel ? 1 : stats.cprog->inactive_inc;
     }
 
-    if(ref) vTaskScreen(nullptr);
+    if(stats.gfx_refresh) vTaskScreen(nullptr);
+    stats.gfx_refresh = 0;
 
     vTaskDelay(5);
     //delay(10);
@@ -315,6 +318,7 @@ void setup(){
   u8g2.setFlipMode(1);
   u8g2.setFont(u8g2_font_t0_12_tf   );	// choose a suitable font
   stats.gfx_text = (char**)malloc(sizeof(char*)*40);
+  stats.gfx_text_lim = 40;
 
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
@@ -392,7 +396,7 @@ void setup(){
   // //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   // xTaskCreate(vTaskScreen,"screen",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   // vTaskStartScheduler();
-  vTaskScreen(nullptr);
+  stats.gfx_refresh = 1;
   vTaskKeyMux(nullptr);
 }
 
