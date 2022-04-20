@@ -26,7 +26,3 @@ int mode_comms_on_press(int i){
 int mode_comms_on_release(int i){
     return 1;
 }
-
-// void mode_comms_on_gfx(){
-
-// }
