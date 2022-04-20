@@ -166,9 +166,6 @@ void vTaskScreen(void* params){
             u8g2.print(stats.gfx_text[stats.gfx_text_count-1-i]);
         }
       }
-      
-      if(stats.cprog->on_gfx)
-        stats.cprog->on_gfx();
 
       u8g2.sendBuffer();
     }
@@ -335,7 +332,6 @@ void setup(){
   stats.progs[P_NUMPAD].on_end = mode_numpad_on_end;
   stats.progs[P_NUMPAD].on_press = mode_numpad_on_press;
   stats.progs[P_NUMPAD].on_release = mode_numpad_on_release;
-  //stats.progs[P_NUMPAD].on_gfx = mode_numpad_on_gfx;
   stats.progs[P_NUMPAD].title = "Numpad";
   stats.progs[P_NUMPAD].txt_f1 = "123";
   stats.progs[P_NUMPAD].txt_f2 = "< ^ >";
@@ -347,7 +343,6 @@ void setup(){
   stats.progs[P_CALC].on_end = mode_calc_on_end;
   stats.progs[P_CALC].on_press = mode_calc_on_press;
   stats.progs[P_CALC].on_release = mode_calc_on_release;
-  //stats.progs[P_CALC].on_gfx = mode_numpad_on_gfx;
   stats.progs[P_CALC].title = "Calculator";
   stats.progs[P_CALC].txt_f1 = "SCI";
   stats.progs[P_CALC].txt_f2 = "BIN";
@@ -359,7 +354,6 @@ void setup(){
   stats.progs[P_MIDI].on_end = mode_midi_on_end;
   stats.progs[P_MIDI].on_press = mode_midi_on_press;
   stats.progs[P_MIDI].on_release = mode_midi_on_release;
-  //stats.progs[P_MIDI].on_gfx = mode_midi_on_gfx;
   stats.progs[P_MIDI].title = "MIDI";
   stats.progs[P_MIDI].txt_f1 = nullptr;
   stats.progs[P_MIDI].txt_f2 = nullptr;
@@ -371,7 +365,6 @@ void setup(){
   stats.progs[P_COMMS].on_end = mode_comms_on_end;
   stats.progs[P_COMMS].on_press = mode_comms_on_press;
   stats.progs[P_COMMS].on_release = mode_comms_on_release;
-  //stats.progs[P_COMMS].on_gfx = mode_comms_on_gfx;
   stats.progs[P_COMMS].title = "Comms";
   stats.progs[P_COMMS].txt_f1 = "UART";
   stats.progs[P_COMMS].txt_f2 = "SPI";
