@@ -42,6 +42,23 @@
 #include "include/comms.h"
 #include <EEPROM.h>
 
+void powerOff(){
+  uint16_t pp = 0;
+  for(int i=0; i<P_COUNT; i++){
+    if(&stats.progs[i] == stats.cprog) break;
+    pp++;
+  }
+  EEPROM.write(0,pp);
+  EEPROM.write(1,stats.fmode);
+  delay(500);
+
+  vTaskEndScheduler();
+  u8g2.clearBuffer();
+  u8g2.sendBuffer();
+  lcdFade(0);
+  
+  digitalWrite(SYS_PDOWN, HIGH);
+}
 
 void changeToProg(int i){
   if(&stats.progs[i] == stats.cprog) return;
@@ -149,18 +166,7 @@ void vTaskKeyMux(void* params){
       }
       else {
         if(stats.c_i == -1) {
-          //system shut down
-          vTaskEndScheduler();
-          u8g2.clearBuffer();
-          u8g2.sendBuffer();
-          lcdFade(0);
-          int pp = 0;
-          for(auto a : stats.progs){
-            if(&a == stats.cprog) break;
-            pp++;
-          }
-          EEPROM.write(0,pp);
-          digitalWrite(SYS_PDOWN, HIGH);
+          powerOff();
         }
         changeToProg(stats.c_i);
         stats.cprog_sel = 0;
@@ -313,9 +319,13 @@ void setup(){
   stats.progs[P_COMMS].inactive_lim = 800;
 
   uint16_t p = 0;
+  uint16_t f = 0;
   EEPROM.read(0,&p);
+  EEPROM.read(1,&f);
   if(p >= P_COUNT) p = 0;
+  if(f > 2) f = 0;
   changeToProg(p);
+  stats.fmode = f;
 
   xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
