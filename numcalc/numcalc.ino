@@ -75,12 +75,13 @@ void changeToProg(int i){
       stats.cprog->on_end();
 
   stats.cprog = &stats.progs[i];
-  stats.gfx_text_count = 0;
+
+  stats.fmode = 0;
+  stats.c_i = i;
+  stats.gfx_log = 0;
 
   if(stats.cprog->on_begin) 
     stats.cprog->on_begin(); 
-  stats.fmode = 0;
-  stats.c_i = i;
 }
 
 void lcdFade(int in){
@@ -116,8 +117,11 @@ void vTaskScreen(void* params){
     //   return;
     // }
 
+    u8g2.clearBuffer();
+    u8g2.setFont(LCD_DEF_FONT);
+
+  
     if(stats.cprog_sel){
-      u8g2.clearBuffer();
       u8g2.setCursor(0,15);
       u8g2.print("~~Programs~~");
       u8g2.drawHLine(0,16,128);
@@ -137,10 +141,14 @@ void vTaskScreen(void* params){
         ii++;
       }
       
-      u8g2.sendBuffer();
     }
-    else{
-      u8g2.clearBuffer();
+    else{  
+      if(stats.gfx_log == 1) {
+        u8g2.setFont(LCD_LOG_FONT);
+        u8g2.drawLog(0, 16, u8g2log);
+        u8g2.setFont(LCD_DEF_FONT);
+      }
+
       u8g2.setCursor(0,8);
       u8g2.print(stats.cprog->title);
       u8g2.drawHLine(0,9,128);
@@ -159,18 +167,17 @@ void vTaskScreen(void* params){
         u8g2.drawButtonUTF8(84,64 , sel, 41, 0, 0, stats.cprog->txt_f3);
       }
 
-      if(stats.gfx_text_count){
-        for(int i=0; i<7;i++){
-          if(i > stats.gfx_text_count-1) break;
-            u8g2.setCursor(0, 64-10-(9*i));
-            u8g2.print(stats.gfx_text[stats.gfx_text_count-1-i]);
-        }
-      }
+      // if(stats.gfx_text_count){
+      //   for(int i=0; i<7;i++){
+      //     if(i > stats.gfx_text_count-1) break;
+      //       u8g2.setCursor(0, 64-10-(9*i));
+      //       u8g2.print(stats.gfx_text[stats.gfx_text_count-1-i]);
+      //   }
+      // }
 
-      u8g2.sendBuffer();
     }
 
-  Serial.println("REF");
+    u8g2.sendBuffer();
   // }
 }
 
@@ -288,12 +295,15 @@ void vTaskKeyMux(void* params){
         stats.inactive_time += stats.cprog_sel ? 1 : stats.cprog->inactive_inc;
     }
 
-    if(stats.gfx_refresh) vTaskScreen(nullptr);
-    stats.gfx_refresh = 0;
 
     if(stats.cprog->on_loop && !stats.cprog_sel)
       stats.cprog->on_loop(dt);
-    else
+
+    if(stats.gfx_refresh) vTaskScreen(nullptr);
+    
+    stats.gfx_refresh = 0;
+
+    //if(!stats.cprog->on_loop || stats.cprog_sel)
       vTaskDelay(5);
 
     dt++;
@@ -320,10 +330,9 @@ void setup(){
   u8g2.begin();
   u8g2.setContrast(82);
   u8g2.setFlipMode(1);
-  u8g2.setFont(u8g2_font_t0_12_tf   );	// choose a suitable font
-  stats.gfx_text = (char**)malloc(sizeof(char*)*40);
-  stats.gfx_text_lim = 40;
-
+  u8g2log.begin(32, 7, u8log_buffer);	// connect to u8g2, assign buffer
+  u8g2log.setRedrawMode(1);
+  
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
   HID.registerComponent();

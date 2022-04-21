@@ -4,6 +4,9 @@
 //conflicting miso pin being pinmoded to input after ::sendBuffer()
 U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ LCD_CK, /* data=*/ LCD_MOSI, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
 //U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2(U8G2_R0, /* cs=*/ LCD_CS, /* dc=*/ LCD_DC, /* reset=*/ LCD_RST);
+U8G2LOG u8g2log;
+uint8_t u8log_buffer[32*7]; 
+
 USBHID HID;
 HIDKeyboard USB_keyboard(HID);
 USBMIDI USB_midi;
@@ -21,6 +24,5 @@ hw_t hw = {
 stats_t stats = {
     nullptr,
     {0},
-    0,0,0,0,0,0,
-    nullptr
+    0,0,0,0,0,0
 };

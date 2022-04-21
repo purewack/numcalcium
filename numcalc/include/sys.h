@@ -57,7 +57,12 @@
 #define K_F3 18
 #define K_X 19
 
+#define LCD_DEF_FONT u8g2_font_t0_12_tf
+#define LCD_LOG_FONT u8g2_font_tom_thumb_4x6_mf
+
 extern U8G2_ST7565_ERC12864_ALT_F_4W_SW_SPI u8g2;
+extern U8G2LOG u8g2log;
+extern uint8_t u8log_buffer[]; 
 
 typedef struct t_io {
   volatile uint8_t state;
@@ -99,10 +104,8 @@ typedef struct Stats {
   volatile int fmode;
   volatile int cprog_sel;
   volatile int inactive_time;
-  volatile int gfx_text_lim;
-  volatile int gfx_text_count;
-  char** gfx_text;
-  int gfx_refresh;
+  volatile int gfx_refresh;
+  volatile int gfx_log;
 } stats_t;
 
 extern stats_t stats;

@@ -19,10 +19,10 @@ char numpad_keys[20*2] = {
 
 
 void mode_numpad_on_begin(){
-    stats.gfx_text[0] = "1.test";
-    stats.gfx_text[1] = "2.2";
-    stats.gfx_text[2] = ">3.test asdf";
-    stats.gfx_text_count = 3;
+    // stats.gfx_text[0] = "1.test";
+    // stats.gfx_text[1] = "2.2";
+    // stats.gfx_text[2] = ">3.test asdf";
+    // stats.gfx_text_count = 3;
 }
 
 void mode_numpad_on_end(){
