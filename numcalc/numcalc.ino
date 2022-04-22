@@ -31,11 +31,6 @@
 //ws28xx ?
 
 
-
-//current stats:
-//rom 40% 26.2kb / 64kb 
-//ram 63% 13kb / 20.4kb r= 7.5kb
-
 #define DEBUG
 #include "include/sys.h"
 #include "include/modes.h"
