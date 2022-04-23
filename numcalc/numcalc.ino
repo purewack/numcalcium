@@ -44,7 +44,7 @@ void vTaskDelay(int d){
   delay(d);
 }
 
-void powerOff(){
+void powerOff(int fade){
   uint16_t pp = 0;
   for(int i=0; i<P_COUNT; i++){
     if(&stats.progs[i] == stats.cprog) break;
@@ -57,7 +57,7 @@ void powerOff(){
   vTaskEndScheduler();
   u8g2.clearBuffer();
   u8g2.sendBuffer();
-  lcdFade(0);
+  if(fade) lcdFade(0);
   
   digitalWrite(SYS_PDOWN, HIGH);
 }
@@ -91,6 +91,7 @@ void lcdFade(int in){
 
 void resetInactiveTime(){
   stats.inactive_time = 0;
+  stats.no_input_time = 0;
 }
 
 // void vTaskWorker(void* params){
@@ -102,7 +103,7 @@ void resetInactiveTime(){
 // }
 
 void vTaskScreen(void* params){
-  if(!digitalRead(LCD_LIGHT)) return;
+  //if(!digitalRead(LCD_LIGHT)) return;
 //
   //while(1){
     // if(digitalRead(LCD_LIGHT))
@@ -200,7 +201,7 @@ void vTaskKeyMux(void* params){
       }
       else {
         if(stats.c_i == -1) {
-          powerOff();
+          powerOff(1);
         }
         changeToProg(stats.c_i);
         stats.cprog_sel = 0;
@@ -227,6 +228,7 @@ void vTaskKeyMux(void* params){
           
           if(hw.io[I].state != hw.io[I].old_state){
             hw.io[I].old_state = hw.io[I].state;
+            stats.no_input_time = 0;
               #ifdef DEBUG
               Serial.println(I);
               #endif
@@ -274,6 +276,7 @@ void vTaskKeyMux(void* params){
       }
     digitalWrite(ROW_F, LOW);
 
+
     if(stats.inactive_time == 0){
         digitalWrite(LCD_LIGHT, 1);
     }
@@ -290,6 +293,10 @@ void vTaskKeyMux(void* params){
         stats.inactive_time += stats.cprog_sel ? 1 : stats.cprog->inactive_inc;
     }
 
+    stats.no_input_time++;
+    if(stats.cprog->no_input_lim){
+      if(stats.no_input_time >= stats.cprog->no_input_lim) powerOff(0);
+    }
 
     if(stats.cprog->on_loop && !stats.cprog_sel)
       stats.cprog->on_loop(dt);
@@ -349,6 +356,7 @@ void setup(){
   stats.progs[P_NUMPAD].txt_f3 = nullptr;
   stats.progs[P_NUMPAD].inactive_inc = 1;
   stats.progs[P_NUMPAD].inactive_lim = 800;
+  stats.progs[P_NUMPAD].no_input_lim = 240000; //20mins
 
   stats.progs[P_CALC].on_begin = mode_calc_on_begin;
   stats.progs[P_CALC].on_end = mode_calc_on_end;
@@ -360,6 +368,7 @@ void setup(){
   stats.progs[P_CALC].txt_f3 = nullptr;
   stats.progs[P_CALC].inactive_inc = 1;
   stats.progs[P_CALC].inactive_lim = 800;
+  stats.progs[P_CALC].no_input_lim = 240000; //20mins
 
   stats.progs[P_MIDI].on_begin = mode_midi_on_begin;
   stats.progs[P_MIDI].on_end = mode_midi_on_end;
@@ -371,6 +380,7 @@ void setup(){
   stats.progs[P_MIDI].txt_f3 = nullptr;
   stats.progs[P_MIDI].inactive_inc = 1;
   stats.progs[P_MIDI].inactive_lim = 400;
+  stats.progs[P_MIDI].no_input_lim = 240000; //20mins
 
   stats.progs[P_COMMS].on_begin = mode_comms_on_begin;
   stats.progs[P_COMMS].on_end = mode_comms_on_end;

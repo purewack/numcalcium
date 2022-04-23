@@ -36,17 +36,20 @@ int mode_comms_on_release(int i){
 }
 
 void mode_comms_on_loop(unsigned long dt){
-    if(Serial.available() > 0){
-        char c = Serial.read();
+    if(Serial.available()){
         u8g2.setFont(LCD_LOG_FONT);	// set the font for the terminal window
-
-        if(c == '\n') 
-            u8g2log.print("\n>");
-        else
-            u8g2log.print(c);
-        
-        Serial.println(c);
+        while(Serial.available() > 0){
+            char c = Serial.read();
+            
+            if(c == '\n') 
+                u8g2log.print("\n>");
+            else
+                u8g2log.print(c);
+            
+            //Serial.println(c);
+        }    
         stats.gfx_refresh = 1;
-    }    
+    }
+    
 
 }

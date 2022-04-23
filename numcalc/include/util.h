@@ -5,9 +5,9 @@
 //light dynamic array
 template <typename data_T>
 struct darray_t {
-    data_T* data;
+    data_T* buf;
     unsigned int count;
-    unsigned int len;
+    unsigned int buf_len;
     unsigned int chunk_size;
 };
 

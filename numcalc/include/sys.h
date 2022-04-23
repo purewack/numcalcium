@@ -95,6 +95,7 @@ typedef struct Program {
 
   volatile int inactive_inc;
   volatile int inactive_lim;
+  volatile int no_input_lim;
 } prog_t; 
 
 typedef struct Stats {
@@ -104,6 +105,7 @@ typedef struct Stats {
   volatile int fmode;
   volatile int cprog_sel;
   volatile int inactive_time;
+  volatile int no_input_time;
   volatile int gfx_refresh;
   volatile int gfx_log;
 } stats_t;
