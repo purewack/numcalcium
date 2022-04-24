@@ -11,7 +11,6 @@ void mode_comms_on_begin(){
 //     SPI_2.begin();
 //     Wire.begin();    
     u8g2log.begin(32, 7, u8log_buffer);	// connect to u8g2, assign buffer
-    u8g2log.setRedrawMode(1);
     u8g2log.print("\f");
     u8g2log.print(">");
     stats.gfx_refresh = 1;
