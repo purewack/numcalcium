@@ -3,6 +3,7 @@
 #include "include/comms.h"
 #include "include/modes.h"
 #include "include/util.h"
+#include "include/number.h"
 
 typedef struct Token token_t;
 
@@ -31,9 +32,11 @@ typedef struct Token
   
   int order;
   union {
-      float value;
+      double value;
       int symbol;
   };
+
+  int vrep_len;
   
   token_t* o1;
   token_t* o2;
@@ -43,25 +46,9 @@ typedef struct Token
 // darray_t<char> number_literal;
 
 sarray_t<token_t> expr;
-sarray_t<char> number_literal;
 token_t expr_buf[100];
-char number_literal_buf[50];
-
-int num_mode = 0;
-int num_mode_old = 0;
-int num_dot = 0;
-token_t* num_input;
 int shift;
 int calc_new_bytes = 0;
-
-void expr_print(){
-    // for(int i=0; i<expr.count; i++){
-    //   if(expr.buf[i]->order)
-    //     printf("i:%d (%d)[%d]\n",i,expr.buf[i]->order,expr.buf[i]->symbol);
-    //   else
-    //     printf("i:%d (%d)vv[%f]\n",i,expr.buf[i]->order,expr.buf[i]->value);
-    // }
-}
 
 void expr_push_input(){
     token_t nn;
@@ -69,11 +56,17 @@ void expr_push_input(){
     sarray_push(expr,nn);
 }
 
-void expr_push_number(float value){
-    token_t nn;
-    nn.order = O_NUM;
-    nn.value = value;
-    sarray_push(expr,nn);
+void expr_push_number(){
+    token_t* nn = nullptr;
+    for(int i=0; i<expr.count; i++){  
+      if(expr.buf[i].order == O_INPUT) {
+        nn = &expr.buf[i];
+        break;
+      }
+    }
+    nn->order = O_NUM;
+    nn->value = getInputNumberResult();
+    nn->vrep_len = keypad_num.dot ? keypad_num.rep.count : keypad_num.rep.count + 2;
 }
 
 void expr_push_symbol(int sym){
@@ -82,24 +75,29 @@ void expr_push_symbol(int sym){
     switch(sym){
         case S_END:
             nn.order = O_FN_END;
+            nn.vrep_len = 1;
         break;
 
         case S_SUB:
         case S_ADD:
             nn.order = O_PM;
+            nn.vrep_len = 1;
         break;
 
         case S_MUL:
         case S_DIV:
             nn.order = O_MD;
+            nn.vrep_len = 1;
         break;
 
         case S_POW:
             nn.order = O_PWR;
+            nn.vrep_len = 1;
         break;
 
         default:
             nn.order = O_FN;
+            nn.vrep_len = 4;
         break;
     }
 
@@ -108,9 +106,9 @@ void expr_push_symbol(int sym){
     return;
 }
 
-float equate(token_t* r){
-  float rl = 0.f;
-  float rr = 0.f;
+double equate(token_t* r){
+  double rl = 0.f;
+  double rr = 0.f;
 
   if (r->o1)
     {
@@ -142,7 +140,7 @@ float equate(token_t* r){
     return pow (rl, rr);
   if (r->symbol == S_SQR) {
     if(r->o1){
-        float oo = pow (rr, (1.f/rl));
+        double oo = pow (rr, (1.f/rl));
         // LOG("sqrt res");
         // LOG(oo);
         // LOG(rr);
@@ -160,7 +158,7 @@ float equate(token_t* r){
   if (r->symbol == S_TAN) 
     return tan (rl + rr);
   if (r->symbol == S_ABS){
-    float a = rl+rr;
+    double a = rl+rr;
     if(a < 0) a*= -1.f;
     return a;
   }
@@ -171,25 +169,13 @@ float equate(token_t* r){
 
 void mode_calc_on_begin(){
   expr.lim = 100;
-  expr.buf = &expr_buf[0];
+  expr.buf = expr_buf;
   sarray_clear(expr);  
-
-  number_literal.lim = 50;
-  number_literal.buf = &number_literal_buf[0];
-  sarray_clear(number_literal);
-
-  float p = 0.000000000001f;
-  float M = 4.f;
-  float r = M / p;
-  Serial.println(p);
-  Serial.println(M);
-  Serial.println(r);
 }
 
 void mode_calc_on_end(){
 
 }
-
 
 int mode_calc_on_press(int i){
     if(i == K_Y) {
@@ -200,7 +186,6 @@ int mode_calc_on_press(int i){
 }
 
 int mode_calc_on_release(int i){
-  resetInactiveTime();
     calc_new_bytes = 1;
     if(i == K_Y) {
         shift = 0;
@@ -212,85 +197,79 @@ int mode_calc_on_release(int i){
       Serial.println("expr count");
       Serial.println(expr.count);
       Serial.println(expr.lim);
-      num_dot = 0;
-      num_mode = 0;
-      num_mode_old = 0;
+      Serial.println("=");
+      for(int i=0; i<expr.count; i++){
+        auto t = &expr.buf[i];
+        Serial.print(" o:");
+        Serial.print(t->order);
+        Serial.print('{');
+        if(t->order == 0){
+        Serial.print('v');
+        Serial.print(t->value);
+        }
+        else{
+        Serial.print('s');
+        Serial.print(t->symbol);
+        }
+        Serial.print('}');
+      }
       return 1;
     }
 
+    bool finish_number_input = 1;
     if(i == K_P) {
       expr_push_symbol(S_ADD);
-      num_mode = 0;
     }
     else if(i== K_N) {
       expr_push_symbol(S_SUB);
-      num_mode = 0;
     }
     else if(i== K_D) 
     {
       expr_push_symbol(S_DIV);
-      num_mode = 0;
     }
     else if(i== K_X) {
       expr_push_symbol(S_MUL);
-      num_mode = 0;
     }
 
     else {
-        if(!num_mode){
-          num_mode_old = 1;
-          num_mode = 1;
-          num_dot = 0;
-          expr_push_input();
-          num_input = &expr.buf[expr.count-1];
-        }
-
-        if(i == K_DOT && !num_dot) {
-          sarray_push(number_literal,'.');
-          num_dot = 1;
-        }
-        else if(i == K_0) sarray_push(number_literal,'0');
-        else if(i == K_1) sarray_push(number_literal,'1');
-        else if(i == K_2) sarray_push(number_literal,'2');
-        else if(i == K_3) sarray_push(number_literal,'3');
-        else if(i == K_4) sarray_push(number_literal,'4');
-        else if(i == K_5) sarray_push(number_literal,'5');
-        else if(i == K_6) sarray_push(number_literal,'6');
-        else if(i == K_7) sarray_push(number_literal,'7');
-        else if(i == K_8) sarray_push(number_literal,'8');
-        else if(i == K_9) sarray_push(number_literal,'9');
+      if(!keypad_num.input) {
+        expr_push_input();
+        startInputNumber();
+      }
+        
+      numberInputKey(i);
+      finish_number_input = 0;
     }
-    
-    if(!num_mode && num_mode_old){
-        float f = atof(number_literal.buf);
 
-        sarray_clear(number_literal);
-        for(int i=0; i<number_literal.lim; i++)
-          number_literal.buf[i] = '\0';
-
-        num_input->value = f;
-        num_input->order = O_NUM;
-        num_mode = 0;
-        num_mode_old = 0;
+    if(keypad_num.input && finish_number_input){
+      expr_push_number();
+      keypad_num.input = false;
     }
     
     return 1;
 }
 
+
+//19 char wide line
 void mode_calc_on_gfx(){
   if(!calc_new_bytes) return;
   int x = 0;
   for(int i=0; i<expr.count; i++){
     
-    u8g2.setCursor(x*8,48);
     auto r = &expr.buf[i];
+    u8g2.setCursor(x*8,32);
+
     if(r->order == O_INPUT){
-      u8g2.print(number_literal.buf);
-      x+=number_literal.count;
+      for(int i=0; i<keypad_num.rep.count; i++){
+        u8g2.setCursor(x*8 + i*8,32);
+        u8g2.print(keypad_num.rep.buf[i]);
+      }
+
+      x += keypad_num.rep.count;
       continue;
     }
-
-    else if(r->order){
+    
+    if(r->order != O_NUM){
       if (r->symbol == S_SUB)
         u8g2.print('-');
       else if (r->symbol == S_ADD)
@@ -299,11 +278,11 @@ void mode_calc_on_gfx(){
         u8g2.print('*');
       else if (r->symbol == S_DIV)
         u8g2.print('/');
-      x+=1;
     }
     else {
       u8g2.print(r->value);
-      x+=1;
     }
+    
+    x += r->vrep_len;
   }
 }

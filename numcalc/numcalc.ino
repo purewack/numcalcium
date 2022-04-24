@@ -223,6 +223,8 @@ void vTaskKeyMux(void* params){
             if(stats.cprog->onRelease)
               stats.gfx_refresh |= stats.cprog->onRelease(I);
           }
+
+          if(stats.gfx_refresh) resetInactiveTime();
           
           if(hw.io[I].state != hw.io[I].old_state){
             hw.io[I].old_state = hw.io[I].state;
