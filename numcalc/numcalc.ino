@@ -66,8 +66,8 @@ void changeToProg(int i){
   if(&stats.progs[i] == stats.cprog) return;
 
   if(stats.cprog) 
-    if(stats.cprog->on_end) 
-      stats.cprog->on_end();
+    if(stats.cprog->onEnd) 
+      stats.cprog->onEnd();
 
   stats.cprog = &stats.progs[i];
 
@@ -75,8 +75,8 @@ void changeToProg(int i){
   stats.c_i = i;
   stats.gfx_log = 0;
 
-  if(stats.cprog->on_begin) 
-    stats.cprog->on_begin(); 
+  if(stats.cprog->onBegin) 
+    stats.cprog->onBegin(); 
 }
 
 void lcdFade(int in){
@@ -139,12 +139,7 @@ void vTaskScreen(void* params){
       
     }
     else{  
-      if(stats.gfx_log == 1) {
-        u8g2.setFont(LCD_LOG_FONT);
-        u8g2.drawLog(0, 16, u8g2log);
-        u8g2.setFont(LCD_DEF_FONT);
-      }
-
+      u8g2.setFont(LCD_DEF_FONT);
       u8g2.setCursor(0,8);
       u8g2.print(stats.cprog->title);
       u8g2.drawHLine(0,9,128);
@@ -162,6 +157,9 @@ void vTaskScreen(void* params){
         u8g2_uint_t sel = (stats.fmode == 2 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
         u8g2.drawButtonUTF8(84,64 , sel, 41, 0, 0, stats.cprog->txt_f3);
       }
+
+      if(stats.cprog->onGfx)
+        stats.cprog->onGfx();
 
       // if(stats.gfx_text_count){
       //   for(int i=0; i<7;i++){
@@ -218,12 +216,12 @@ void vTaskKeyMux(void* params){
 
           if(hw.io[I].state && !hw.io[I].old_state){
             hw.io[I].dt = 0;
-            if(stats.cprog->on_press)
-              stats.gfx_refresh |= stats.cprog->on_press(I);
+            if(stats.cprog->onPress)
+              stats.gfx_refresh |= stats.cprog->onPress(I);
           }
           else if(!hw.io[I].state && hw.io[I].old_state){
-            if(stats.cprog->on_release)
-              stats.gfx_refresh |= stats.cprog->on_release(I);
+            if(stats.cprog->onRelease)
+              stats.gfx_refresh |= stats.cprog->onRelease(I);
           }
           
           if(hw.io[I].state != hw.io[I].old_state){
@@ -255,8 +253,8 @@ void vTaskKeyMux(void* params){
         if(stats.cprog_sel){
           stats.c_i = stats.c_i > 0 ? stats.c_i-1 : -1;
         }
-        else if(stats.cprog->on_nav)
-          stats.cprog->on_nav(-1);
+        else if(stats.cprog->onNav)
+          stats.cprog->onNav(-1);
 
         stats.gfx_refresh |= 1;
       }
@@ -269,8 +267,8 @@ void vTaskKeyMux(void* params){
         if(stats.cprog_sel){
           stats.c_i = stats.c_i < P_COUNT-1 ? stats.c_i+1 : P_COUNT-1;
         }
-        else if(stats.cprog->on_nav)
-          stats.cprog->on_nav(1);
+        else if(stats.cprog->onNav)
+          stats.cprog->onNav(1);
 
         stats.gfx_refresh |= 1;
       }
@@ -298,14 +296,14 @@ void vTaskKeyMux(void* params){
       if(stats.no_input_time >= stats.cprog->no_input_lim) powerOff(0);
     }
 
-    if(stats.cprog->on_loop && !stats.cprog_sel)
-      stats.cprog->on_loop(dt);
+    if(stats.cprog->onLoop && !stats.cprog_sel)
+      stats.cprog->onLoop(dt);
 
     if(stats.gfx_refresh) vTaskScreen(nullptr);
     
     stats.gfx_refresh = 0;
 
-    //if(!stats.cprog->on_loop || stats.cprog_sel)
+    //if(!stats.cprog->onLoop || stats.cprog_sel)
       vTaskDelay(5);
 
     dt++;
@@ -332,8 +330,7 @@ void setup(){
   u8g2.begin();
   u8g2.setContrast(82);
   u8g2.setFlipMode(1);
-  u8g2log.begin(32, 7, u8log_buffer);	// connect to u8g2, assign buffer
-  u8g2log.setRedrawMode(1);
+
   
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
@@ -346,11 +343,11 @@ void setup(){
   if(!usb) Serial.println("usb begin failed");
   else Serial.println("usb begin succ");
 
-  stats.progs[P_NUMPAD].on_begin = mode_numpad_on_begin;
-  stats.progs[P_NUMPAD].on_end = mode_numpad_on_end;
-  stats.progs[P_NUMPAD].on_press = mode_numpad_on_press;
-  stats.progs[P_NUMPAD].on_release = mode_numpad_on_release;
-  stats.progs[P_NUMPAD].title = "Numpad";
+  stats.progs[P_NUMPAD].onBegin = mode_numpad_on_begin;
+  stats.progs[P_NUMPAD].onEnd = mode_numpad_on_end;
+  stats.progs[P_NUMPAD].onPress = mode_numpad_on_press;
+  stats.progs[P_NUMPAD].onRelease = mode_numpad_on_release;
+  stats.progs[P_NUMPAD].title = "Keyboard";
   stats.progs[P_NUMPAD].txt_f1 = "123";
   stats.progs[P_NUMPAD].txt_f2 = "< ^ >";
   stats.progs[P_NUMPAD].txt_f3 = nullptr;
@@ -358,22 +355,23 @@ void setup(){
   stats.progs[P_NUMPAD].inactive_lim = 800;
   stats.progs[P_NUMPAD].no_input_lim = 240000; //20mins
 
-  stats.progs[P_CALC].on_begin = mode_calc_on_begin;
-  stats.progs[P_CALC].on_end = mode_calc_on_end;
-  stats.progs[P_CALC].on_press = mode_calc_on_press;
-  stats.progs[P_CALC].on_release = mode_calc_on_release;
+  stats.progs[P_CALC].onBegin = mode_calc_on_begin;
+  stats.progs[P_CALC].onEnd = mode_calc_on_end;
+  stats.progs[P_CALC].onPress = mode_calc_on_press;
+  stats.progs[P_CALC].onRelease = mode_calc_on_release;
+  stats.progs[P_CALC].onGfx = mode_calc_on_gfx;
   stats.progs[P_CALC].title = "Calculator";
   stats.progs[P_CALC].txt_f1 = "SCI";
   stats.progs[P_CALC].txt_f2 = "BIN";
   stats.progs[P_CALC].txt_f3 = nullptr;
   stats.progs[P_CALC].inactive_inc = 1;
-  stats.progs[P_CALC].inactive_lim = 800;
+  stats.progs[P_CALC].inactive_lim = 10000;
   stats.progs[P_CALC].no_input_lim = 240000; //20mins
 
-  stats.progs[P_MIDI].on_begin = mode_midi_on_begin;
-  stats.progs[P_MIDI].on_end = mode_midi_on_end;
-  stats.progs[P_MIDI].on_press = mode_midi_on_press;
-  stats.progs[P_MIDI].on_release = mode_midi_on_release;
+  stats.progs[P_MIDI].onBegin = mode_midi_on_begin;
+  stats.progs[P_MIDI].onEnd = mode_midi_on_end;
+  stats.progs[P_MIDI].onPress = mode_midi_on_press;
+  stats.progs[P_MIDI].onRelease = mode_midi_on_release;
   stats.progs[P_MIDI].title = "MIDI";
   stats.progs[P_MIDI].txt_f1 = nullptr;
   stats.progs[P_MIDI].txt_f2 = nullptr;
@@ -382,11 +380,12 @@ void setup(){
   stats.progs[P_MIDI].inactive_lim = 400;
   stats.progs[P_MIDI].no_input_lim = 240000; //20mins
 
-  stats.progs[P_COMMS].on_begin = mode_comms_on_begin;
-  stats.progs[P_COMMS].on_end = mode_comms_on_end;
-  stats.progs[P_COMMS].on_press = mode_comms_on_press;
-  stats.progs[P_COMMS].on_release = mode_comms_on_release;
-  stats.progs[P_COMMS].on_loop = mode_comms_on_loop;
+  stats.progs[P_COMMS].onBegin = mode_comms_on_begin;
+  stats.progs[P_COMMS].onEnd = mode_comms_on_end;
+  stats.progs[P_COMMS].onPress = mode_comms_on_press;
+  stats.progs[P_COMMS].onRelease = mode_comms_on_release;
+  stats.progs[P_COMMS].onLoop = mode_comms_on_loop;
+  stats.progs[P_COMMS].onGfx = mode_comms_on_gfx;
   stats.progs[P_COMMS].title = "Comms";
   stats.progs[P_COMMS].txt_f1 = "UART";
   stats.progs[P_COMMS].txt_f2 = "SPI";
@@ -415,6 +414,4 @@ void setup(){
   vTaskKeyMux(nullptr);
 }
 
-// void loop(){ 
-//   // vTaskScreen(nullptr);
-// }
+void loop(){}
