@@ -20,6 +20,7 @@ void mode_calc_on_begin();
 void mode_calc_on_end();
 int mode_calc_on_press(int i);
 int mode_calc_on_release(int i);
+void mode_calc_on_gfx();
 
 #define P_MIDI 2
 void mode_midi_on_begin();
@@ -33,3 +34,4 @@ void mode_comms_on_end();
 int mode_comms_on_press(int i);
 int mode_comms_on_release(int i);
 void mode_comms_on_loop(unsigned long dt);
+void mode_comms_on_gfx();

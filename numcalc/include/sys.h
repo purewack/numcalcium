@@ -85,13 +85,14 @@ typedef struct Program {
   char* txt_f1;
   char* txt_f2;
   char* txt_f3;
-  void (*on_begin)(void);
-  void (*on_end)(void);
-  void (*on_ok)(void);
-  void (*on_nav)(int);
-  int (*on_press)(int);
-  int (*on_release)(int);
-  void (*on_loop)(unsigned long);
+  void (*onBegin)(void);
+  void (*onEnd)(void);
+  void (*onOk)(void);
+  void (*onNav)(int);
+  int (*onPress)(int);
+  int (*onRelease)(int);
+  void (*onLoop)(unsigned long);
+  void (*onGfx)(void);
 
   volatile int inactive_inc;
   volatile int inactive_lim;
