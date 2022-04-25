@@ -11,10 +11,10 @@ char numpad_keys[20*2] = {
     0,0,0,'*',
 
     KEY_LEFT_ARROW,KEY_DOWN_ARROW,KEY_RIGHT_ARROW,KEY_RETURN,
-    ' ',KEY_UP_ARROW,0,KEY_BACKSPACE,
+    KEY_BACKSPACE,KEY_UP_ARROW,' ',KEY_DELETE,
     0,0,0,0,
     0,0,0,0,
-    0,0,0,KEY_BACKSPACE
+    0,0,0,0
 };
 
 
@@ -60,8 +60,17 @@ int mode_numpad_on_release(int i){
     return 0;
 }
 
-// void mode_numpad_on_gfx(){
-//     u8g2.setCursor(8, 32);
-//     if(stats.fmode == 0) u8g2.print("> Numpad");
-//     else u8g2.print("> Arrow Keys");
-// }
+void mode_numpad_on_gfx(){
+    
+    if(stats.fmode == 0){
+        u8g2.setCursor(16,32);
+        u8g2.print("Default keys");
+    }
+    else{
+        u8g2.setCursor(16,32);
+        u8g2.print("BP | ^ | SP | DEL");
+        u8g2.setCursor(16,48);
+        u8g2.print("<  | V | >  | RET");
+    }     
+    
+}

@@ -349,6 +349,7 @@ void setup(){
   stats.progs[P_NUMPAD].onEnd = mode_numpad_on_end;
   stats.progs[P_NUMPAD].onPress = mode_numpad_on_press;
   stats.progs[P_NUMPAD].onRelease = mode_numpad_on_release;
+  stats.progs[P_NUMPAD].onGfx = mode_numpad_on_gfx;
   stats.progs[P_NUMPAD].title = "Keyboard";
   stats.progs[P_NUMPAD].txt_f1 = "123";
   stats.progs[P_NUMPAD].txt_f2 = "< ^ >";
