@@ -31,13 +31,9 @@ typedef struct Token
   #define S_ABS 10
   
   int order;
-  union {
-      double value;
-      int symbol;
-  };
+  int symbol;
+  vnum_t value;
 
-  int vrep_len;
-  
   token_t* o1;
   token_t* o2;
 } token_t;
@@ -47,63 +43,66 @@ typedef struct Token
 
 sarray_t<token_t> expr;
 token_t expr_buf[100];
+unsigned int expr_edit_index;
+unsigned int expr_cursor;
 int shift;
 int calc_new_bytes = 0;
 
-void expr_push_input(){
-    token_t nn;
-    nn.order = O_INPUT;
-    sarray_push(expr,nn);
+int expr_push_input(){
+  if(expr_edit_index != -1) return 0;
+  
+  token_t nn;
+  nn.order = O_INPUT;
+  sarray_push(expr,nn);
+  expr_edit_index = expr.count-1;
+  expr_cursor = expr.count-1;
+
+  return 1;
 }
 
-void expr_push_number(){
-    token_t* nn = nullptr;
-    for(int i=0; i<expr.count; i++){  
-      if(expr.buf[i].order == O_INPUT) {
-        nn = &expr.buf[i];
-        break;
-      }
-    }
-    nn->order = O_NUM;
-    nn->value = getInputNumberResult();
-    nn->vrep_len = keypad_num.dot ? keypad_num.rep.count : keypad_num.rep.count + 2;
-}
+int expr_push_number(){
+  if(expr_edit_index < 0) return 0;
+  
+  token_t* nn = &expr.buf[expr_edit_index];
+  nn->order = O_NUM;
+  nn->value = keypad_num;
+  expr_cursor = expr.count-1;
+  expr_edit_index = -1;
 
-void expr_push_symbol(int sym){
+  return 1;
+ }
+
+int expr_push_symbol(int sym){
     token_t nn;
     nn.symbol = sym;
     switch(sym){
         case S_END:
             nn.order = O_FN_END;
-            nn.vrep_len = 1;
         break;
 
         case S_SUB:
         case S_ADD:
             nn.order = O_PM;
-            nn.vrep_len = 1;
         break;
 
         case S_MUL:
         case S_DIV:
             nn.order = O_MD;
-            nn.vrep_len = 1;
         break;
 
         case S_POW:
             nn.order = O_PWR;
-            nn.vrep_len = 1;
         break;
 
         default:
             nn.order = O_FN;
-            nn.vrep_len = 4;
         break;
     }
 
     sarray_push(expr,nn);
+    expr_cursor = expr.count-1;
 
-    return;
+    return 1;
 }
 
 double equate(token_t* r){
@@ -126,7 +125,7 @@ double equate(token_t* r){
 //   LOG(">>>>>>>>>>");
     
   if (r->order == O_NUM)
-    return r->value;
+    return r->value.result;
   if (r->symbol == S_SUB)
     return rl - rr;
   if (r->symbol == S_ADD)
@@ -171,6 +170,8 @@ void mode_calc_on_begin(){
   expr.lim = 100;
   expr.buf = expr_buf;
   sarray_clear(expr);  
+  expr_cursor = 0;
+  expr_edit_index = -1;
 }
 
 void mode_calc_on_end(){
@@ -205,7 +206,7 @@ int mode_calc_on_release(int i){
         Serial.print('{');
         if(t->order == 0){
         Serial.print('v');
-        Serial.print(t->value);
+        Serial.print(t->value.result);
         }
         else{
         Serial.print('s');
@@ -228,22 +229,45 @@ int mode_calc_on_release(int i){
       expr_push_symbol(S_DIV);
     }
     else if(i== K_X) {
-      expr_push_symbol(S_MUL);
-    }
-
-    else {
-      if(!keypad_num.input) {
-        expr_push_input();
-        startInputNumber();
-      }
+      if(shift){
+        if(sarray_peek(expr).order <= O_NUM){
+          finish_number_input = 0;
+          numberInputBackspace(keypad_num);
+          if(keypad_num.e_dc == 0 && keypad_num.m_dc == 0){
+            sarray_pop(expr);
+            keypad_num_inputting = 0;
+            expr_cursor = expr.count-1;
+          }
+        }
+        else {
+          sarray_pop(expr);
+          expr_cursor = expr.count-1;
+        }
         
-      numberInputKey(i);
+      }
+      else
+        expr_push_symbol(S_MUL);
+    }
+    else{
+      if(!keypad_num_inputting){
+        keypad_num = {0};
+        keypad_num_inputting = 1;
+        expr_push_input();
+        enterNumberInput(keypad_num);
+        Serial.println("enter input");
+      }
+
+      numberInputKey(keypad_num, i);
       finish_number_input = 0;
+      int x = 0;
     }
 
-    if(keypad_num.input && finish_number_input){
+    if(finish_number_input && keypad_num_inputting){
+      endNumberInput(keypad_num);
       expr_push_number();
-      keypad_num.input = false;
+      keypad_num_inputting = 0;
+      Serial.println("end input");
+      int x = 0;
     }
     
     return 1;
@@ -257,32 +281,52 @@ void mode_calc_on_gfx(){
   for(int i=0; i<expr.count; i++){
     
     auto r = &expr.buf[i];
-    u8g2.setCursor(x*8,32);
 
-    if(r->order == O_INPUT){
-      for(int i=0; i<keypad_num.rep.count; i++){
-        u8g2.setCursor(x*8 + i*8,32);
-        u8g2.print(keypad_num.rep.buf[i]);
+    Serial.print(i);
+    Serial.print("::");
+    Serial.println(r->order);
+
+    if(i == expr_edit_index){
+      if(i == expr_cursor){
+        auto e = keypad_num.e_dc;
+        auto m = keypad_num.m_dc;
+        if(e < 0) e*=-1;
+        if(m < 0) m*=-1;
+        auto w = e+m;
+        if(keypad_num.m_dc < 0) w += 1;
+        w*=6;
+        u8g2.drawHLine(x,32,w);
       }
+      print_vnum(keypad_num,x,32);
+    }
+    else{
+      if(r->order > O_NUM){
+        u8g2.setCursor(x,32);
+        if (r->symbol == S_SUB)
+          u8g2.print('-');
+        else if (r->symbol == S_ADD)
+          u8g2.print('+');
+        else if (r->symbol == S_MUL)
+          u8g2.print('*');
+        else if (r->symbol == S_DIV)
+          u8g2.print('/');
 
-      x += keypad_num.rep.count;
-      continue;
+        if(i == expr_cursor){
+          u8g2.drawHLine(x,32,8);
+        }
+        x += 6;
+      }
+      else {
+        if(i == expr_cursor){
+          auto w = keypad_num.e_dc+keypad_num.m_dc;
+          if(keypad_num.m_dc > 0) w += 1;
+          w*=6;
+          u8g2.drawHLine(x,32,w);
+        }
+        print_vnum(r->value,x,32);
+      }
     }
+
     
-    if(r->order != O_NUM){
-      if (r->symbol == S_SUB)
-        u8g2.print('-');
-      else if (r->symbol == S_ADD)
-        u8g2.print('+');
-      else if (r->symbol == S_MUL)
-        u8g2.print('*');
-      else if (r->symbol == S_DIV)
-        u8g2.print('/');
-    }
-    else {
-      u8g2.print(r->value);
-    }
-    
-    x += r->vrep_len;
   }
 }

@@ -2,19 +2,18 @@
 #include "util.h"
 
 struct vnum_t{
-    bool input;
-    bool dot;
+    int8_t m_dc;
+    int8_t e_dc;
+    uint32_t e_int;
+    uint32_t m_int;
     double result;
-    int mantissa;
-    int expo;
-    double d_mantissa;
-    double d_expo;
-    sarray_t<char> rep;
 };
-extern vnum_t keypad_num;
 
-void startInputNumber();
-double getInputNumberResult();
-char* getInputNumberRep();
-void numberInputKey(int i);
-void numberInputBackspace();
+extern vnum_t keypad_num;
+extern bool keypad_num_inputting;
+
+void enterNumberInput(vnum_t &n);
+void endNumberInput(vnum_t &n);
+void numberInputKey(vnum_t& n, uint32_t i);
+void numberInputBackspace(vnum_t &n);
+void print_vnum(vnum_t& n, int& x, const int y);

@@ -129,3 +129,8 @@ void sarray_remove(sarray_t<T> &a, int i){
     }
     a.count--;
 }
+
+template <typename T> 
+T& sarray_peek(sarray_t<T> &a){
+    return a.buf[a.count-1];
+}

@@ -230,6 +230,7 @@ void vTaskKeyMux(void* params){
             hw.io[I].old_state = hw.io[I].state;
             stats.no_input_time = 0;
               #ifdef DEBUG
+              Serial.print("\nkey");
               Serial.println(I);
               #endif
           }
