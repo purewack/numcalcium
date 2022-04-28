@@ -110,13 +110,9 @@ double equate(token_t* r){
   double rr = 0.f;
 
   if (r->o1)
-    {
       rl = equate (r->o1);
-    }
   if (r->o2)
-    {
       rr = equate (r->o2);
-    }
     
 //   print_token(r);
 //   LOG("");
@@ -242,8 +238,16 @@ int mode_calc_on_release(int i){
         else {
           sarray_pop(expr);
           expr_cursor = expr.count-1;
+          
+          if(expr.buf[expr_cursor].order <= O_NUM){
+            expr.buf[expr_cursor].order = O_INPUT;
+            keypad_num = expr.buf[expr_cursor];
+            keypad_num_inputting = 1;
+            enterNumberInput(keypad_num);
+            Serial.println("re enter input");
+          }
         }
-        
+
       }
       else
         expr_push_symbol(S_MUL);

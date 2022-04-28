@@ -33,15 +33,21 @@ stats_t stats = {
 
 vnum_t keypad_num{0};
 bool keypad_num_inputting = false;
+bool keypad_num_dot = false;
 
-void enterNumberInput(vnum_t &n){
-    if(n.m_dc > 0) n.m_dc *= -1;
-    if(n.e_dc > 0) n.e_dc *= -1;
+void beginNumberInput(vnum_t &n){
+    if(n.e_dc){ 
+        if(n.m_dc) keypad_num_dot = true;
+        return;
+    }
+    
+    n.m_dc = 0;
+    n.e_dc = 0;
+    n.e_int = 0;
+    n.m_int = 0;
 }
 
 void endNumberInput(vnum_t &n){
-    if(n.e_dc < 0) n.e_dc *= -1;
-    if(n.m_dc < 0) n.m_dc *= -1;
     auto e = double(n.e_int);
     auto m = double(n.m_int);
     auto mm = m / pow(10.0,n.m_dc);
@@ -50,15 +56,10 @@ void endNumberInput(vnum_t &n){
 }
 
 void numberInputKey(vnum_t& n, uint32_t i){
-    if(i == K_DOT && n.m_dc == 0) {
-        n.e_dc *= -1;
-        if(n.e_dc == 0) n.e_dc = 1;
-        n.m_dc = -1;
+    if(i == K_DOT && !keypad_num_dot) {
+        keypad_num_dot = true;
         return;
     }
-
-    if(n.m_dc == -1&& n.m_int == 0 && i != K_0) n.m_dc = 0;
-    //if(n.e_dc == 1 && n.e_int == 0) n.e_dc = 0;
 
     const uint32_t key_map[10] = {
         K_0,
@@ -82,50 +83,58 @@ void numberInputKey(vnum_t& n, uint32_t i){
         }
     }
 
-    if(n.e_dc <= 0){
+    if(n.e_dc < 32){
         n.e_int *= 10.0;
         n.e_int += ii;
-        n.e_dc -= 1;
+        n.e_dc++;
     }
-    else{
+    else if(n.m_dc < 32){
         n.m_int *= 10.0;
         n.m_int += ii;
-        n.m_dc -= 1;
+        n.m_dc++;
     }
 
 }
 
-void numberInputBackspace(vnum_t &n){
+//return if deleted entry
+bool numberInputBackspace(vnum_t &n){
 
-    if(n.m_dc < 0){
-        n.m_dc++;
+    if(n.m_dc > 0){
+        n.m_dc--;
         n.m_int /= 10;
-        if(n.m_int == 0 && n.e_dc > 0) 
-            n.e_dc *= -1;
     }
     else{
-        if(n.e_dc == 0) return;
-        n.e_dc++; 
+        n.e_dc--; 
         n.e_int /= 10;
+        if(n.e_dc <= 0) {
+            n.e_dc = 0;
+            return true;
+        }
     }
 
+    return false;
 }
 
 
 void print_vnum(vnum_t& n, int &x, const int y){
     
-    int cc = n.m_dc ? 2 : 1;
+    int cc = 2;//n.m_dc || keypad_num_dot ? 2 : 1;
     Serial.println('{');
     Serial.println(n.e_dc);
     Serial.println(n.m_dc);
     Serial.println(n.e_int);
     Serial.println(n.m_int);
     Serial.println("}\n");
-   
+
     for(int c=0; c<cc; c++){
+        if(c == 1 && keypad_num_dot) {
+            u8g2.setCursor(x,y);
+            u8g2.print('.');
+            x+=6;
+        }
+
         auto nnn = c == 0 ? n.e_int : n.m_int;
-        auto dcc = c == 0 ? n.e_dc : n.m_dc;
-        if(dcc < 0) dcc *= -1;
+        auto dcc = c == 0 ? (keypad_num_dot ? n.e_dc+1 : n.e_dc) : n.m_dc;
         for(int j=0; j<dcc; j++){
             int a = nnn;
             int b = nnn;
@@ -142,12 +151,6 @@ void print_vnum(vnum_t& n, int &x, const int y){
 
             u8g2.setCursor(x,y);
             u8g2.print(c);
-            x+=6;
-        }
-
-        if(c == 0 && n.m_dc != 0) {
-            u8g2.setCursor(x,y);
-            u8g2.print('.');
             x+=6;
         }
     } 
