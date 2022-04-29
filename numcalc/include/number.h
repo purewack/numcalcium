@@ -11,9 +11,10 @@ struct vnum_t{
 
 extern vnum_t keypad_num;
 extern bool keypad_num_inputting;
+extern bool keypad_num_dot;
 
-void enterNumberInput(vnum_t &n);
+void beginNumberInput(vnum_t &n);
 void endNumberInput(vnum_t &n);
 void numberInputKey(vnum_t& n, uint32_t i);
-void numberInputBackspace(vnum_t &n);
+bool numberInputBackspace(vnum_t &n);
 void print_vnum(vnum_t& n, int& x, const int y);

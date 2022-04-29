@@ -228,7 +228,7 @@ int mode_calc_on_release(int i){
       if(shift){
         if(sarray_peek(expr).order <= O_NUM){
           finish_number_input = 0;
-          numberInputBackspace(keypad_num);
+          auto d = numberInputBackspace(keypad_num);
           if(keypad_num.e_dc == 0 && keypad_num.m_dc == 0){
             sarray_pop(expr);
             keypad_num_inputting = 0;
@@ -241,13 +241,12 @@ int mode_calc_on_release(int i){
           
           if(expr.buf[expr_cursor].order <= O_NUM){
             expr.buf[expr_cursor].order = O_INPUT;
-            keypad_num = expr.buf[expr_cursor];
+            keypad_num = expr.buf[expr_cursor].value;
             keypad_num_inputting = 1;
-            enterNumberInput(keypad_num);
+            beginNumberInput(keypad_num);
             Serial.println("re enter input");
           }
         }
-
       }
       else
         expr_push_symbol(S_MUL);
@@ -257,7 +256,7 @@ int mode_calc_on_release(int i){
         keypad_num = {0};
         keypad_num_inputting = 1;
         expr_push_input();
-        enterNumberInput(keypad_num);
+        beginNumberInput(keypad_num);
         Serial.println("enter input");
       }
 
