@@ -2,6 +2,16 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 
+#define DEBUG
+
+#ifdef DEBUG
+#define LOG(X) Serial.print(X)
+#define LOGL(X) Serial.println(X)
+#else
+#define LOG(X) 
+#define LOGL(X) 
+#endif
+
 #define SYS_PDOWN PB5
 
 #define LCD_LIGHT PA6

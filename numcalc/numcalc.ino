@@ -31,7 +31,6 @@
 //ws28xx ?
 
 
-#define DEBUG
 #include "include/sys.h"
 #include "include/modes.h"
 #include "include/comms.h"
@@ -188,7 +187,7 @@ void vTaskKeyMux(void* params){
       if(!hw.ok) continue;
 
       #ifdef DEBUG
-      Serial.println("ok");
+      LOGL("ok");
       #endif
       resetInactiveTime();
 
@@ -230,8 +229,8 @@ void vTaskKeyMux(void* params){
             hw.io[I].old_state = hw.io[I].state;
             stats.no_input_time = 0;
               #ifdef DEBUG
-              Serial.print("\nkey");
-              Serial.println(I);
+              LOG("\nkey");
+              LOGL(I);
               #endif
           }
           if(hw.io[I].state) hw.io[I].dt += 1;
@@ -249,7 +248,7 @@ void vTaskKeyMux(void* params){
 
       if(hw.enc_a && !hw.enc_b && !hw.enc_a_old && !hw.enc_b_old){
         #ifdef DEBUG
-        Serial.println("LEFT turn");
+        LOGL("LEFT turn");
         #endif
         
         resetInactiveTime();
@@ -263,7 +262,7 @@ void vTaskKeyMux(void* params){
       }
       else if(!hw.enc_a && hw.enc_b && !hw.enc_a_old && !hw.enc_b_old){    
         #ifdef DEBUG
-        Serial.println("RIGHT turn");
+        LOGL("RIGHT turn");
         #endif
 
         resetInactiveTime();
@@ -343,8 +342,8 @@ void setup(){
   // USB_audio.registerComponent();
   USB_midi.registerComponent();
   bool usb = USBComposite.begin();
-  if(!usb) Serial.println("usb begin failed");
-  else Serial.println("usb begin succ");
+  if(!usb) LOGL("usb begin failed");
+  else LOGL("usb begin succ");
 
   stats.progs[P_NUMPAD].onBegin = mode_numpad_on_begin;
   stats.progs[P_NUMPAD].onEnd = mode_numpad_on_end;
@@ -404,11 +403,11 @@ void setup(){
   if(p >= P_COUNT) p = 0;
   if(f > 2) f = 0;
 
-  Serial.println("seq start");
+  LOGL("seq start");
   changeToProg(p);
   stats.fmode = f;
 
-  Serial.println("sched start");
+  LOGL("sched start");
 
   // xTaskCreate(vTaskKeyMux,"key_mux",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);
   // //xTaskCreate(vTaskWorker,"worker",configMINIMAL_STACK_SIZE, NULL,tskIDLE_PRIORITY,NULL);

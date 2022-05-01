@@ -191,24 +191,25 @@ int mode_calc_on_release(int i){
     
     if(i== K_R) {
       //equate(nullptr);
-      Serial.println("expr count");
-      Serial.println(expr.count);
-      Serial.println(expr.lim);
-      Serial.println("=");
+      LOGL("expr count");
+      LOGL(expr.count);
+      LOGL(expr.lim);
+      LOGL("=");
       for(int i=0; i<expr.count; i++){
         auto t = &expr.buf[i];
-        Serial.print(" o:");
-        Serial.print(t->order);
-        Serial.print('{');
-        if(t->order == 0){
-        Serial.print('v');
-        Serial.print(t->value.result);
+        LOG(" o:");
+        LOG(t->order);
+        LOG('{');
+        if(t->order == O_NUM){
+          LOG('v');
+          computeNumber(t->value);
+          LOG(t->value.result);
         }
         else{
-        Serial.print('s');
-        Serial.print(t->symbol);
+          LOG('s');
+          LOG(t->symbol);
         }
-        Serial.print('}');
+        LOG('}');
       }
       return 1;
     }
