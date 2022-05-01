@@ -19,6 +19,7 @@ void mode_numpad_on_gfx();
 #define P_CALC 1
 void mode_calc_on_begin();
 void mode_calc_on_end();
+void mode_calc_on_nav(int d);
 int mode_calc_on_press(int i);
 int mode_calc_on_release(int i);
 void mode_calc_on_gfx();

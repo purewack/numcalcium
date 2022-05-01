@@ -363,6 +363,7 @@ void setup(){
   stats.progs[P_CALC].onPress = mode_calc_on_press;
   stats.progs[P_CALC].onRelease = mode_calc_on_release;
   stats.progs[P_CALC].onGfx = mode_calc_on_gfx;
+  stats.progs[P_CALC].onNav = mode_calc_on_nav;
   stats.progs[P_CALC].title = "Calculator";
   stats.progs[P_CALC].txt_f1 = "SCI";
   stats.progs[P_CALC].txt_f2 = "BIN";

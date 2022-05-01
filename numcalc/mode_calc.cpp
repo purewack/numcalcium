@@ -174,6 +174,13 @@ void mode_calc_on_end(){
 
 }
 
+void mode_calc_on_nav(int d){
+  expr_cursor += d;
+  if(expr_cursor < 0) expr_cursor = expr.count-1;
+  if(expr_cursor > expr.count-1) expr_cursor = 0;
+  calc_new_bytes = 1;
+}
+
 int mode_calc_on_press(int i){
     if(i == K_Y) {
         shift = 1;
