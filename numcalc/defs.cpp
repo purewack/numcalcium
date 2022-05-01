@@ -31,35 +31,63 @@ stats_t stats = {
 
 
 
-vnum_t keypad_num{0};
-bool keypad_num_inputting = false;
-bool keypad_num_dot = false;
+double computeNumber(vnum_t &n){
+    auto e = double(n.e_int);
+    auto m = double(n.m_int);
+    auto mm = m / pow(10.0,n.m_dc);
+    n.result = e + mm;
+    return n.result;
+}
 
-void beginNumberInput(vnum_t &n){
-    if(n.e_dc){ 
-        if(n.m_dc) keypad_num_dot = true;
-        return;
-    }
-    
+void clearNumber(vnum_t &n){
+    n.dot = false;
     n.m_dc = 0;
     n.e_dc = 0;
     n.e_int = 0;
     n.m_int = 0;
+    n.result = 0.0;
 }
 
-void endNumberInput(vnum_t &n){
-    auto e = double(n.e_int);
-    auto m = double(n.m_int);
-    auto mm = m / pow(10.0,n.m_dc);
-    n.result = e;
-    n.result += mm;
+void decimalInsert(uint32_t& n, int dc, int pos, int digit){
+    int aa = n;
+    for(int i=0; i<dc-pos+1; i++)
+        aa /= 10;
+        
+    aa*=10;
+    aa+=digit;
+    
+    for(int i=0; i<dc-pos+1; i++)
+        aa *= 10;
+    
+    auto aaa = n;
+    for(int i=0; i<dc-pos+1; i++)
+        aaa /= 10;
+    for(int i=0; i<dc-pos+1; i++)
+        aaa *= 10;
+    aaa = n - aaa;
+    
+    n = aa+aaa;
 }
 
-void numberInputKey(vnum_t& n, uint32_t i){
-    if(i == K_DOT && !keypad_num_dot) {
-        keypad_num_dot = true;
-        return;
-    }
+void decimalRemove(uint32_t& n, int dc, int pos){
+    int aa = n;
+    for(int i=0; i<dc-pos+1; i++)
+        aa /= 10;
+    for(int i=0; i<dc-pos; i++)
+        aa *= 10;
+    
+    auto aaa = n;
+    for(int i=0; i<dc-pos; i++)
+        aaa /= 10;
+    for(int i=0; i<dc-pos; i++)
+        aaa *= 10;
+    aaa = n - aaa;
+
+    n = aa+aaa;
+}
+
+
+void numberInputKey(vnum_t& n, uint32_t i, int pos){
 
     const uint32_t key_map[10] = {
         K_0,
@@ -82,8 +110,62 @@ void numberInputKey(vnum_t& n, uint32_t i){
             cc += j;
         }
     }
+    
+    if(pos > 0){
+        auto e = n.e_int;
+        auto m = n.m_int;
+        auto edc = n.e_dc;
+        auto mdc = n.m_dc;
+        auto dot = n.dot;
+        int dp = n.dot ? edc+1 : -1;
+        
+        if(i == K_DOT && mdc == 0){
+            dot = true;
+            if(pos > edc) pos = edc;
+            
+            int ee = e;
+            for(int i=0; i<edc-pos; i++)
+                ee /= 10;
+            int eee = ee;
+            for(int i=0; i<edc-pos; i++)
+                eee *= 10;
+            
+            int mm = e-eee;
+            e = ee;
+            m = mm;
+            mdc = edc-pos;
+            edc = pos;
+        }
+        else if(pos <= edc){
+            decimalInsert(e,edc,pos,ii);
+            edc++;
+        }
+        else if(mdc > 0){
+            pos -= edc+1;
+            if(pos > mdc) pos = mdc;
+            decimalInsert(m,mdc,pos,ii);
+            mdc++;
+        }
+            
+        
+        n.dot = dot;
+        n.e_int = e;
+        n.m_int = m;
+        n.e_dc = edc;
+        n.m_dc = mdc;
+        return;
+    }
+    
+    
+    
+    if(i == K_DOT) {
+        if(n.dot) return;
+        if(n.e_dc == 0) n.e_dc = 1;
+        n.dot = true;
+        return;
+    }
 
-    if(n.e_dc < 32){
+    if(n.e_dc < 32 && !n.dot){
         n.e_int *= 10.0;
         n.e_int += ii;
         n.e_dc++;
@@ -96,27 +178,83 @@ void numberInputKey(vnum_t& n, uint32_t i){
 
 }
 
-//return if deleted entry
-bool numberInputBackspace(vnum_t &n){
 
+bool numberInputBackspace(vnum_t& n, int pos){
+    if(pos > 0){
+        
+        auto e = n.e_int;
+        auto m = n.m_int;
+        auto edc = n.e_dc;
+        auto mdc = n.m_dc;
+        auto dot = n.dot;
+        int dp = n.dot ? edc+1 : -1;
+        
+        if(pos == dp && dp > -1){
+            for(int i=0; i<mdc; i++)
+                e *= 10;
+                
+            e += m;
+            m = 0;
+            edc = edc + mdc;
+            mdc = 0;
+            dot = false;
+        }
+        else{
+            if(pos <= edc){
+                decimalRemove(e,edc,pos);
+                edc--;
+            }
+            else if(mdc > 0){
+                pos -= edc+1;
+                if(pos > mdc) pos = mdc;
+                decimalRemove(m,mdc,pos);
+                mdc--;
+            }
+            
+            
+        }
+        
+        n.dot = dot;
+        n.e_int = e;
+        n.m_int = m;
+        n.e_dc = edc < 0 ? 0 : edc;
+        n.m_dc = mdc < 0 ? 0 : mdc;
+        LOGL(n.m_dc);
+        LOGL(n.e_dc);
+        return (n.m_dc == 0 && n.e_dc == 0);
+    }
+    
     if(n.m_dc > 0){
         n.m_dc--;
         n.m_int /= 10;
     }
     else{
+        if(n.dot){
+            n.dot = false;
+            return false;
+        }
         n.e_dc--; 
         n.e_int /= 10;
-        if(n.e_dc <= 0) {
+        if(n.e_dc == 0) {
             n.e_dc = 0;
             return true;
         }
     }
-
-    return false;
+    return (n.e_dc == 0 && n.m_dc == 0);
 }
 
 
-void print_vnum(vnum_t& n, int &x, const int y){
+int numberLength(vnum_t& n){
+    int l = 0;
+    l += (n.dot ? 1 : 0);
+    l += n.e_dc;
+    l += (n.m_dc == 0 && n.dot ? 1 : n.m_dc);
+    return l;
+}
+
+void printNumber(vnum_t& n, int &x, const int y){
+
+    if(n.e_dc == 0 && n.m_dc == 0) return;
     
     int cc = 2;//n.m_dc || keypad_num_dot ? 2 : 1;
     // LOGL('{');
@@ -127,14 +265,14 @@ void print_vnum(vnum_t& n, int &x, const int y){
     // LOGL("}\n");
 
     for(int c=0; c<cc; c++){
-        if(c == 1 && keypad_num_dot) {
+        if(c == 1 && n.dot) {
             u8g2.setCursor(x,y);
             u8g2.print('.');
             x+=6;
-        }
+    }
 
         auto nnn = c == 0 ? n.e_int : n.m_int;
-        auto dcc = c == 0 ? (keypad_num_dot ? n.e_dc+1 : n.e_dc) : n.m_dc;
+        auto dcc = c == 0 ? (n.dot && n.e_dc == 0 ? 1 : n.e_dc) : (n.dot && n.m_dc == 0 ? 1 : n.m_dc);
         for(int j=0; j<dcc; j++){
             int a = nnn;
             int b = nnn;
@@ -149,8 +287,10 @@ void print_vnum(vnum_t& n, int &x, const int y){
             char c = char(b)-char(a);
             c += '0';
 
-            u8g2.setCursor(x,y);
-            u8g2.print(c);
+            if(x>=0 || x<=128-6){
+                u8g2.setCursor(x,y);
+                u8g2.print(c);
+            }
             x+=6;
         }
     } 
