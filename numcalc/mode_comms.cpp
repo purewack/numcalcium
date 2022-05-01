@@ -57,5 +57,5 @@ void mode_comms_on_gfx(){
     u8g2.setFont(LCD_LOG_FONT);	
     u8g2.drawLog(0, 16, u8g2log);
     comms_new_bytes = 0;
-    Serial.println("gfx");
+    LOGL("gfx");
 }

@@ -119,12 +119,12 @@ bool numberInputBackspace(vnum_t &n){
 void print_vnum(vnum_t& n, int &x, const int y){
     
     int cc = 2;//n.m_dc || keypad_num_dot ? 2 : 1;
-    Serial.println('{');
-    Serial.println(n.e_dc);
-    Serial.println(n.m_dc);
-    Serial.println(n.e_int);
-    Serial.println(n.m_int);
-    Serial.println("}\n");
+    // LOGL('{');
+    // LOGL(n.e_dc);
+    // LOGL(n.m_dc);
+    // LOGL(n.e_int);
+    // LOGL(n.m_int);
+    // LOGL("}\n");
 
     for(int c=0; c<cc; c++){
         if(c == 1 && keypad_num_dot) {
