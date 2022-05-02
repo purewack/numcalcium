@@ -2,10 +2,10 @@
 #include "util.h"
 
 struct vnum_t{
-    uint32_t m_dc;
-    uint32_t e_dc;
-    uint32_t e_int;
-    uint32_t m_int;
+    uint16_t m_dc;
+    uint16_t e_dc;
+    uint64_t e_int;
+    uint64_t m_int;
     bool dot;
     double result;
 };

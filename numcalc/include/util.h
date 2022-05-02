@@ -87,8 +87,10 @@ struct sarray_t{
 };
 
 template <typename T> 
-void sarray_clear(sarray_t<T> &a){
+void sarray_clear(sarray_t<T> &a, T set_to){
     a.count = 0;
+    for(int i=0; i<a.lim; i++)
+        a.buf[i] = set_to;
 }
 
 template <typename T> 

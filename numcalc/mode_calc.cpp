@@ -9,7 +9,7 @@ typedef struct Token token_t;
 
 typedef struct Token
 {
-  #define O_INPUT -1
+  #define O_NONE -1
   #define O_NUM 0
   #define O_PM 1 //+ -
   #define O_MD 2 //* /
@@ -33,6 +33,7 @@ typedef struct Token
   int order;
   int symbol;
   vnum_t value;
+  int vlen;
 
   token_t* o1;
   token_t* o2;
@@ -43,64 +44,76 @@ typedef struct Token
 
 sarray_t<token_t> expr;
 token_t expr_buf[100];
-unsigned int expr_edit_index;
-unsigned int expr_cursor;
+int expr_cursor;
+int expr_cursor_inter;
+int wstart;
+int ovlc;
+int ocx;
+int cpos, ocpos;
 int shift;
 int calc_new_bytes = 0;
 
-int expr_push_input(){
-  if(expr_edit_index != -1) return 0;
-  
+int expr_insert_number(){
+  if(expr_cursor+1 == 100) return 0 ;
+  if(expr.buf[expr_cursor+1].order == O_NUM) {
+    //enter edit mode number
+    expr_cursor_inter = 0;
+    expr_cursor++;
+    return 1;
+  }
+
+  if(expr.buf[expr_cursor].order > O_NUM)
+    expr_cursor++;
+
   token_t nn;
-  nn.order = O_INPUT;
-  sarray_push(expr,nn);
-  expr_edit_index = expr.count-1;
-  expr_cursor = expr.count-1;
-
-  return 1;
-}
-
-int expr_push_number(){
-  if(expr_edit_index < 0) return 0;
-  
-  token_t* nn = &expr.buf[expr_edit_index];
-  nn->order = O_NUM;
-  nn->value = keypad_num;
-  expr_cursor = expr.count-1;
-  expr_edit_index = -1;
-
+  nn.order = O_NUM;
+  clearNumber(nn.value);
+  sarray_insert(expr,nn,expr_cursor);
   return 1;
  }
 
-int expr_push_symbol(int sym){
+int expr_insert_symbol(int sym){
+  
+    // if(keypad_num_inputting){
+    //   expr_insert_number();
+    //   LOGln("end input");
+    // }
+    if(expr.buf[expr_cursor].order != O_NONE)
+      expr_cursor++;
+    
+
     token_t nn;
     nn.symbol = sym;
     switch(sym){
         case S_END:
             nn.order = O_FN_END;
+            nn.vlen = 1;
         break;
 
         case S_SUB:
         case S_ADD:
             nn.order = O_PM;
+            nn.vlen = 1;
         break;
 
         case S_MUL:
         case S_DIV:
             nn.order = O_MD;
+            nn.vlen = 1;
         break;
 
         case S_POW:
             nn.order = O_PWR;
+            nn.vlen = 1;
         break;
 
         default:
             nn.order = O_FN;
+            nn.vlen = 1;
         break;
     }
 
-    sarray_push(expr,nn);
-    expr_cursor = expr.count-1;
+    sarray_insert(expr,nn,expr_cursor);
 
     return 1;
 }
@@ -113,12 +126,6 @@ double equate(token_t* r){
       rl = equate (r->o1);
   if (r->o2)
       rr = equate (r->o2);
-    
-//   print_token(r);
-//   LOG("");
-//   LOG(rl);
-//   LOG(rr);
-//   LOG(">>>>>>>>>>");
     
   if (r->order == O_NUM)
     return r->value.result;
@@ -136,10 +143,6 @@ double equate(token_t* r){
   if (r->symbol == S_SQR) {
     if(r->o1){
         double oo = pow (rr, (1.f/rl));
-        // LOG("sqrt res");
-        // LOG(oo);
-        // LOG(rr);
-        // LOG(rl);
         return oo;
     }
     else
@@ -161,13 +164,17 @@ double equate(token_t* r){
   return rl + rr;
 }
 
-
 void mode_calc_on_begin(){
   expr.lim = 100;
-  expr.buf = expr_buf;
-  sarray_clear(expr);  
+  expr.buf = expr_buf; 
   expr_cursor = 0;
-  expr_edit_index = -1;
+  expr_cursor_inter = 0;
+  wstart = 0;
+  ocpos = 0;
+  cpos = 0;
+  token_t cv = {0};
+  cv.order = O_NONE;
+  sarray_clear(expr, cv); 
 }
 
 void mode_calc_on_end(){
@@ -175,9 +182,29 @@ void mode_calc_on_end(){
 }
 
 void mode_calc_on_nav(int d){
-  expr_cursor += d;
-  if(expr_cursor < 0) expr_cursor = expr.count-1;
-  if(expr_cursor > expr.count-1) expr_cursor = 0;
+  auto e = &expr.buf[expr_cursor];
+  if(e->order == O_NUM && expr_cursor_inter != -1){
+    if(expr_cursor_inter == 0)
+      expr_cursor_inter = d > 0 ? 1 : e->vlen;
+    else if(expr_cursor_inter != -1){
+      expr_cursor_inter += d;
+      if(expr_cursor_inter <= 0 || expr_cursor_inter > e->vlen){
+        expr_cursor_inter = -1;
+        calc_new_bytes = 1;
+        return;
+      } 
+    }
+  }
+  else{
+    expr_cursor_inter = -1;  
+  }
+
+  if(expr_cursor_inter <= 0){
+    expr_cursor_inter = 0;
+    expr_cursor += d;
+    if(expr_cursor < 0) expr_cursor = expr.count-1;
+    if(expr_cursor > expr.count-1) expr_cursor = 0;
+  }
   calc_new_bytes = 1;
 }
 
@@ -221,65 +248,53 @@ int mode_calc_on_release(int i){
       return 1;
     }
 
-    bool finish_number_input = 1;
     if(i == K_P) {
-      expr_push_symbol(S_ADD);
+      expr_insert_symbol(S_ADD);
     }
     else if(i== K_N) {
-      expr_push_symbol(S_SUB);
+      expr_insert_symbol(S_SUB);
     }
     else if(i== K_D) 
     {
-      expr_push_symbol(S_DIV);
+      expr_insert_symbol(S_DIV);
     }
     else if(i== K_X) {
-      if(shift){
-        if(sarray_peek(expr).order <= O_NUM){
-          finish_number_input = 0;
-          auto d = numberInputBackspace(keypad_num);
-          if(keypad_num.e_dc == 0 && keypad_num.m_dc == 0){
-            sarray_pop(expr);
-            keypad_num_inputting = 0;
-            expr_cursor = expr.count-1;
+      if(!shift)
+        expr_insert_symbol(S_MUL);
+      else{
+        if(expr.buf[expr_cursor].order == O_NUM){
+          auto del = numberInputBackspace(expr.buf[expr_cursor].value, expr_cursor_inter);
+          if(del) {
+            sarray_remove(expr,expr_cursor);
+            expr_cursor--;
+          }
+          else{
+            expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
+            if(expr_cursor_inter > expr_buf[expr_cursor].vlen)
+              expr_cursor_inter--;
           }
         }
-        else {
-          sarray_pop(expr);
-          expr_cursor = expr.count-1;
-          
-          if(expr.buf[expr_cursor].order <= O_NUM){
-            expr.buf[expr_cursor].order = O_INPUT;
-            keypad_num = expr.buf[expr_cursor].value;
-            keypad_num_inputting = 1;
-            beginNumberInput(keypad_num);
-            Serial.println("re enter input");
-          }
+        else{
+          expr.buf[expr_cursor].order = O_NONE;
+          expr.buf[expr_cursor].vlen = 0;
+          sarray_remove(expr,expr_cursor);
+          expr_cursor--;
         }
+
+        if(expr_cursor < 0) 
+          expr_cursor = 0;
       }
-      else
-        expr_push_symbol(S_MUL);
     }
     else{
-      if(!keypad_num_inputting){
-        keypad_num = {0};
-        keypad_num_inputting = 1;
-        expr_push_input();
-        beginNumberInput(keypad_num);
-        Serial.println("enter input");
+      if(expr.buf[expr_cursor].order != O_NUM){
+        expr_insert_number();
+        expr.buf[expr_cursor].vlen = 0;
       }
 
-      numberInputKey(keypad_num, i);
-      finish_number_input = 0;
-      int x = 0;
+      numberInputKey(expr.buf[expr_cursor].value, i, expr_cursor_inter);
+      expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
     }
 
-    if(finish_number_input && keypad_num_inputting){
-      endNumberInput(keypad_num);
-      expr_push_number();
-      keypad_num_inputting = 0;
-      Serial.println("end input");
-      int x = 0;
-    }
     
     return 1;
 }
@@ -288,56 +303,107 @@ int mode_calc_on_release(int i){
 //19 char wide line
 void mode_calc_on_gfx(){
   if(!calc_new_bytes) return;
-  int x = 0;
+
+  //vlla == 21 max
+  int ll = 0;
+  int vlc = 0;
+  int cpx = 0;
+  int cpl = 0;
+  int sx = 0;
+  int cx = 0;
   for(int i=0; i<expr.count; i++){
-    
     auto r = &expr.buf[i];
-
-    Serial.print(i);
-    Serial.print("::");
-    Serial.println(r->order);
-
-    if(i == expr_edit_index){
-      if(i == expr_cursor){
-        auto e = keypad_num.e_dc;
-        auto m = keypad_num.m_dc;
-        if(e < 0) e*=-1;
-        if(m < 0) m*=-1;
-        auto w = e+m;
-        if(keypad_num.m_dc < 0) w += 1;
-        w*=6;
-        u8g2.drawHLine(x,32,w);
-      }
-      print_vnum(keypad_num,x,32);
-    }
-    else{
-      if(r->order > O_NUM){
-        u8g2.setCursor(x,32);
-        if (r->symbol == S_SUB)
-          u8g2.print('-');
-        else if (r->symbol == S_ADD)
-          u8g2.print('+');
-        else if (r->symbol == S_MUL)
-          u8g2.print('*');
-        else if (r->symbol == S_DIV)
-          u8g2.print('/');
-
-        if(i == expr_cursor){
-          u8g2.drawHLine(x,32,8);
-        }
-        x += 6;
-      }
-      else {
-        if(i == expr_cursor){
-          auto w = keypad_num.e_dc+keypad_num.m_dc;
-          if(keypad_num.m_dc > 0) w += 1;
-          w*=6;
-          u8g2.drawHLine(x,32,w);
-        }
-        print_vnum(r->value,x,32);
-      }
-    }
-
     
+    if(i == expr_cursor){
+      cpx = vlc+1;
+    }
+
+    ll = r->vlen;
+    vlc += ll;
+
+    if(i == expr_cursor){
+      cpl = ll;  
+      if(expr_cursor_inter>0){
+        cx = cpl-ll;
+        cx += expr_cursor_inter;
+      }
+    }
+  
+  } 
+
+
+
+  #define WINW 21
+  // int win_start = vlc > WINW ? vlc-WINW : 0;
+  // int win_end = win_start + (vlc > WINW ? WINW : vlc);
+  // if(cx && cpx+cx-1 < ocx) wstart = cpx+cx-1;
+  // else if(vlc > ovlc && vlc > WINW) wstart = vlc-WINW;
+  // ovlc = vlc;
+  // ocx = cx ? cpx+cx-1 : cpx;
+  // wstart = wstart<0 ? 0 : wstart;
+
+
+  ocpos = cpos;
+  cpos = (cx < 1 ? cpx+cpl-1 : cpx+cx-1);
+  if(cpos <= wstart) wstart = cpos-1;
+  if(cpos > wstart+WINW) wstart = cpos-WINW;
+
+  LOGL("======= ");
+  LOG("ll - ");LOGL(ll);
+  LOG("vcl - ");LOGL(vlc);
+  LOG("cpx - "); LOGL(cpx);
+  LOG("cpl - ");LOGL(cpl);
+  LOG("cx - ");LOGL(cx);
+  LOG("expr_cursor - "); LOGL(expr_cursor);
+  LOG("expr inter - "); LOGL(expr_cursor_inter);
+  LOG("cpos - "); LOGL(cpos);
+  LOG("wstart "); LOGL(wstart);
+  LOGL("======= ");
+
+  int x = (wstart)*(-6);
+
+  for(int i=0; i<expr.count; i++){
+
+    auto r = &expr.buf[i];
+    int xx = x;
+    
+    if(r->order > O_NUM){
+      if(x<0){
+        x+=6;
+        continue;
+      }
+      if(x>122) continue;
+
+      u8g2.setCursor(x,32);
+      if (r->symbol == S_SUB)
+        u8g2.print('-');
+      else if (r->symbol == S_ADD)
+        u8g2.print('+');
+      else if (r->symbol == S_MUL)
+        u8g2.print('*');
+      else if (r->symbol == S_DIV)
+        u8g2.print('/');
+
+      
+      x += 6;
+    }
+    else {
+      printNumber(r->value,x,32);
+    }
+    
+    if(i == expr_cursor){
+      u8g2.drawHLine(xx,33,r->vlen*6);
+      if(expr_cursor_inter > 0){
+        int xxx = xx - 6 + expr_cursor_inter*6;
+        u8g2.drawHLine(xxx,35,6);
+        //u8g2.drawHLine(xxx+5,36,1);
+      }
+    }
+  }
+
+  if(wstart){
+    u8g2.setDrawColor(2);
+    u8g2.drawBox(0,24,6,8);
+    u8g2.setDrawColor(1);
   }
 }
