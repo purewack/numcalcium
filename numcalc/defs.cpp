@@ -48,7 +48,7 @@ void clearNumber(vnum_t &n){
     n.result = 0.0;
 }
 
-void decimalInsert(uint32_t& n, int dc, int pos, int digit){
+void decimalInsert(uint64_t& n, uint16_t dc, int pos, int digit){
     int aa = n;
     for(int i=0; i<dc-pos+1; i++)
         aa /= 10;
@@ -69,7 +69,7 @@ void decimalInsert(uint32_t& n, int dc, int pos, int digit){
     n = aa+aaa;
 }
 
-void decimalRemove(uint32_t& n, int dc, int pos){
+void decimalRemove(uint64_t& n, uint16_t dc, int pos){
     int aa = n;
     for(int i=0; i<dc-pos+1; i++)
         aa /= 10;
@@ -88,6 +88,8 @@ void decimalRemove(uint32_t& n, int dc, int pos){
 
 
 void numberInputKey(vnum_t& n, uint32_t i, int pos){
+    if(i != K_DOT && !n.dot && n.e_dc == 16) return;
+    if(n.dot && n.m_dc == 16) return;
 
     const uint32_t key_map[10] = {
         K_0,
@@ -165,12 +167,12 @@ void numberInputKey(vnum_t& n, uint32_t i, int pos){
         return;
     }
 
-    if(n.e_dc < 32 && !n.dot){
+    if(n.e_dc < 16 && !n.dot){
         n.e_int *= 10.0;
         n.e_int += ii;
         n.e_dc++;
     }
-    else if(n.m_dc < 32){
+    else if(n.m_dc < 16){
         n.m_int *= 10.0;
         n.m_int += ii;
         n.m_dc++;
@@ -274,16 +276,16 @@ void printNumber(vnum_t& n, int &x, const int y){
         auto nnn = c == 0 ? n.e_int : n.m_int;
         auto dcc = c == 0 ? (n.dot && n.e_dc == 0 ? 1 : n.e_dc) : (n.dot && n.m_dc == 0 ? 1 : n.m_dc);
         for(int j=0; j<dcc; j++){
-            int a = nnn;
-            int b = nnn;
-            int t = dcc-j-1;
+            uint64_t a = nnn;
+            uint64_t b = nnn;
+            int64_t t = dcc-j-1;
             
             for(int i=0; i<t+1; i++)
                 a /= 10;
             a *= 10;
             for(int i=0; i<t; i++)
                 b /= 10;
-            
+
             char c = char(b)-char(a);
             c += '0';
 
