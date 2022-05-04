@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define LOG(X) Serial.print(X)
