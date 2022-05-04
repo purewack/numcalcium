@@ -17,7 +17,8 @@ typedef struct Token
   #define O_FN 4 //func ( or (
   #define O_FN_END 5// )
 
-  #define S_END -1
+  #define S_END -2
+  #define S_GRP -1
   #define S_EQU 0
   #define S_SUB 1
   #define S_ADD 2
@@ -47,11 +48,265 @@ token_t expr_buf[100];
 int expr_cursor;
 int expr_cursor_inter;
 int wstart;
-int ovlc;
-int ocx;
-int cpos, ocpos;
 int shift;
+bool secondF;
 int calc_new_bytes = 0;
+double result;
+token_t* parsed;
+
+
+void print_token(token_t* r){
+#ifdef DEBUG
+    if(r == nullptr) {
+        LOG("*dead*");
+        return;
+    }
+    
+    if(r->order == O_NONE)
+        LOG("?");
+    else if(r->order == O_NUM)
+        LOG(computeNumber(r->value));
+    else if(r->order == O_PM && r->symbol == S_ADD)
+        LOG("-");
+    else if(r->order == O_PM && r->symbol == S_SUB)
+        LOG("+");
+    else if(r->order == O_MD && r->symbol == S_MUL)
+        LOG("*");
+    else if(r->order == O_MD && r->symbol == S_DIV)
+        LOG("/");
+    else if(r->order == O_PWR && r->symbol == S_POW)
+        LOG("^");
+    else if(r->order == O_FN && r->symbol == S_COS)
+        LOG("cos(");
+    else if(r->order == O_FN && r->symbol == S_END)
+        LOG("(");
+    else if(r->order == O_FN_END)
+        LOG(")");
+#endif
+}
+
+
+void
+print_tree (token_t * r, int l)
+{
+#ifdef DEBUG
+  if(!r) return;
+
+  auto indent =[](int l) {
+    for (int i = 0; i < l; i++)
+      LOG("\t");
+  };
+
+  indent (l);
+
+  //std::cout << r;
+  LOG("[");
+  print_token(r);
+  LOGL("]");
+    
+
+  if (r->o1){
+    LOG("o1:"); 
+    print_tree (r->o1, l + 1);
+  }
+  if (r->o2){
+    LOG("o2:"); 
+    print_tree (r->o2, l + 1);
+  }
+#endif
+}
+
+
+int ii;
+token_t* trickle(token_t* cur, token_t* o2){
+    if(cur->o2){
+        LOGL("TR: have o2");
+        cur->o2 = trickle(cur->o2,o2);
+        LOGL("o2 done");
+        return cur;
+    }
+    if(o2->order == O_PWR or (o2->order==O_FN && cur->order == O_NUM)) { // ^ or N sqrt
+        LOGL("TR: have PWR or ROOT");
+        o2->o1 = cur;
+        cur = o2;
+    }
+    else{ // number
+    LOGL("have num");
+        cur->o2 = o2;
+    }
+    LOGL("TRICKLETRICKLETRICKLE");
+    print_tree(cur,2);
+    return cur;
+}
+
+token_t* parse(token_t* cur, int id, int& status){
+    if(parsed) return parsed;
+
+    if(expr.count == 0) {
+        LOGL("parse: no expr");
+        return nullptr;
+    }
+    
+    if(ii >= expr.count) {
+        LOGL("parse: end of expr");
+        return cur;
+    }
+        
+    LOGL("parse()=-----------------------------------------");
+    LOGL(id);
+    LOGL("===");
+    
+    auto self = &expr.buf[ii];
+    LOG(">>>>>>>>>>>>>>>");
+    print_token(self);
+    LOG("\n>>>>>>>>>>>>>>>");
+    print_tree(cur,0);
+    LOG("\n>>>>>>>>>>>>>>>");
+    
+    if(id == 0){
+        LOGL("\nNEW GRP GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+    
+        if(self->order == O_FN){
+            ii++;
+            self->o2 = parse(nullptr,0,status);
+        }
+        if(cur==nullptr) cur = self;
+        ii++;
+        return parse(self,id+1,status);
+    }
+    
+
+    if(self->order == O_NUM or self->order == O_FN){
+        LOGL("parse: TRICKLE");
+        print_tree(cur,0);
+        cur = trickle(cur,self);
+        
+        //start a new group if self is grouped
+        if(self->order == O_FN){
+            ii++;
+            LOGL("new group");
+            self->o2 = parse(nullptr,0,status);
+            //self->o1 = self->o2;
+        }
+        
+        LOGL("next after number");
+        ii++;
+        cur = parse(cur, id+1,status);
+    }
+    
+    else{
+        if(self->order == O_PM){ // + or -
+            LOGL("have PM");
+            self->o1 = cur;
+            cur = self;
+            ii++;
+            cur = parse(self, id+1, status);
+        }
+        else if(self->order == O_MD){ // * or /
+        
+            if(cur->order == O_NUM){
+                LOGL("have MD with NUM");
+                self->o1 = cur;
+                print_tree(self,0);
+                ii++;
+                cur = parse(self, id+1, status);
+            }
+            else{
+                if(cur->order >= self->order){
+                    self->o1 = cur;
+                    cur = self;
+                }else{
+                    self->o1 = cur->o2;
+                    cur->o2 = self;
+                }
+                LOGL("have MD else");
+                print_tree(cur,0);
+                ii++;
+                cur = parse(cur, id+1, status);
+            }
+            
+        }
+        else if(self->order == O_PWR){ // exp ^
+            LOGL("have exp");
+            cur = trickle(cur,self);
+            print_tree(cur,0);
+            ii++;
+            cur = parse(cur, id+1, status);
+        }
+        else if(self->order == O_FN_END){ //brac end
+            LOGL("end brac ))))");
+            return cur;
+        }
+        else{
+            //parse error
+            return nullptr;
+        }
+    }
+    LOGL("WRAPWRAPWRAPWRAPWRAP");
+    print_tree(cur,0);
+    return cur;
+}
+
+double
+compute_expr (token_t * r)
+{
+  double rl = 0.f;
+  double rr = 0.f;
+
+  if (r->o1)
+    {
+      rl = compute_expr (r->o1);
+    }
+  if (r->o2)
+    {
+      rr = compute_expr (r->o2);
+    }
+    
+  print_token(r);
+  LOG("");
+  LOG(rl);
+  LOG(rr);
+  LOG(">>>>>>>>>>");
+    
+  if (r->order == O_NUM)
+    return computeNumber(r->value);
+  if (r->symbol == S_SUB)
+    return rl - rr;
+  if (r->symbol == S_ADD)
+    return rl + rr;
+  if (r->symbol == S_MUL)
+    return rl * rr;
+  if (r->symbol == S_DIV)
+    return rl / rr;
+    
+  if (r->symbol == S_POW) 
+    return pow (rl, rr);
+  if (r->symbol == S_SQR) {
+    if(r->o1){
+        double oo = pow (rr, (1.f/rl));
+        // LOG("sqrt res");
+        // LOG(oo);
+        // LOG(rr);
+        // LOG(rl);
+        return oo;
+    }
+    else
+        return sqrt (rl + rr);
+  }
+  
+  if (r->symbol == S_COS) 
+    return cos (rl + rr);
+  if (r->symbol == S_SIN) 
+    return sin (rl + rr);
+  if (r->symbol == S_TAN) 
+    return tan (rl + rr);
+  if (r->symbol == S_ABS) 
+    return abs (rl + rr);
+      
+  return rl + rr;
+}
+
+
 
 int expr_insert_number(){
   if(expr_cursor+1 == 100) return 0 ;
@@ -106,6 +361,31 @@ int expr_insert_symbol(int sym){
             nn.order = O_PWR;
             nn.vlen = 1;
         break;
+        
+        case S_COS:
+            nn.order = O_FN;
+            nn.vlen = 4;
+        break;
+
+        case S_SIN:
+            nn.order = O_FN;
+            nn.vlen = 4;
+        break;
+
+        case S_TAN:
+            nn.order = O_FN;
+            nn.vlen = 4;
+        break;
+
+        case S_ABS:
+            nn.order = O_FN;
+            nn.vlen = 4;
+        break;
+
+        case S_SQR:
+            nn.order = O_FN;
+            nn.vlen = 5;
+        break;
 
         default:
             nn.order = O_FN;
@@ -118,63 +398,24 @@ int expr_insert_symbol(int sym){
     return 1;
 }
 
-double equate(token_t* r){
-  double rl = 0.f;
-  double rr = 0.f;
-
-  if (r->o1)
-      rl = equate (r->o1);
-  if (r->o2)
-      rr = equate (r->o2);
-    
-  if (r->order == O_NUM)
-    return r->value.result;
-  if (r->symbol == S_SUB)
-    return rl - rr;
-  if (r->symbol == S_ADD)
-    return rl + rr;
-  if (r->symbol == S_MUL)
-    return rl * rr;
-  if (r->symbol == S_DIV)
-    return rl / rr;
-    
-  if (r->symbol == S_POW) 
-    return pow (rl, rr);
-  if (r->symbol == S_SQR) {
-    if(r->o1){
-        double oo = pow (rr, (1.f/rl));
-        return oo;
-    }
-    else
-        return sqrt (rl + rr);
-  }
-  
-  if (r->symbol == S_COS) 
-    return cos (rl + rr);
-  if (r->symbol == S_SIN) 
-    return sin (rl + rr);
-  if (r->symbol == S_TAN) 
-    return tan (rl + rr);
-  if (r->symbol == S_ABS){
-    double a = rl+rr;
-    if(a < 0) a*= -1.f;
-    return a;
-  }
-      
-  return rl + rr;
+void clearAll(){
+  expr_cursor = 0;
+  expr_cursor_inter = 0;
+  wstart = 0;
+  token_t cv = {0};
+  cv.order = O_NONE;
+  cv.symbol = S_END;
+  sarray_clear(expr, cv); 
+  result = 0.0;
+  parsed = nullptr;
+  secondF = false;
+  calc_new_bytes = 1;
 }
 
 void mode_calc_on_begin(){
   expr.lim = 100;
   expr.buf = expr_buf; 
-  expr_cursor = 0;
-  expr_cursor_inter = 0;
-  wstart = 0;
-  ocpos = 0;
-  cpos = 0;
-  token_t cv = {0};
-  cv.order = O_NONE;
-  sarray_clear(expr, cv); 
+  clearAll();
 }
 
 void mode_calc_on_end(){
@@ -222,34 +463,62 @@ int mode_calc_on_release(int i){
         shift = 0;
         return 1;
     } 
-    
-    if(i== K_R) {
-      //equate(nullptr);
-      LOGL("expr count");
-      LOGL(expr.count);
-      LOGL(expr.lim);
-      LOGL("=");
-      for(int i=0; i<expr.count; i++){
-        auto t = &expr.buf[i];
-        LOG(" o:");
-        LOG(t->order);
-        LOG('{');
-        if(t->order == O_NUM){
-          LOG('v');
-          computeNumber(t->value);
-          LOG(t->value.result);
-        }
-        else{
-          LOG('s');
-          LOG(t->symbol);
-        }
-        LOG('}');
-      }
+
+    if(shift && i==K_F3){
+      clearAll();
       return 1;
     }
 
+    if(i== K_R) {
+      if(shift){
+        expr_insert_symbol(S_END);
+        return 1;
+      }
+      //equate(nullptr);
+      // LOGL("expr count");
+      // LOGL(expr.count);
+      // LOGL(expr.lim);
+      // LOGL("=");
+      // for(int i=0; i<expr.count; i++){
+      //   auto t = &expr.buf[i];
+      //   LOG(" o:");
+      //   LOG(t->order);
+      //   LOG('{');
+      //   if(t->order == O_NUM){
+      //     LOG('v');
+      //     computeNumber(t->value);
+      //     LOG(t->value.result);
+      //   }
+      //   else{
+      //     LOG('s');
+      //     LOG(t->symbol);
+      //   }
+      //   LOG('}');
+      // }
+      if(!parsed){
+        LOGL("clear expr childs");
+        for(int i=0; i<expr.count; i++){
+          expr.buf[i].o1 = nullptr;
+          expr.buf[i].o2 = nullptr;
+        }
+      }
+      LOGL("start parse");
+      int status;
+      ii = 0;
+      u8g2.drawBox(0,0,128,8);
+      u8g2.sendBuffer();
+      parsed = parse(nullptr,0,status);
+      LOGL("end parse");
+      if(parsed) LOGL("have tree");
+      result = compute_expr(parsed);
+      LOGL("result");
+      return 1;
+    }
+
+    parsed = nullptr;
+
     if(i == K_P) {
-      expr_insert_symbol(S_ADD);
+      expr_insert_symbol(shift ? S_POW : S_ADD);
     }
     else if(i== K_N) {
       expr_insert_symbol(S_SUB);
@@ -286,6 +555,20 @@ int mode_calc_on_release(int i){
       }
     }
     else{
+      if(shift){
+        if(i==K_DOT) expr_insert_symbol(S_GRP);
+        if(i==K_2) secondF = true;
+        return 1;
+      }else if(secondF){
+        if(i==K_1) expr_insert_symbol(S_SIN);
+        if(i==K_2) expr_insert_symbol(S_COS);
+        if(i==K_3) expr_insert_symbol(S_TAN);
+        if(i==K_4) expr_insert_symbol(S_SQR);
+        if(i==K_5) expr_insert_symbol(S_ABS);
+        secondF = false;
+        return 1;
+      }
+
       if(expr.buf[expr_cursor].order != O_NUM){
         expr_insert_number();
         expr.buf[expr_cursor].vlen = 0;
@@ -303,6 +586,14 @@ int mode_calc_on_release(int i){
 //19 char wide line
 void mode_calc_on_gfx(){
   if(!calc_new_bytes) return;
+
+  if(secondF){
+    u8g2.setCursor(0,18);
+    u8g2.print("1=sin 2=cos 3=tan");
+    u8g2.setCursor(0,18+9*1);
+    u8g2.print("4=sqrt 5=abs P=pow");
+    return;
+  }
 
   //vlla == 21 max
   int ll = 0;
@@ -331,22 +622,11 @@ void mode_calc_on_gfx(){
   
   } 
 
-
-
   #define WINW 21
-  // int win_start = vlc > WINW ? vlc-WINW : 0;
-  // int win_end = win_start + (vlc > WINW ? WINW : vlc);
-  // if(cx && cpx+cx-1 < ocx) wstart = cpx+cx-1;
-  // else if(vlc > ovlc && vlc > WINW) wstart = vlc-WINW;
-  // ovlc = vlc;
-  // ocx = cx ? cpx+cx-1 : cpx;
-  // wstart = wstart<0 ? 0 : wstart;
-
-
-  ocpos = cpos;
-  cpos = (cx < 1 ? cpx+cpl-1 : cpx+cx-1);
+  int cpos = (cx < 1 ? cpx+cpl-1 : cpx+cx-1);
   if(cpos <= wstart) wstart = cpos-1;
   if(cpos > wstart+WINW) wstart = cpos-WINW;
+  if(wstart < 0) wstart = 0;
 
   LOGL("======= ");
   LOG("ll - ");LOGL(ll);
@@ -383,9 +663,28 @@ void mode_calc_on_gfx(){
         u8g2.print('*');
       else if (r->symbol == S_DIV)
         u8g2.print('/');
+      else if (r->symbol == S_POW)
+        u8g2.print('^');
+      else if (r->symbol == S_COS)
+        u8g2.print("cos(");
+      else if (r->symbol == S_SIN)
+        u8g2.print("sin(");
+      else if (r->symbol == S_COS)
+        u8g2.print("cos(");
+      else if (r->symbol == S_TAN)
+        u8g2.print("tan(");
+      else if (r->symbol == S_ABS)
+        u8g2.print("abs(");
+      else if (r->symbol == S_SQR)
+        u8g2.print("sqrt(");
+      else if (r->symbol == S_SQR)
+        u8g2.print("sqrt(");
+      else if (r->symbol == S_GRP)
+        u8g2.print("(");
+      else if (r->symbol == S_END)
+        u8g2.print(")");
 
-      
-      x += 6;
+      x += 6*r->vlen;
     }
     else {
       printNumber(r->value,x,32);
@@ -406,4 +705,9 @@ void mode_calc_on_gfx(){
     u8g2.drawBox(0,24,6,8);
     u8g2.setDrawColor(1);
   }
+  
+  u8g2.setCursor(0,64-10);
+  u8g2.print('=');
+  u8g2.setCursor(8,64-10);
+  u8g2.print(result, 12);
 }
