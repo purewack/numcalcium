@@ -6,10 +6,10 @@
 #include "numcalcium-base/hw.cpp"
 #include "numcalcium-base/fonttiny.cpp"
 
-// USBHID HID;
-// HIDKeyboard USB_keyboard(HID);
-// USBMIDI USB_midi;
-// USBAUDIO USB_audio;
+USBHID HID;
+HIDKeyboard USB_keyboard(HID);
+USBMIDI USB_midi;
+USBAUDIO USB_audio;
 
 // SPIClass SPI_2(2);
 font_t sys_font = {
