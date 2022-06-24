@@ -1,0 +1,3 @@
+[submodule "numcalc/numcalcium-base"]
+	path = numcalc/numcalcium-base
+	url = https://github.com/purewack/numcalcium-base.git

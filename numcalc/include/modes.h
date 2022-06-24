@@ -12,9 +12,7 @@
 #define P_NUMPAD 0
 void mode_numpad_on_begin();
 void mode_numpad_on_end();
-int mode_numpad_on_press(int i);
-int mode_numpad_on_release(int i);
-void mode_numpad_on_gfx();
+void mode_numpad_on_process();
 
 #define P_CALC 1
 void mode_calc_on_begin();
