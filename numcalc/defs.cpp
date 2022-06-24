@@ -4,9 +4,7 @@
 #include "include/number.h"
 
 #include "numcalcium-base/hw.cpp"
-
-// U8G2LOG u8g2log;
-// uint8_t u8log_buffer[32*7]; 
+#include "numcalcium-base/fonttiny.cpp"
 
 // USBHID HID;
 // HIDKeyboard USB_keyboard(HID);
