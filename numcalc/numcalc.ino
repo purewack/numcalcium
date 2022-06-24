@@ -56,9 +56,10 @@ void powerOff(int fade){
 void changeToProg(int i){
   if(&stats.progs[i] == stats.cprog) return;
 
-  if(stats.cprog) 
+  if(stats.cprog){ 
     if(stats.cprog->onEnd) 
       stats.cprog->onEnd();
+  }
 
   stats.cprog = &stats.progs[i];
 
@@ -66,8 +67,10 @@ void changeToProg(int i){
   stats.c_i = i;
   stats.gfx_log = 0;
 
-  if(stats.cprog->onBegin) 
+  if(stats.cprog){
+    if(stats.cprog->onBegin) 
     stats.cprog->onBegin(); 
+  }
 }
 
 void resetInactiveTime(){
@@ -108,8 +111,10 @@ void vTaskScreen(void* params){
       lcd_drawString(0,0, sys_font, stats.cprog->title);
       lcd_drawHline(0,9,128);
       
-      if(stats.cprog)
-        if(stats.cprog->onProcess) stats.cprog->onProcess();
+      if(stats.cprog){
+        if(stats.cprog->onProcess) 
+        stats.cprog->onProcess();
+      }
 
       // hud.setCursor(0,64);
       // if(stats.cprog->txt_f1){
@@ -200,7 +205,7 @@ void vTaskKeyMux(void* params){
     vTaskScreen(nullptr);
     
     stats.gfx_refresh = 0;
-    
+
     //if(!stats.cprog->onLoop || stats.cprog_sel)
     delay(5);
 
@@ -265,16 +270,7 @@ void setup(){
 
   base_init();
   io_mux_init();
-
-  // USBComposite.clear();
-  // USBComposite.setProductId(0x0031);
-  // HID.registerComponent();
-  // HID.setReportDescriptor(HID_KEYBOARD); 
-  // USB_midi.registerComponent();
-  // bool usb = USBComposite.begin();
-  // if(!usb) LOGL("usb begin failed");
-  // else LOGL("usb begin succ");
-
+ 
   //stats.cprog_sel = 1;
 
   // uint16_t p = 0;
@@ -284,10 +280,10 @@ void setup(){
   // if(p >= P_COUNT) p = 0;
   // if(f > 2) f = 0;
 
+  lcd_fade(1);
   LOGL("seq start");
   changeToProg(0);
   stats.fmode = 0;
-  lcd_fade(1);
   LOGL("sched start");
 
   stats.gfx_refresh = 1;

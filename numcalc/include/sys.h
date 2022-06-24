@@ -50,6 +50,7 @@ typedef struct Stats {
   volatile int no_input_time;
   volatile int gfx_refresh;
   volatile int gfx_log;
+  int usb_state;
 } stats_t;
 
 extern stats_t stats;
