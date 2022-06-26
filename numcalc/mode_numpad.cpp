@@ -25,11 +25,13 @@ void mode_numpad_on_begin(){
   lcd_update();
   io.bscan_down |= (1<<K_F1);
 
-  disconnectUSB();
-  delay(100);
-  connectUSB();  //stats.cprog_sel = 1;
-  delay(100);
-  USBComposite.begin();
+  if(!USBComposite){
+    disconnectUSB();
+    delay(100);
+    connectUSB();  //stats.cprog_sel = 1;
+    delay(100);
+    USBComposite.begin();
+  }
   //while(!USBComposite) delay(1);
 }
 
