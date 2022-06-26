@@ -31,7 +31,4 @@ int mode_midi_on_release(int i);
 #define P_COMMS 3
 void mode_comms_on_begin();
 void mode_comms_on_end();
-int mode_comms_on_press(int i);
-int mode_comms_on_release(int i);
-void mode_comms_on_loop(unsigned long dt);
-void mode_comms_on_gfx();
+void mode_comms_on_process();

@@ -140,12 +140,10 @@ void setup(){
   stats.progs[P_MIDI].inactive_lim = 400;
   stats.progs[P_MIDI].no_input_lim = 240000; //20mins
 
-  // stats.progs[P_COMMS].onBegin = mode_comms_on_begin;
-  // stats.progs[P_COMMS].onEnd = mode_comms_on_end;
-  // stats.progs[P_COMMS].onPress = mode_comms_on_press;
-  // stats.progs[P_COMMS].onRelease = mode_comms_on_release;
-  // stats.progs[P_COMMS].onLoop = mode_comms_on_loop;
-  // stats.progs[P_COMMS].onGfx = mode_comms_on_gfx;
+
+  stats.progs[P_COMMS].onBegin = mode_comms_on_begin;
+  stats.progs[P_COMMS].onEnd = mode_comms_on_end;
+  stats.progs[P_COMMS].onProcess = mode_comms_on_process;
   stats.progs[P_COMMS].title = "Comms";
   stats.progs[P_COMMS].txt_f1 = "UART";
   stats.progs[P_COMMS].txt_f2 = "SPI";
@@ -175,7 +173,7 @@ void setup(){
   // if(f > 2) f = 0;
 
   LOGL("seq start");
-  changeToProg(0);
+  changeToProg(P_COMMS);
   stats.fmode = 0;
   LOGL("sched start");
 
@@ -183,6 +181,21 @@ void setup(){
 
 void loop(){
   if(stats.cprog_sel){
+    if(io.turns_left && stats.c_i > 0) {
+      io.turns_left = 0;
+      stats.c_i--;
+    }
+    else if(io.turns_right && stats.c_i < P_COUNT-1){
+      io.turns_right = 0;
+      stats.c_i++;
+    }
+    if(io.ok){
+      changeToProg(stats.c_i);
+      stats.cprog_sel = 0;
+      delay(1000);
+      io.ok = 0;
+    }
+
     lcd_clear();
     lcd_drawString(0,0,sys_font,"~~Programs~~");
     lcd_drawHline(0,8,128);
@@ -211,6 +224,10 @@ void loop(){
     if(stats.cprog){
       if(stats.cprog->onProcess) 
       stats.cprog->onProcess();
+    }
+    if(io.ok){
+      io.ok = 0;
+      stats.cprog_sel = 1;
     }
   }
 
