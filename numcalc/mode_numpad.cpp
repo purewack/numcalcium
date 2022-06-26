@@ -3,7 +3,8 @@
 #include "include/comms.h"
 #include "include/modes.h"
 
-char numpad_keys[20*2] = {
+
+const char numpad_keys[20*2] = {
     KEY_BACKSPACE,'0','.','=',
     '1','2','3','+',
     '4','5','6','-',
@@ -19,53 +20,76 @@ char numpad_keys[20*2] = {
 
 
 void mode_numpad_on_begin(){
-    // stats.gfx_text[0] = "1.test";
-    // stats.gfx_text[1] = "2.2";
-    // stats.gfx_text[2] = ">3.test asdf";
-    // stats.gfx_text_count = 3;
+  lcd_clear();
+  drawTitle();
+  lcd_update();
+  io.bscan_down |= (1<<K_F1);
+
+  disconnectUSB();
+  delay(100);
+  connectUSB();  //stats.cprog_sel = 1;
+  delay(100);
+  USBComposite.begin();
+  //while(!USBComposite) delay(1);
 }
 
 void mode_numpad_on_end(){
-
+  drawUSBStatus();
+  lcd_updateSection(0,1,0,128);
 }
 
+double th = 0.0;
 void mode_numpad_on_process(){
+    if(USBComposite){
+      for(int i=0; i<20; i++){
+          if(io.bscan_down & (1<<i)) 
+              USB_keyboard.press(numpad_keys[i + 20*stats.fmode]);
+          if(io.bscan_up & (1<<i)) 
+              USB_keyboard.release(numpad_keys[i + 20*stats.fmode]);
+      }   
 
-    if(stats.usb_state){
-        for(int i=0; i<20; i++){
-            if(io.bscan_down & (1<<i)) 
-                USB_keyboard.press(numpad_keys[i + 20*stats.fmode]);
-            if(io.bscan_up & (1<<i)) 
-                USB_keyboard.release(numpad_keys[i + 20*stats.fmode]);
-        }
-        lcd_drawString(110,0, sys_font, "USB");
-        if(stats.fmode == 0){
-            lcd_drawString(16,24, sys_font, "Default keys");
-        }
-        else{
-            lcd_drawString(16,24, sys_font, "BP | ^ | SP | DEL");
-            lcd_drawString(16,32, sys_font, "<  | V | >  | RET");
-        }     
+      if(io.bscan_down & (1<<K_F1)) {
+        stats.fmode = 0;
+        clearProgGFX();
+          lcd_drawString(16,24, sys_font, "Default keys");
+        updateProgGFX();
+      }
+      if(io.bscan_down & (1<<K_F2)) {
+        stats.fmode = 1;
+        clearProgGFX();
+          lcd_drawString(16,24, sys_font, "BP | ^ | SP | DEL");
+          lcd_drawString(16,32, sys_font, "<  | V | >  | RET");
+        updateProgGFX();
+      }
+
+      if(io.bscan_down) {
+        LOGL(io.bscan_down);
+        io.bscan_down = 0;
+      }
+      
+      if(io.bscan_up) {
+        LOGL(io.bscan_up);
+        io.bscan_up = 0;
+      }
     }
     else{
-        lcd_drawString(16,32, sys_font, "Connecting...");
+      clearProgGFX();
+      lcd_drawLine(64 + int(14.0*cos(-th)),32 + int(14.0*sin(-th)),64 + int(14.0*cos(-th-3.1415)),32 + int(14.0*sin(-th-3.1415)));
+      lcd_drawLine(64 + int(20.0*cos(th+2.09)),32 + int(20.0*sin(th+2.09)),64 + int(20.0*cos(th+3.1415+2.09)),32 + int(20.0*sin(th+3.1415+2.09)));
+      lcd_drawLine(64 + int(6.0*cos(th+4.18)),32 + int(6.0*sin(th+4.18)),64 + int(6.0*cos(th+3.1415+4.18)),32 + int(6.0*sin(th+3.1415+4.18)));
+      updateProgGFX();
+      th += 0.007;
+      
     }
 
-    if(io.bscan_down & (1<<K_F1)) stats.fmode = 0;
-    if(io.bscan_down & (1<<K_F2)) stats.fmode = 1;
-    if(io.bscan_down) io.bscan_down = 0;
-    if(io.bscan_up) io.bscan_up = 0;
-
-    
-    if(!stats.usb_state){
-        USBComposite.clear();
-        USBComposite.setProductId(0x0031);
-        HID.registerComponent();
-        HID.setReportDescriptor(HID_KEYBOARD); 
-        USB_midi.registerComponent();
-        bool usb = USBComposite.begin();
-        if(!usb) LOGL("usb begin failed");
-        else LOGL("usb begin succ");
-        stats.usb_state = usb;
+    if(USBComposite != stats.usb_state){
+      stats.usb_state = USBComposite;
+      lcd_clearSection(0,8,0,128,0);
+      drawTitle();
+      drawUSBStatus();
+      lcd_updateSection(0,1,0,128);
+      io.bscan_down |= (1<<K_F1);
     }
+
+    delay(5);
 }

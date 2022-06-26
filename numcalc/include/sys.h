@@ -4,7 +4,7 @@
 
 #include "../numcalcium-base/hw.h"
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define LOG(X) Serial.print(X)
@@ -50,7 +50,8 @@ typedef struct Stats {
   volatile int no_input_time;
   volatile int gfx_refresh;
   volatile int gfx_log;
-  int usb_state;
+  volatile int usb_state;
+  volatile int usb_conn;
 } stats_t;
 
 extern stats_t stats;
@@ -58,3 +59,11 @@ extern font_t sys_font;
 
 void changeToProg(int i);
 void resetInactiveTime();
+
+void connectUSB();
+void disconnectUSB();
+void drawUSBStatus();
+void drawTitle();
+void drawFooter();
+void clearProgGFX();
+void updateProgGFX();

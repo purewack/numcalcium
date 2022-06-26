@@ -6,12 +6,6 @@
 #include "numcalcium-base/hw.cpp"
 #include "numcalcium-base/fonttiny.cpp"
 
-USBHID HID;
-HIDKeyboard USB_keyboard(HID);
-USBMIDI USB_midi;
-USBAUDIO USB_audio;
-
-// SPIClass SPI_2(2);
 font_t sys_font = {
     fonttiny_tall,
     fonttiny_wide,
@@ -24,6 +18,68 @@ stats_t stats = {
     {0},
     0,0,0,0,0,0,0
 };
+
+// SPIClass SPI_2(2);
+
+USBHID HID;
+HIDKeyboard USB_keyboard(HID);
+USBMIDI USB_midi;
+USBAUDIO USB_audio;
+
+void connectUSB(){
+    gpio_set_mode(GPIOA, 13, GPIO_OUTPUT_PP);
+    gpio_write_bit(GPIOA, 13, 1);
+}
+
+void disconnectUSB(){
+    gpio_set_mode(GPIOA, 13, GPIO_OUTPUT_PP);
+    gpio_write_bit(GPIOA, 13, 0);   
+}
+
+void drawUSBStatus(){
+    if(USBComposite)
+        lcd_drawString(110,0, sys_font, "USB");
+}
+
+void drawTitle(){
+    lcd_drawString(0,0, sys_font, stats.cprog->title);
+    lcd_drawHline(0,9,128);
+}
+
+void drawFooter(){
+//     hud.setCursor(0,64);
+//     if(stats.cprog->txt_f1){
+//       u8g2_uint_t sel = (stats.fmode == 0 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
+//       hud.drawButtonUTF8(0,64, sel, 41, 0, 0, stats.cprog->txt_f1);
+//     }
+//     if(stats.cprog->txt_f2){
+//       u8g2_uint_t sel = (stats.fmode == 1 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
+//       hud.drawButtonUTF8(42,64 , sel, 41, 0, 0, stats.cprog->txt_f2);
+//     }
+//     if(stats.cprog->txt_f3){
+//       u8g2_uint_t sel = (stats.fmode == 2 ? U8G2_BTN_INV|U8G2_BTN_BW1 : U8G2_BTN_BW1 );
+//       hud.drawButtonUTF8(84,64 , sel, 41, 0, 0, stats.cprog->txt_f3);
+//     }
+
+//     if(stats.cprog->onGfx)
+//       stats.cprog->onGfx();
+
+//     // if(stats.gfx_text_count){
+//     //   for(int i=0; i<7;i++){
+//     //     if(i > stats.gfx_text_count-1) break;
+//     //       hud.setCursor(0, 64-10-(9*i));
+//     //       hud.print(stats.gfx_text[stats.gfx_text_count-1-i]);
+//     //   }
+//     // }
+}
+
+void clearProgGFX(){
+    lcd_clearSection(10,64-10,0,128,0);
+}
+void updateProgGFX(){
+    lcd_updateSection(1,7,0,128);
+}
+
 
 double computeNumber(vnum_t &n){
     auto e = double(n.e_int);
