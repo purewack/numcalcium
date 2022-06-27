@@ -18,6 +18,7 @@ void powerOff(int fade){
   lcd_update();
   if(fade) lcd_fade(0);
   
+  pinMode(SYS_PDOWN, OUTPUT);
   digitalWrite(SYS_PDOWN, HIGH);
 }
 
@@ -181,19 +182,13 @@ void setup(){
 
 void loop(){
   if(stats.cprog_sel){
-    if(io.turns_left && stats.c_i > 0) {
+    if(io.turns_left && stats.c_i > -1) {
       io.turns_left = 0;
       stats.c_i--;
     }
     else if(io.turns_right && stats.c_i < P_COUNT-1){
       io.turns_right = 0;
       stats.c_i++;
-    }
-    if(io.ok){
-      changeToProg(stats.c_i);
-      stats.cprog_sel = 0;
-      delay(1000);
-      io.ok = 0;
     }
 
     lcd_clear();
@@ -218,7 +213,19 @@ void loop(){
       }
       ii++;
     }
-    lcd_update();
+    lcd_update();    
+    
+    if(io.ok){
+		if(stats.cprog_sel < 0)
+			powerOff(1);
+		
+      changeToProg(stats.c_i);
+      stats.cprog_sel = 0;
+      lcd_clear();
+      delay(1000);
+      io.ok = 0;
+    }
+
   }
   else{  
     if(stats.cprog){

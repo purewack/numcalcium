@@ -1,8 +1,6 @@
-
 #include "include/sys.h"
 #include "include/comms.h"
 #include "include/modes.h"
-
 
 const char numpad_keys[20*2] = {
     KEY_BACKSPACE,'0','.','=',
@@ -17,7 +15,6 @@ const char numpad_keys[20*2] = {
     0,0,0,0,
     0,0,0,0
 };
-
 
 void mode_numpad_on_begin(){
   lcd_clear();
