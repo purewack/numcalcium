@@ -6,9 +6,9 @@ void mode_comms_on_begin(){
     Wire.begin();
     LOGL("wire begin");
 	lcd_clear();
-	lcd_drawString(0,32-8,sys_font,"\0\0\0");
-	lcd_drawString(8,32-3,sys_font,"\0\0\0");
-	lcd_drawString(16,32,sys_font,"\0\0\0");
+	lcd_drawString(0,32-8,sys_font,"ZZZ");
+	lcd_drawString(8,32-3,sys_font,"XXX");
+	lcd_drawString(16,32,sys_font,"YYY");
 	lcd_update();
 }
 
