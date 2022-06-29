@@ -128,12 +128,14 @@ void setup(){
   stats.progs[P_NUMPAD].inactive_lim = 800;
   stats.progs[P_NUMPAD].no_input_lim = 240000; //20mins
 
-  // stats.progs[P_CALC].onBegin = mode_calc_on_begin;
-  // stats.progs[P_CALC].onEnd = mode_calc_on_end;
+  
   // stats.progs[P_CALC].onPress = mode_calc_on_press;
   // stats.progs[P_CALC].onRelease = mode_calc_on_release;
   // stats.progs[P_CALC].onGfx = mode_calc_on_gfx;
   // stats.progs[P_CALC].onNav = mode_calc_on_nav;
+  stats.progs[P_CALC].onBegin = mode_calc_on_begin;
+  stats.progs[P_CALC].onEnd = mode_calc_on_end;
+  stats.progs[P_CALC].onProcess = mode_calc_on_process;
   stats.progs[P_CALC].title = "Calculator";
   stats.progs[P_CALC].txt_f1 = "SCI";
   stats.progs[P_CALC].txt_f2 = "BIN";
