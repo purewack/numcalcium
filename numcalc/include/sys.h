@@ -56,7 +56,7 @@ typedef struct Stats {
 extern stats_t stats;
 extern font_t sys_font;
 
-void changeToProg(int i);
+int changeToProg(int i);
 void resetInactiveTime();
 
 void connectUSB();
