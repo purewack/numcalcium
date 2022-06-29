@@ -16,18 +16,22 @@ void powerOff(int fade){
 
   lcd_clear();
   lcd_update();
-  if(fade) lcd_fade(0);
+  lcd_fade(0);
   
   pinMode(SYS_PDOWN, OUTPUT);
   digitalWrite(SYS_PDOWN, HIGH);
 }
 
-void changeToProg(int i){
-  if(&stats.progs[i] == stats.cprog) return;
+int changeToProg(int i){
+  if(&stats.progs[i] == stats.cprog) return 1;
+	
+LOGL("prog change");
 
   if(stats.cprog){ 
-    if(stats.cprog->onEnd) 
+    if(stats.cprog->onEnd) {
       stats.cprog->onEnd();
+	LOGL("prog end");
+}
   }
 
   stats.cprog = &stats.progs[i];
@@ -36,10 +40,19 @@ void changeToProg(int i){
   stats.c_i = i;
   stats.gfx_log = 0;
 
+LOGL("assign new prog...");
+
   if(stats.cprog){
-    if(stats.cprog->onBegin) 
+LOGL("check onbegin");
+    if(stats.cprog->onBegin){ 
+LOGL("start onbegin");
     stats.cprog->onBegin(); 
+	LOGL("prog Begin");	
+}
+
+LOGL("leave prog change");
   }
+	return 0;
 }
 
 void resetInactiveTime(){
@@ -173,7 +186,6 @@ void setup(){
   // if(p >= P_COUNT) p = 0;
   // if(f > 2) f = 0;
 
-  LOGL("seq start");
   changeToProg(P_COMMS);
   stats.fmode = 0;
   LOGL("sched start");
@@ -201,14 +213,11 @@ void loop(){
     int ii = 0;
     for(int i=(stats.c_i); i<(stats.c_i + 3); i++){
       if(i >= P_COUNT) continue;
-      // u8g2_uint_t sel = (i == stats.c_i ? U8G2_BTN_INV|U8G2_BTN_BW1|U8G2_BTN_HCENTER : U8G2_BTN_BW1|U8G2_BTN_HCENTER);
       
       const char* text = (i==-1 ? "Power Off" : stats.progs[i].title);
-      // hud.drawButtonUTF8(64,32 + (16*ii), sel, 128, 0, 0, text);
       lcd_drawString(16,16 + (16*ii), sys_font, text);
       if(i == stats.c_i) 
       {
-        //lcd_drawRectSize(0,(16*ii), 126, 16);
         lcd_drawHline(16, 18 + 8 + (16*ii), 126-32);
       }
       ii++;
@@ -216,25 +225,28 @@ void loop(){
     lcd_update();    
     
     if(io.ok){
-		if(stats.cprog_sel < 0)
-			powerOff(1);
-		
-      changeToProg(stats.c_i);
-      stats.cprog_sel = 0;
-      lcd_clear();
-      delay(1000);
-      io.ok = 0;
+	if(stats.c_i < 0)
+		powerOff(1);
+	do{
+		delay(20);
+	}while(io.ok);
+	int pp = changeToProg(stats.c_i);
+	stats.cprog_sel = 0;
     }
 
   }
   else{  
-    if(stats.cprog){
-      if(stats.cprog->onProcess) 
-      stats.cprog->onProcess();
+    if(!stats.cprog_sel && stats.cprog){
+      if(stats.cprog->onProcess) {
+stats.cprog->onProcess();
+	}
     }
     if(io.ok){
-      io.ok = 0;
-      stats.cprog_sel = 1;
+	do{
+		delay(20);
+	}while(io.ok);
+      
+	stats.cprog_sel = 1;
     }
   }
 

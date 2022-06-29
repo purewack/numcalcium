@@ -3,7 +3,8 @@
 #include "include/modes.h"
 
 void mode_comms_on_begin(){
-    Wire.begin();
+	LOGL("begin comms");
+    //Wire.begin();
     LOGL("wire begin");
 	lcd_clear();
 	lcd_drawString(0,32-8,sys_font,"ZZZ");
@@ -13,12 +14,13 @@ void mode_comms_on_begin(){
 }
 
 void mode_comms_on_end(){
-    Wire.end();
+    //Wire.end();
     LOGL("wire end");
 }
 
 void mode_comms_on_process(){
-    byte error, address;
+	return;    
+byte error, address;
     int nDevices;
   
     Serial.println("Scanning...");
