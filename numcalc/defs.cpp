@@ -157,7 +157,7 @@ void numberInputKey(vnum_t& n, uint32_t i, int pos){
     int ii = 0;
     char cc = '0';
     for(int j=0; j<10; j++){
-        if(i == key_map[j]) {
+        if(i == (1<<key_map[j])) {
             ii = j;
             cc += j;
         }
@@ -171,7 +171,7 @@ void numberInputKey(vnum_t& n, uint32_t i, int pos){
         auto dot = n.dot;
         int dp = n.dot ? edc+1 : -1;
         
-        if(i == K_DOT && mdc == 0){
+        if(i == (1<<K_DOT) && mdc == 0){
             dot = true;
             if(pos > edc) pos = edc;
             
@@ -210,7 +210,7 @@ void numberInputKey(vnum_t& n, uint32_t i, int pos){
     
     
     
-    if(i == K_DOT) {
+    if(i == (1<<K_DOT)) {
         if(n.dot) return;
         if(n.e_dc == 0) n.e_dc = 1;
         n.dot = true;

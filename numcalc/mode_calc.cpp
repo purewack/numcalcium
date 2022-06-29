@@ -314,7 +314,7 @@ int expr_insert_number(){
     //enter edit mode number
     expr_cursor_inter = 0;
     expr_cursor++;
-    return;
+    return 0;
   }
 
   if(expr.buf[expr_cursor].order > O_NUM)
@@ -324,7 +324,7 @@ int expr_insert_number(){
   nn.order = O_NUM;
   clearNumber(nn.value);
   sarray_insert(expr,nn,expr_cursor);
-  return;
+  return 0;
  }
 
 int expr_insert_symbol(int sym){
@@ -395,7 +395,7 @@ int expr_insert_symbol(int sym){
 
     sarray_insert(expr,nn,expr_cursor);
 
-    return;
+    return 0;
 }
 
 void clearAll(){
@@ -416,13 +416,16 @@ void mode_calc_on_begin(){
   expr.lim = 100;
   expr.buf = expr_buf; 
   clearAll();
+  lcd_clear();
+  drawTitle();
+  lcd_update();
 }
 
 void mode_calc_on_end(){
 
 }
 
-void mode_calc_process(){
+void mode_calc_on_process(){
 //void mode_calc_on_nav(int d){
 
     
@@ -430,7 +433,7 @@ void mode_calc_process(){
     if(io.turns_left || io.turns_right){
         int d = 0;
         if(io.turns_left){
-            d = io.turns_left;
+            d = -io.turns_left;
             io.turns_left = 0;
         }
         else if(io.turns_right){
@@ -512,6 +515,7 @@ void mode_calc_process(){
             
             if(parsed) LOGL("have tree");
             result = compute_expr(parsed);
+            LOGL(result);
             LOGL("result");
             return;
         }
@@ -587,6 +591,8 @@ void mode_calc_process(){
 //19 char wide line
 //void mode_calc_on_gfx(){
     if(!calc_new_bytes) return;
+    calc_new_bytes = 0;
+    clearProgGFX();
 
 // if(secondF){
 //     hud.setCursor(0,18);
@@ -597,6 +603,7 @@ void mode_calc_process(){
 // }
 
     //vlla == 21 max
+    const int y = 32-8;
     int ll = 0;
     int vlc = 0;
     int cpx = 0;
@@ -656,45 +663,45 @@ void mode_calc_process(){
             if(x>122) continue;
 
             if (r->symbol == S_SUB)
-                lcd_drawChar(x,32,sys_font,'-');
+                lcd_drawChar(x,y,sys_font,'-');
             else if (r->symbol == S_ADD)
-                lcd_drawChar(x,32,sys_font,'+');
+                lcd_drawChar(x,y,sys_font,'+');
             else if (r->symbol == S_MUL)
-                lcd_drawChar(x,32,sys_font,'*');
+                lcd_drawChar(x,y,sys_font,'*');
             else if (r->symbol == S_DIV)
-                lcd_drawChar(x,32,sys_font,'/');
+                lcd_drawChar(x,y,sys_font,'/');
             else if (r->symbol == S_POW)
-                lcd_drawChar(x,32,sys_font,'^');
+                lcd_drawChar(x,y,sys_font,'^');
             else if (r->symbol == S_COS)
-                lcd_drawString(x,32,sys_font,"cos(");
+                lcd_drawString(x,y,sys_font,"cos(");
             else if (r->symbol == S_SIN)
-                lcd_drawString(x,32,sys_font,"sin(");
+                lcd_drawString(x,y,sys_font,"sin(");
             else if (r->symbol == S_COS)
-                lcd_drawString(x,32,sys_font,"cos(");
+                lcd_drawString(x,y,sys_font,"cos(");
             else if (r->symbol == S_TAN)
-                lcd_drawString(x,32,sys_font,"tan(");
+                lcd_drawString(x,y,sys_font,"tan(");
             else if (r->symbol == S_ABS)
-                lcd_drawString(x,32,sys_font,"abs(");
+                lcd_drawString(x,y,sys_font,"abs(");
             else if (r->symbol == S_SQR)
-                lcd_drawString(x,32,sys_font,"sqrt(");
+                lcd_drawString(x,y,sys_font,"sqrt(");
             else if (r->symbol == S_SQR)
-                lcd_drawString(x,32,sys_font,"sqrt(");
+                lcd_drawString(x,y,sys_font,"sqrt(");
             else if (r->symbol == S_GRP)
-                lcd_drawChar(x,32,sys_font,'(');
+                lcd_drawChar(x,y,sys_font,'(');
             else if (r->symbol == S_END)
-                lcd_drawChar(x,32,sys_font,')');
+                lcd_drawChar(x,y,sys_font,')');
 
             x += 6*r->vlen;
         }
         else {
-            printNumber(r->value,x,32);
+            printNumber(r->value,x,y);
         }
         
         if(i == expr_cursor){
-            lcd_drawHLine(xx,33,r->vlen*6);
+            lcd_drawHline(xx,y+9,r->vlen*6);
             if(expr_cursor_inter > 0){
                 int xxx = xx - 6 + expr_cursor_inter*6;
-                lcd_drawHLine(xxx,35,6);
+                lcd_drawHline(xxx,y+11,6);
                 //hud.drawHLine(xxx+5,36,1);
             }
         }
@@ -705,13 +712,22 @@ void mode_calc_process(){
 //     hud.drawBox(0,24,6,8);
 //     hud.setDrawColor(1);
 // }
-    
-    // hud.setCursor(0,64-10);
-    // hud.print('=');
-    // hud.setCursor(8,64-10);
-    // hud.print(result, 12);
+
     lcd_drawChar(0,64-10,sys_font,'=');
-    char res_str[16];
-    sprintf(res_str,"%f",result);
+    long res_exp = long(result);
+    long res_mant = long((result-double(res_exp))*1000000);
+    char res_str[32];  
+    for(int i=0;i<32;i++)
+        res_str[i] = 0;
+    char res_mant_str[13];
+    int res_str_cnt = snprintf(res_str,32-13,"%ld",res_exp);
+    int res_mant_str_cnt = snprintf(res_mant_str,1,"%ld",res_mant);
+    res_str[res_str_cnt++] = '.';
+    // for(int i=res_str_cnt; i<23; i++){
+    //     res_str[]
+    //     res_str[i] = '0';
+    // }
     lcd_drawString(8,64-10,sys_font,res_str);
+
+    updateProgGFX();
 }
