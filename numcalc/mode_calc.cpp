@@ -5,6 +5,11 @@
 #include "include/util.h"
 #include "include/number.h"
 
+#undef LOGL
+#define LOGL(X) 
+#undef LOG
+#define LOG(X) 
+
 typedef struct Token token_t;
 
 typedef struct Token
