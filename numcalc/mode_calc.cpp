@@ -714,20 +714,14 @@ void mode_calc_on_process(){
 // }
 
     lcd_drawChar(0,64-10,sys_font,'=');
-    long res_exp = long(result);
-    long res_mant = long((result-double(res_exp))*1000000);
-    char res_str[32];  
-    for(int i=0;i<32;i++)
-        res_str[i] = 0;
-    char res_mant_str[13];
-    int res_str_cnt = snprintf(res_str,32-13,"%ld",res_exp);
-    int res_mant_str_cnt = snprintf(res_mant_str,1,"%ld",res_mant);
-    res_str[res_str_cnt++] = '.';
-    // for(int i=res_str_cnt; i<23; i++){
-    //     res_str[]
-    //     res_str[i] = '0';
-    // }
-    lcd_drawString(8,64-10,sys_font,res_str);
+    
+    char str[64];
+    const char* sign = (result < 0) ? "-" : " ";
+    double val = (result < 0) ? -result : result;
+    long exp = long(val);
+    long frac = long((val - exp) * pow(10,15));
+    snprintf(str,64,"%s%d.%015d",sign,exp,frac);
+    lcd_drawString(8,64-10,sys_font,str);
 
     updateProgGFX();
 }
