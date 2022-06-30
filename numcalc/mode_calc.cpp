@@ -719,8 +719,14 @@ void mode_calc_on_process(){
     const char* sign = (result < 0) ? "-" : " ";
     double val = (result < 0) ? -result : result;
     long exp = long(val);
-    long frac = long((val - exp) * pow(10,15));
-    snprintf(str,64,"%s%d.%015d",sign,exp,frac);
+    double frac_d = val-double(exp);
+    if(frac_d < 0.0001){
+    	long frac = long(frac_d * pow(10,12));
+    	snprintf(str,64,"%s%d.%012d",sign,exp,frac);
+    }else{
+    	long frac = long(frac_d * pow(10,6));
+    	snprintf(str,64,"%s%d.%06d...",sign,exp,frac);
+    }
     lcd_drawString(8,64-10,sys_font,str);
 
     updateProgGFX();
