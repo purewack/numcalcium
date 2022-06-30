@@ -48,7 +48,8 @@ token_t expr_buf[100];
 int expr_cursor;
 int expr_cursor_inter;
 int wstart;
-int shift;
+bool eng;
+bool shift;
 bool secondF;
 int calc_new_bytes = 0;
 double result;
@@ -413,6 +414,7 @@ void clearAll(){
 }
 
 void mode_calc_on_begin(){
+  eng = 1;
   expr.lim = 100;
   expr.buf = expr_buf; 
   clearAll();
@@ -713,21 +715,52 @@ void mode_calc_on_process(){
 //     hud.setDrawColor(1);
 // }
 
-    lcd_drawChar(0,64-10,sys_font,'=');
     
     char str[64];
     const char* sign = (result < 0) ? "-" : " ";
     double val = (result < 0) ? -result : result;
     long exp = long(val);
     double frac_d = val-double(exp);
-    if(frac_d < 0.0001){
+    int cc = snprintf(str,64,"%ld",exp);
+    if(frac_d < 0.000001){
     	long frac = long(frac_d * pow(10,12));
     	snprintf(str,64,"%s%d.%012d",sign,exp,frac);
     }else{
     	long frac = long(frac_d * pow(10,6));
     	snprintf(str,64,"%s%d.%06d...",sign,exp,frac);
     }
+    for(int i=0;i<(frac_d < 0.000001 ? 4 : 2);i++)
+    	lcd_drawHline(10+6*(cc+2+(3*i)),63,(3*6)-3);
+
+    lcd_drawChar(0,64-10,sys_font,'=');
     lcd_drawString(8,64-10,sys_font,str);
+
+    if(eng){//engineering notation
+    	
+	if(abs(result) < 1){
+    	lcd_drawChar(0,64-10-8,sys_font,'=');
+	      	if(result < 0.000000001) {
+    			long frac = long(frac_d * pow(10,12));
+	       		snprintf(str,64,"%dp",frac);	       
+		}
+		else if(result < 0.000001) {
+    			long frac = long(frac_d * pow(10,9));
+	       		snprintf(str,64,"%dn",frac);	       
+		}
+		else if(result < 0.001) {
+    			long frac = long(frac_d * pow(10,6));
+	       		snprintf(str,64,"%du",frac);	       
+		}
+		else{
+    			long frac = long(frac_d * pow(10,3));
+	       		snprintf(str,64,"%dm",frac);	       
+		}
+		lcd_drawString(16,64-10-8,sys_font,str);
+	}
+    }
+    else{ //SI notation
+    
+    }
 
     updateProgGFX();
 }
