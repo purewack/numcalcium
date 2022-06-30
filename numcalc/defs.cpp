@@ -4,13 +4,13 @@
 #include "include/number.h"
 
 #include "numcalcium-base/hw.cpp"
-#include "numcalcium-base/fonttiny.cpp"
+#include "numcalcium-base/ftiny.cpp"
 
 font_t sys_font = {
-    fonttiny_tall,
-    fonttiny_wide,
-    (void*)fonttiny_data,
-    fonttiny_data_count
+    ftiny_tall,
+    ftiny_wide,
+    (void*)ftiny_data,
+    ftiny_count
 };
 
 stats_t stats = {
@@ -314,18 +314,11 @@ void printNumber(vnum_t& n, int &x, const int y){
     // LOGL(n.m_dc);
     // LOGL(n.e_int);
     // LOGL(n.m_int);
-    // LOGL("}\n");
-
-    font_t fnt = {
-      fonttiny_tall,
-      fonttiny_wide,
-      (void*)fonttiny_data,
-      fonttiny_data_count
-    };
+    // LOGL("}\n")
 
     for(int c=0; c<cc; c++){
         if(c == 1 && n.dot) {
-            lcd_drawChar(x,y,fnt,'.');
+            lcd_drawChar(x,y,sys_font,'.');
             x+=6;
         }
 
@@ -346,7 +339,7 @@ void printNumber(vnum_t& n, int &x, const int y){
             c += '0';
 
             if(x>=0 || x<=128-6)
-                lcd_drawChar(x,y,fnt,c);
+                lcd_drawChar(x,y,sys_font,c);
             
             x+=6;
         }
