@@ -25,7 +25,7 @@ void mode_comms_on_begin(){
 	lcd_clear();
   drawTitle();
   lcd_update();
-  i2c_step = I2C_SCAN;
+  i2c_step = I2C_RES;
   io.bscan_down |= 1;
 }
 
@@ -75,8 +75,8 @@ i2c_task:
               lcd_drawHline(x*4,32+i*8,3);
 
             if(x + i*32 == i2c_addr_cursor){
-              uint8_t box[5] = {0x3f,0x3f,0x3f,0x3f,0x3f};
-              lcd_drawTile(x*4,31+i*8,3,5,0,box,DRAWBITMAP_XOR);
+              uint8_t box = 0x3f;
+              lcd_drawTile(x*4,31+i*8,3,5,0,0,&box,DRAWBITMAP_XOR);
             }
           }
         }
@@ -255,9 +255,25 @@ i2c_task:
           snprintf(str,32,"%3d  0x%s%X  0b%s",d,d < 16 ? "0" : "",d,bin_str);
           lcd_drawString(0,64-8,sys_font,str);
 
-          // if(imode)
-          //   lcd_drawHline(imode*2*6 + 4*6*imode,64-10,4*6);
-          
+          if(imode){
+            byte sel = 0xff;
+            byte xx = 0;
+            byte ww = 0;
+            if(imode == 4) {
+              xx = 6*11;
+              ww = 6*10;
+            }
+            else if(imode == 2) {
+              xx = 6*5;
+              ww = 6*4;
+            }
+            else if(imode == 1) {
+              xx = 0;
+              ww = 6*3;
+            }
+            lcd_drawTile(xx,64-8,ww,8,0,0,&sel,DRAWBITMAP_XOR);
+          }
+            
         updateProgGFX();
 
       break;
