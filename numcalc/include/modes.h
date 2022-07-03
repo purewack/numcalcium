@@ -1,4 +1,6 @@
 #pragma once
+
+#include <libmaple/delay.h>
 //CMODE:
 //numpad -> F1 = normal, F2 = Arrows, F3 = phone ascii
 //calculator -> F1 = basic, F2 = sci, F3 = comp

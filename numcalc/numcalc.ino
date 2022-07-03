@@ -12,7 +12,7 @@ void powerOff(int fade){
   }
   EEPROM.write(0,pp);
   EEPROM.write(1,stats.fmode);
-  delay(500);
+  delay_us(500000);
 
   lcd_clear();
   lcd_update();
@@ -230,7 +230,7 @@ void loop(){
 	if(stats.c_i < 0)
 		powerOff(1);
 	do{
-		delay(20);
+		delay_us(20000);
 	}while(io.ok);
 	int pp = changeToProg(stats.c_i);
 	stats.cprog_sel = 0;
@@ -245,7 +245,7 @@ stats.cprog->onProcess();
     }
     if(io.ok){
 	do{
-		delay(20);
+		delay_us(20000);
 	}while(io.ok);
       
 	stats.cprog_sel = 1;
