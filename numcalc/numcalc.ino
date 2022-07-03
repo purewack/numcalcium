@@ -196,6 +196,7 @@ void setup(){
 
 void loop(){
   if(stats.cprog_sel){
+    
     if(io.turns_left && stats.c_i > -1) {
       io.turns_left = 0;
       stats.c_i--;
@@ -206,9 +207,9 @@ void loop(){
     }
 
     lcd_clear();
-    lcd_drawString(0,0,sys_font,"~~Programs~~");
-    lcd_drawHline(0,8,128);
-    lcd_drawHline(0,10,128);
+    uint8_t pat = 0xff;
+    lcd_drawTile(0,0,128,8,0,0,&pat,DRAWBITMAP_SOLID);
+    lcd_drawString(5*6,0,sys_font,"~~Programs~~");
     if(stats.c_i > -1)
       lcd_drawString(120,14,sys_font,"^");
 
@@ -227,28 +228,25 @@ void loop(){
     lcd_update();    
     
     if(io.ok){
-	if(stats.c_i < 0)
-		powerOff(1);
-	do{
-		delay_us(20000);
-	}while(io.ok);
-	int pp = changeToProg(stats.c_i);
-	stats.cprog_sel = 0;
+      delay_us(500000);
+      if(stats.c_i < 0)
+        powerOff(1);
+        
+      int pp = changeToProg(stats.c_i);
+      stats.cprog_sel = 0;
     }
 
   }
   else{  
     if(!stats.cprog_sel && stats.cprog){
       if(stats.cprog->onProcess) {
-stats.cprog->onProcess();
-	}
+      stats.cprog->onProcess();
+	    }
     }
     if(io.ok){
-	do{
-		delay_us(20000);
-	}while(io.ok);
-      
-	stats.cprog_sel = 1;
+      LOGL("ok");
+      delay_us(500000);
+      stats.cprog_sel = 1;
     }
   }
 
