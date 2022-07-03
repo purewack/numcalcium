@@ -32,6 +32,8 @@ void mode_numpad_on_begin(){
 }
 
 void mode_numpad_on_end(){
+  disconnectUSB();
+  USBComposite.end();
   drawUSBStatus();
   lcd_updateSection(0,1,0,128);
 }
