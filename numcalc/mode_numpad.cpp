@@ -24,12 +24,11 @@ void mode_numpad_on_begin(){
 
   if(!USBComposite){
     disconnectUSB();
-    delay(100);
+    delay_us(100000);
     connectUSB();  //stats.cprog_sel = 1;
-    delay(100);
+    delay_us(100000);
     USBComposite.begin();
   }
-  //while(!USBComposite) delay(1);
 }
 
 void mode_numpad_on_end(){
@@ -90,5 +89,5 @@ void mode_numpad_on_process(){
       io.bscan_down |= (1<<K_F1);
     }
 
-    delay(5);
+    delay_us(5000);
 }
