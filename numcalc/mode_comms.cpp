@@ -11,10 +11,12 @@ int i2c_addr_count = 0;
 int i2c_addr_table[4];
 int i2c_payload_count = 0;
 int i2c_payload_ptr = 0;
-int i2c_payload[16];
+byte i2c_payload[16];
 int i2c_payload_ptr_offset = 0;
 
 bool comms_setup = 0;
+int imode = 0;
+int digit_ptr = 0;
 
 void mode_comms_on_begin(){
   if(!comms_setup)
@@ -109,7 +111,84 @@ i2c_task:
 
       case I2C_WRITE:
         
-        if(io.bscan_down == (1<<K_P)) {
+        if ( io.bscan_down&0x70000 ){
+          int i = io.bscan_down>>16;
+          io.bscan_down = 0;
+          digit_ptr = 0;
+          if(imode != i)
+            imode = i;
+          else
+            imode = 0;
+        }
+        else if ((io.bscan_down & 0x7772) && imode == 1){
+          uint32_t i = ((io.bscan_down&0x70)>>3); //123
+          i |= ((io.bscan_down&0x000700)>>4); //456
+          i |= ((io.bscan_down&0x007000)>>5); //789
+          i |= ((io.bscan_down&0x000002)>>1); //0
+          LOGL(i);
+          for(int j=0; j<10; j++){
+            if(i == (1<<j)){
+              i=j; 
+              break;
+            }
+          }
+
+          uint8_t a = (i2c_payload[i2c_payload_ptr]); //org
+          if(digit_ptr == 0){
+            a /= 10;
+            a *= 10;
+            i2c_payload[i2c_payload_ptr] = a+i;
+          }
+          else if(digit_ptr == 1){
+            uint8_t b = ((a / 100)*10 + i)*10; //xNx
+            uint8_t c = a - ((a / 10)*10); //..x
+            i2c_payload[i2c_payload_ptr] = b+c;
+          }
+          else if(digit_ptr == 2){
+            uint8_t b = i*100; //N..
+            uint8_t c = a - ((a / 100)*100); //.xx
+            i2c_payload[i2c_payload_ptr] = b+c;
+          }
+
+          digit_ptr = (digit_ptr+1) % 3;
+
+          io.bscan_down = 0;
+        }
+        else if ((io.bscan_down & 0x8FFFE) && imode == 2){
+          uint32_t i = ((io.bscan_down&0x70)>>3); //123
+          i |= ((io.bscan_down&0x000700)>>4); //456
+          i |= ((io.bscan_down&0x007000)>>5); //789
+          i |= ((io.bscan_down&0x000002)>>1); //0
+          i |= ((io.bscan_down&0x00000C)<<8); //AB
+          i |= ((io.bscan_down&0x000080)<<5); //C
+          i |= ((io.bscan_down&0x00800)<<2); //D
+          i |= ((io.bscan_down&0x08000)>>1); //E
+          i |= ((io.bscan_down&0x80000)>>4); //F
+          LOGL(i);
+          for(int j=0; j<16; j++){
+            if(i == (1<<j)){
+              i=j; 
+              break;
+            }
+          }
+
+          i2c_payload[i2c_payload_ptr] &= 0xf0>>(digit_ptr*4);
+          i2c_payload[i2c_payload_ptr] |= i<<(digit_ptr*4);
+        
+          digit_ptr = (!digit_ptr) & 0x1;
+
+          io.bscan_down = 0;
+        }
+        else if ((io.bscan_down & 0x3772) && imode == 4){
+            if(io.bscan_down == (1<<K_0)) 
+              i2c_payload[i2c_payload_ptr] = 0;
+            else{
+              byte i = ((io.bscan_down&0x70)>>4) | ((io.bscan_down&0x700)>>5)| ((io.bscan_down&0x3000)>>6);
+              i2c_payload[i2c_payload_ptr] ^= i;
+            }
+          io.bscan_down = 0;
+        }
+        else if(io.bscan_down == (1<<K_P)) {
           clearProgGFX();
           updateProgGFX();
           Wire.beginTransmission(i2c_addr_cursor+1);
@@ -118,12 +197,12 @@ i2c_task:
           io.bscan_down = 0;
           delay_us(100000);
         }
-        else if(io.bscan_down & (1<<K_X)){
+        else if(io.bscan_down == (1<<K_X)){
           i2c_payload_count = 0;
           i2c_payload_ptr = 0;
           io.bscan_down = 0;
         }
-        else if(io.bscan_down & (1<<K_R)){
+        else if(io.bscan_down == (1<<K_R)){
           i2c_step = I2C_RES;
           io.bscan_down = 0;
           goto i2c_task;
@@ -157,7 +236,7 @@ i2c_task:
         clearProgGFX();
           // snprintf(str,32,"(P)ost; (R)et; %s","...");
           // lcd_drawString(0,16,sys_font,str);
-          snprintf(str,32,"Dest:[%d]{0x%X}",1+i2c_addr_cursor,1+i2c_addr_cursor);
+          snprintf(str,32,"Dest @ [%d]{0x%X}",1+i2c_addr_cursor,1+i2c_addr_cursor);
           lcd_drawString(0,16,sys_font,str);
           lcd_drawHline(0,24,128);
 
@@ -175,6 +254,9 @@ i2c_task:
 
           snprintf(str,32,"%3d  0x%s%X  0b%s",d,d < 16 ? "0" : "",d,bin_str);
           lcd_drawString(0,64-8,sys_font,str);
+
+          // if(imode)
+          //   lcd_drawHline(imode*2*6 + 4*6*imode,64-10,4*6);
           
         updateProgGFX();
 
