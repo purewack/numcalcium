@@ -33,5 +33,5 @@ void mode_comms_on_process();
 
 #define P_AUDIO 4
 void mode_audio_on_begin();
-void mode_audio_on_begin();
-void mode_audio_on_begin();
+void mode_audio_on_end();
+void mode_audio_on_process();

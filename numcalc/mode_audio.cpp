@@ -2,24 +2,46 @@
 #include "include/sys.h"
 #include "include/comms.h"
 #include "include/modes.h"
+#include "libintdsp/_source/init.c"
+#include "libintdsp/_source/nodes.c"
+
 struct sig_gen_t
 {
     double f;
     double a;
     int shape;
-    int16_t table[512];
 } sig_gen;
 
 void mode_audio_on_begin(){
+    soft_i2s_init();
+    libintdsp_init(&gg,[](int16_t ph){
+        return int16_t(32766.0 * sin(2.0 * 3.1415 * double(ph)/double(LUT_COUNT)));
+    });
+    set_osc_freq(&osc,4400,31250);
 
+    lcd_clear();
+    drawTitle();
+    lcd_update();
 }
 
-void mode_audio_on_process_end(){
-
+void mode_audio_on_end(){
+    soft_i2s_deinit();
 }
 
 void mode_audio_on_process(){
-    if(abuf.req){
+    if(abuf.req){ 
+        int s = 0;
+        int e = abuf.buf_len>>1;
+        if(abuf.req == 2){
+        s = abuf.buf_len>>1;
+        e = abuf.buf_len;
+        }
+        abuf.req = 0;
 
+        for(int i=s; i<e; i+=2){
+            proc_osc((void*)(&osc));
+            abuf.buf[i] = osc.io->out;
+            abuf.buf[i+1] = osc.io->out;
+        }
     }
 }
