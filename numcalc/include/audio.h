@@ -2,4 +2,5 @@
 #include "../libintdsp/libintdsp.h"
 
 agraph_t gg;
-osc_t* osc;
+osc_t* osca;
+osc_t* oscb;
