@@ -167,6 +167,14 @@ void setup(){
   stats.progs[P_COMMS].inactive_inc = 0;
   stats.progs[P_COMMS].inactive_lim = 800;
 
+
+  stats.progs[P_GPIO].onBegin = mode_gpio_on_begin;
+  stats.progs[P_GPIO].onEnd = mode_gpio_on_end;
+  stats.progs[P_GPIO].onProcess = mode_gpio_on_process;
+  stats.progs[P_GPIO].title = "Util Pins";
+  stats.progs[P_GPIO].inactive_inc = 0;
+  stats.progs[P_GPIO].inactive_lim = 800;
+
   base_init();
   io_mux_init();
 
