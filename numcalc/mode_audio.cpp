@@ -17,8 +17,10 @@ void mode_audio_on_begin(){
     libintdsp_init(&gg,[](int16_t ph){
         return int16_t(32766.0 * sin(2.0 * 3.1415 * double(ph)/double(LUT_COUNT)));
     });
-    set_osc_freq(&osc,4400,31250);
-
+    
+    if(!osc) osc = (osc_t*)(new_osc(&gg,"S")->processor);
+    set_osc_freq(osc,4400,31250);
+    
     lcd_clear();
     drawTitle();
     lcd_update();
@@ -39,9 +41,10 @@ void mode_audio_on_process(){
         abuf.req = 0;
 
         for(int i=s; i<e; i+=2){
-            proc_osc((void*)(&osc));
-            abuf.buf[i] = osc.io->out;
-            abuf.buf[i+1] = osc.io->out;
+            proc_osc((void*)(osc));
+            int s = (osc->io->out*50)>>8;
+            abuf.buf[i] = s;
+            abuf.buf[i+1] = s;
         }
     }
 }
