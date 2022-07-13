@@ -167,6 +167,12 @@ void setup(){
   stats.progs[P_COMMS].inactive_inc = 0;
   stats.progs[P_COMMS].inactive_lim = 800;
 
+  stats.progs[P_AUDIO].onBegin = mode_audio_on_begin;
+  stats.progs[P_AUDIO].onEnd = mode_audio_on_end;
+  stats.progs[P_AUDIO].onProcess = mode_audio_on_process;
+  stats.progs[P_AUDIO].title = "Signals";
+  stats.progs[P_AUDIO].inactive_inc = 0;
+  stats.progs[P_AUDIO].inactive_lim = 800;
 
   stats.progs[P_GPIO].onBegin = mode_gpio_on_begin;
   stats.progs[P_GPIO].onEnd = mode_gpio_on_end;
@@ -174,7 +180,7 @@ void setup(){
   stats.progs[P_GPIO].title = "Util Pins";
   stats.progs[P_GPIO].inactive_inc = 0;
   stats.progs[P_GPIO].inactive_lim = 800;
-
+  
   base_init();
   io_mux_init();
 
