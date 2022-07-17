@@ -13,11 +13,7 @@ font_t sys_font = {
     ftiny_count
 };
 
-stats_t stats = {
-    nullptr,
-    {0},
-    0,0,0,0,0,0,0
-};
+stats_t stats;
 
 // SPIClass SPI_2(2);
 

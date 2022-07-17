@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <libmaple/delay.h>
-
+#include "modes.h"
 #include "../numcalcium-base/hw.h"
 
 #define DEBUG
@@ -42,7 +42,7 @@ typedef struct Program {
 
 typedef struct Stats {
   volatile prog_t* cprog;
-  volatile prog_t progs[6];
+  volatile prog_t progs[P_COUNT];
   volatile int c_i;
   volatile int fmode;
   volatile int cprog_sel;

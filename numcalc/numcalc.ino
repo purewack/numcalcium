@@ -181,6 +181,13 @@ void setup(){
   stats.progs[P_GPIO].inactive_inc = 0;
   stats.progs[P_GPIO].inactive_lim = 800;
   
+  stats.progs[P_SCOPE].onBegin = mode_scope_on_begin;
+  stats.progs[P_SCOPE].onEnd = mode_scope_on_end;
+  stats.progs[P_SCOPE].onProcess = mode_scope_on_process;
+  stats.progs[P_SCOPE].title = "Scope";
+  stats.progs[P_SCOPE].inactive_inc = 0;
+  stats.progs[P_SCOPE].inactive_lim = 800;
+
   base_init();
   io_mux_init();
 
