@@ -38,6 +38,7 @@ LOGL("prog change");
 
   stats.fmode = 0;
   stats.c_i = i;
+  stats.p_i = 0;
   stats.gfx_log = 0;
 
 LOGL("assign new prog...");
