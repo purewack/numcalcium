@@ -16,7 +16,7 @@ font_t sys_font = {
 stats_t stats = {
     nullptr,
     {0},
-    0,0,0,0,0,0,0
+    0,0,0,0,0,0,0,0
 };
 
 // SPIClass SPI_2(2);
