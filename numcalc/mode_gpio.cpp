@@ -15,30 +15,35 @@ void mode_gpio_stats(){
     drawTitle();  
     char str[32]; 
 
-    snprintf(str,32,"  CS SCL CDA RX MO MI"); 
-    lcd_drawString(0,8*2,sys_font,str);
+    // snprintf(str,32,"  CS SCL CDA RX MO MI"); 
+    // lcd_drawString(0,8*2,sys_font,str);
 
-    snprintf(str,32,"I/O %d %d %d %d %d %d",1,1,1,0,0,0); 
-    lcd_drawString(0,8*3,sys_font,str);
+    // snprintf(str,32,"I/O %d %d %d %d %d %d",1,1,1,0,0,0); 
+    // lcd_drawString(0,8*3,sys_font,str);
 
-    adc_block_get((*uint16_t)shared_int32_1024,16);
+    adc_block_get((uint16_t*)(shared_int32_1024),128*4);
     while(IS_ADC_BUSY){}
-    f = ((*uint16_t)shared_int32_1024)[0];
-    snprintf(str,32,"GP_A: %d [%dmV]%d",f,(f*3300*gp_a_mv)/4096,gp_a_mv); 
-    lcd_drawString(0,8*4,sys_font,str);
+    auto s16b = (uint16_t*)shared_int32_1024;
 
-    // f = adc_read(ADC1,1);
-    // snprintf(str,32,"GP_B: %d [%dmV]%d",f,(f*3300*gp_b_mv)/4096,gp_b_mv); 
-    // lcd_drawString(0,8*5,sys_font,str);
+    for(int i=0; i<128; i++){
+      int yy = s16b[i*4]>>5;
+      lcd_drawVline(i,10,yy);
+    }
+    // snprintf(str,32,"GP_A: %d [%dmV]%d",f,(f*3300*gp_a_mv)/4096,gp_a_mv); 
+    // lcd_drawString(0,8*4,sys_font,str);
 
-    snprintf(str,32,"PWM AR/PSC:%d/%d",TIMER1->regs.adv->ARR+1,TIMER1->regs.adv->PSC+1); 
-    lcd_drawString(0,8*6,sys_font,str);
+    // // f = adc_read(ADC1,1);
+    // // snprintf(str,32,"GP_B: %d [%dmV]%d",f,(f*3300*gp_b_mv)/4096,gp_b_mv); 
+    // // lcd_drawString(0,8*5,sys_font,str);
+
+    // snprintf(str,32,"PWM AR/PSC:%d/%d",TIMER1->regs.adv->ARR+1,TIMER1->regs.adv->PSC+1); 
+    // lcd_drawString(0,8*6,sys_font,str);
     
-    snprintf(str,32,"DT:%d P:%dHz",TIMER1->regs.adv->CCR3,(48000000/(TIMER1->regs.adv->PSC+1))/(TIMER1->regs.adv->ARR+1)); 
-    lcd_drawString(0,8*7,sys_font,str);
+    // snprintf(str,32,"DT:%d P:%dHz",TIMER1->regs.adv->CCR3,(48000000/(TIMER1->regs.adv->PSC+1))/(TIMER1->regs.adv->ARR+1)); 
+    // lcd_drawString(0,8*7,sys_font,str);
 
-    char p = 0xff;
-    lcd_drawTile(0, 16 + 8*((stats.p_i+2)&0xf) ,128,8,0,0,&p,DRAWBITMAP_XOR);
+    //char p = 0xff;
+    //lcd_drawTile(0, 16 + 8*((stats.p_i+2)&0xf) ,128,8,0,0,&p,DRAWBITMAP_XOR);
   updateProgGFX();
 }
 
