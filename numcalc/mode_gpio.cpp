@@ -20,14 +20,16 @@ void mode_gpio_stats(){
 
     snprintf(str,32,"I/O %d %d %d %d %d %d",1,1,1,0,0,0); 
     lcd_drawString(0,8*3,sys_font,str);
-    
-    f = adc_read(ADC1,0);
+
+    adc_block_get((*uint16_t)shared_int32_1024,16);
+    while(IS_ADC_BUSY){}
+    f = ((*uint16_t)shared_int32_1024)[0];
     snprintf(str,32,"GP_A: %d [%dmV]%d",f,(f*3300*gp_a_mv)/4096,gp_a_mv); 
     lcd_drawString(0,8*4,sys_font,str);
 
-    f = adc_read(ADC1,1);
-    snprintf(str,32,"GP_B: %d [%dmV]%d",f,(f*3300*gp_b_mv)/4096,gp_b_mv); 
-    lcd_drawString(0,8*5,sys_font,str);
+    // f = adc_read(ADC1,1);
+    // snprintf(str,32,"GP_B: %d [%dmV]%d",f,(f*3300*gp_b_mv)/4096,gp_b_mv); 
+    // lcd_drawString(0,8*5,sys_font,str);
 
     snprintf(str,32,"PWM AR/PSC:%d/%d",TIMER1->regs.adv->ARR+1,TIMER1->regs.adv->PSC+1); 
     lcd_drawString(0,8*6,sys_font,str);
@@ -41,17 +43,7 @@ void mode_gpio_stats(){
 }
 
 void mode_gpio_on_begin(){
-  gpio_set_mode(GPIOA,1,GPIO_INPUT_ANALOG);
-  gpio_set_mode(GPIOA,0,GPIO_INPUT_ANALOG);
-
-  adc_init(ADC1);
-  ADC1->regs->CR2 |= ADC_CR2_TSVREFE;
-  adc_set_extsel(ADC1,ADC_SWSTART);
-  adc_set_sample_rate(ADC1, ADC_SMPR_239_5);
-  adc_set_reg_seqlen(ADC1, 1);
-  adc_enable(ADC1);
-  adc_calibrate(ADC1);
-
+  adc_block_init();
   io.turns_right |= 1;
 }
 
