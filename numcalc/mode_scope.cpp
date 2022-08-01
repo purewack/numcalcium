@@ -24,8 +24,8 @@ void mode_scope_on_process(){
         if(io.bscan_down & (1<<K_X)) scope_hold = !scope_hold;
         
         if(io.bscan_down & (1<<K_F1)) stats.fmode = 1; //trig_timebase
-        else if(io.bscan_down & (1<<K_F2)) stats.fmode = 2; //trig_lvl
-        else if(io.bscan_down & (1<<K_F3)) stats.fmode = 3; //y gain
+        else if(io.bscan_down & (1<<K_F2)) stats.fmode = 2; //y gain
+        else if(io.bscan_down & (1<<K_F3)) stats.fmode = 3; //trig_lvl
         io.bscan_down = 0;
     }
     else if(io.bscan_up){
@@ -39,6 +39,7 @@ void mode_scope_on_process(){
 	adc_block_get((uint16_t*)(shared_int32_1024),1024);
     while(IS_ADC_BUSY){}
     auto s16b = (uint16_t*)shared_int32_1024;   
+    
     trig_pos = 0;
     for(int i=1; i<1024; i++){
         if(s16b[i-1] > trig_lvl && s16b[i] <= trig_lvl){
@@ -58,15 +59,15 @@ void mode_scope_on_process(){
 
         if(stats.fmode){
             char p = 0xff;
-            lcd_drawTile(0,0,64,8,0,0,&p,DRAWBITMAP_XOR);
+            lcd_drawTile(0,0,128,8,0,0,&p,DRAWBITMAP_XOR);
             char str[32];
-            const char* pre = (stats.fmode == 1 ? "X-s" : (stats.fmode == 2 ? "LVL" : "Y-S"));
+            const char* pre = (stats.fmode == 1 ? "Timebase/" : (stats.fmode == 2 ? "Y-Scale" : "Thresh"));
             int val = (stats.fmode == 1 ? trig_timebase : (stats.fmode == 2 ? trig_lvl : y_gain));
             snprintf(str,32,"%s:%d",pre,val);
             lcd_drawString(0,0,sys_font,str);
         }
 
-        if(stats.fmode == 2){
+        if(stats.fmode == 1){
             char p=0x1;
             int ty = trig_lvl>>6;
             for(int i=0; i<128; i+=8){
