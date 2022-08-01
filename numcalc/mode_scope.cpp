@@ -2,36 +2,77 @@
 #include "include/comms.h"
 #include "include/modes.h"
 
-void mode_scope_on_begin(){
-    lcd_clear();
-    drawTitle();
-    lcd_drawString(0,32,sys_font,"Hello");
-    lcd_update();
+bool scope_hold = 0; //hold display, dont update on 1
+int16_t trig_lvl = 2400; //threshold for triggering 
+uint16_t trig_pos = 0; //flag if signal passed thresh and n of sample in buf
+uint32_t trig_duration = 0; //spl time spent front
+uint8_t trig_timebase = 1; 
+int16_t y_gain = 255;
+double frequency; //calculated freq
 
-    LOGL("adc init");
-    adc_init(ADC1);
-    ADC1->regs->CR2 |= ADC_CR2_TSVREFE;
-    adc_set_extsel(ADC1,ADC_SWSTART);
-    adc_set_sample_rate(ADC1, ADC_SMPR_7_5);
-    adc_set_reg_seqlen(ADC1, 1);
-    adc_enable(ADC1);
-    adc_calibrate(ADC1);
-    LOGL("on start scope fin ");
+void mode_scope_on_begin(){
+    adc_block_init();
+    LOGL("scope: done on_begin");
 }
 
 void mode_scope_on_end(){
-    LOGL("on end scope");
+    adc_block_deinit();
 }
 
 void mode_scope_on_process(){
-	LOGL("onproc");
-	clearProgGFX();
-	auto a = adc_read(ADC1,17);
-	char str[32];
-	double vv = 1.25*4096.0 / double(a);
-	snprintf(str,32,"read:%d, mV[%d]",a,int(vv*1000.0));
-	lcd_drawString(0,16,sys_font,str);
-	updateProgGFX();
-	delay_us(100000);
-	LOGL("onproc end");
+    if(io.bscan_down){
+        if(io.bscan_down & (1<<K_X)) scope_hold = !scope_hold;
+        
+        if(io.bscan_down & (1<<K_F1)) stats.fmode = 1; //trig_timebase
+        else if(io.bscan_down & (1<<K_F2)) stats.fmode = 2; //trig_lvl
+        else if(io.bscan_down & (1<<K_F3)) stats.fmode = 3; //y gain
+        io.bscan_down = 0;
+    }
+    else if(io.bscan_up){
+        stats.fmode = 0;
+        io.bscan_up = 0;
+    }
+    if(stats.fmode && (io.turns_left || io.turns_right)){
+        int tt = io.turns_right - io.turns_left;
+    }
+
+	adc_block_get((uint16_t*)(shared_int32_1024),1024);
+    while(IS_ADC_BUSY){}
+    auto s16b = (uint16_t*)shared_int32_1024;   
+    trig_pos = 0;
+    for(int i=1; i<1024; i++){
+        if(s16b[i-1] > trig_lvl && s16b[i] <= trig_lvl){
+            trig_pos = i;
+            //freq_av += (adc_srate / trig_duration);  
+            break;
+        }
+    }
+
+    if(scope_hold) return;
+    lcd_clear();
+        for(int i=trig_pos; i<128; i++){
+            int yy = s16b[i];
+            yy >>= 6;
+            lcd_drawVline(i-trig_pos,0,yy);
+        }
+
+        if(stats.fmode){
+            char p = 0xff;
+            lcd_drawTile(0,0,64,8,0,0,&p,DRAWBITMAP_XOR);
+            char str[32];
+            const char* pre = (stats.fmode == 1 ? "X-s" : (stats.fmode == 2 ? "LVL" : "Y-S"));
+            int val = (stats.fmode == 1 ? trig_timebase : (stats.fmode == 2 ? trig_lvl : y_gain));
+            snprintf(str,32,"%s:%d",pre,val);
+            lcd_drawString(0,0,sys_font,str);
+        }
+
+        if(stats.fmode == 2){
+            char p=0x1;
+            int ty = trig_lvl>>6;
+            for(int i=0; i<128; i+=8){
+                lcd_drawTile(i,ty,4,8,0,0,&p,DRAWBITMAP_XOR);
+            }
+        }
+    lcd_update();
+
 }

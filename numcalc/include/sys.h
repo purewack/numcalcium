@@ -43,7 +43,8 @@ typedef struct Program {
 typedef struct Stats {
   volatile prog_t* cprog;
   volatile prog_t progs[P_COUNT];
-  volatile int c_i;
+  volatile int c_i;  
+  volatile int p_i;
   volatile int fmode;
   volatile int cprog_sel;
   volatile int inactive_time;
