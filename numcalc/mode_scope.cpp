@@ -34,6 +34,7 @@ void mode_scope_on_process(){
     }
     if(stats.fmode && (io.turns_left || io.turns_right)){
         int tt = io.turns_right - io.turns_left;
+	if(stats.fmode == 3) trig_lvl += tt;
     }
 
 	adc_block_get((uint16_t*)(shared_int32_1024),1024);
@@ -42,10 +43,20 @@ void mode_scope_on_process(){
     
     trig_pos = 0;
     for(int i=1; i<1024; i++){
+		trid_duration++;
         if(s16b[i-1] > trig_lvl && s16b[i] <= trig_lvl){
-            trig_pos = i;
-            //freq_av += (adc_srate / trig_duration);  
-            break;
+			if(!trig_pos)	
+            	trig_pos = i;
+			
+            freq_av += (adc_srate / trig_duration);  
+			trig_duration = 0;
+
+			freq_avc++;
+			if(freq_avc == 10){
+				freq = double(freq_av) / double(freq_avc);
+				freq_avc = 0;
+				freq_av = 0;
+			}
         }
     }
 
@@ -56,16 +67,22 @@ void mode_scope_on_process(){
             yy >>= 6;
             lcd_drawVline(i-trig_pos,0,yy);
         }
+			
+			//info background
+			char p = 0xff;
+			lcd_drawTile(0,0,128,8,0,0,&p,DRAWBITMAP_XOR);
+			char str[32];
 
         if(stats.fmode){
-            char p = 0xff;
-            lcd_drawTile(0,0,128,8,0,0,&p,DRAWBITMAP_XOR);
-            char str[32];
             const char* pre = (stats.fmode == 1 ? "Timebase/" : (stats.fmode == 2 ? "Y-Scale" : "Thresh"));
             int val = (stats.fmode == 1 ? trig_timebase : (stats.fmode == 2 ? trig_lvl : y_gain));
             snprintf(str,32,"%s:%d",pre,val);
             lcd_drawString(0,0,sys_font,str);
         }
+		else {
+			snprintf(str,32,"F:%dHz SR:%dHz",int(freq),adc_srate);				
+			lcd_drawString(0,0,sys_font,str);
+		}
 
         if(stats.fmode == 1){
             char p=0x1;
