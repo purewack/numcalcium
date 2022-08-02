@@ -26,6 +26,9 @@ void mode_scope_on_process(){
         if(io.bscan_down & (1<<K_F1)) stats.fmode = 1; //trig_timebase
         else if(io.bscan_down & (1<<K_F2)) stats.fmode = 2; //y gain
         else if(io.bscan_down & (1<<K_F3)) stats.fmode = 3; //trig_lvl
+
+	if(io.bscan_down & (1<<K_1)) adc_set_srate_type(0);
+	else if(io.bscan_down & (1<<K_0)) adc_set_srate_type(-1);
         io.bscan_down = 0;
     }
     else if(io.bscan_up){
