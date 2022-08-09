@@ -153,6 +153,22 @@ void mode_scope_on_process(){
             }
 
             //if(details_view == 2){
+                
+                p=0x1;    
+                lcd_drawTile(0,32,128,1,0,0,&p,DRAWBITMAP_XOR); 
+                
+            //}
+
+            //thresh indicator
+            if(stats.fmode == 3){
+                p=0x1;    
+                int ty = trig_lvl>>6;
+                for(int i=0; i<128; i+=8){
+                    lcd_drawTile(i,ty,4,8,0,0,&p,DRAWBITMAP_XOR);
+                    lcd_drawTile(i,64-ty,4,8,0,0,&p,DRAWBITMAP_XOR);
+                }
+            }
+            else{
                 //time base divisions
                 for(int x=0; x<8; x++){
                     for(int i=1; i<8; i++){
@@ -161,16 +177,6 @@ void mode_scope_on_process(){
                         cc = 0xaa;
                         lcd_drawTile(dt_cursor,i*8,1,8,0,0,&cc,DRAWBITMAP_XOR);
                     }
-                }
-            //}
-
-            //thresh indicator
-            if(stats.fmode == 3){
-                char p=0x1;
-                int ty = trig_lvl>>7;
-                for(int i=0; i<128; i+=8){
-                    lcd_drawTile(i,ty,4,8,0,0,&p,DRAWBITMAP_XOR);
-                    lcd_drawTile(i,64-ty,4,8,0,0,&p,DRAWBITMAP_XOR);
                 }
             }
         }
