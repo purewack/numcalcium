@@ -6,15 +6,38 @@ bool scope_hold = 0; //hold display, dont update on 1
 int16_t trig_lvl = 2400; //threshold for triggering 
 uint16_t trig_pos = 0; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration = 0; //spl time spent front
-uint8_t trig_timebase = 1; 
-int16_t y_gain = 255;
+uint8_t trig_timebase = 1; //x axis zoom level in sw, adding / taking divisions
+int16_t y_gain = 255; //zoom level of the y axis in sw
+int8_t y_gain_ctrl = 0; //amplifier gain control, > 0 = more gain, < 0 = less gain
 double frequency; //calculated freq
-uint32_t freq_av;
-uint8_t freq_avc;
+uint32_t freq_av; //average freq
+uint8_t freq_avc; //average freq counter
+double db_level = 0.0;
+double rms_total = 0.0;
 
+void mode_scope_set_amp(int8_t mode){
+	y_gain_ctrl = mode;
+
+	gpio_write_bit(GPIOB,15,mode == -1 ? 1 : 0);
+	gpio_write_bit(GPIOB,14,mode == -2 ? 1 : 0);
+	gpio_write_bit(GPIOB,13,mode == -3 ? 1 : 0);
+
+	gpio_write_bit(GPIOB,12,mode == 1 ? 1 : 0);
+	gpio_write_bit(GPIOB,6,mode == 2 ? 1 : 0);
+	gpio_write_bit(GPIOB,7,mode == 3 ? 1 : 0);
+}
 
 void mode_scope_on_begin(){
     adc_block_init();
+	gpio_set_mode(GPIOB,15,GPIO_OUTPUT_OD);// a/2
+	gpio_set_mode(GPIOB,14,GPIO_OUTPUT_OD);// a/5
+	gpio_set_mode(GPIOB,13,GPIO_OUTPUT_OD);// a/10
+
+	gpio_set_mode(GPIOB,12,GPIO_OUTPUT_OD);// a*2
+	gpio_set_mode(GPIOB,6,GPIO_OUTPUT_OD);// a*5
+	gpio_set_mode(GPIOB,7,GPIO_OUTPUT_OD);// a*10
+	
+	mode_scope_set_amp(0);
     LOGL("scope: done on_begin");
 }
 
@@ -50,7 +73,11 @@ void mode_scope_on_process(){
     auto s16b = (uint16_t*)shared_int32_1024;   
     
     trig_pos = 0;
+	rms_total = 0;
     for(int i=1; i<1024; i++){
+		auto a = double(s16b[i])/2048.0;
+		rms_total += sqrt(a*a);
+
 		trig_duration++;
         if(s16b[i-1] > trig_lvl && s16b[i] <= trig_lvl){
 			if(!trig_pos)	
@@ -67,6 +94,7 @@ void mode_scope_on_process(){
 			}
         }
     }
+	db_level = 20*log10(rms_total / 1024.0);
 
     if(scope_hold) return;
     lcd_clear();
@@ -88,7 +116,7 @@ void mode_scope_on_process(){
             lcd_drawString(0,0,sys_font,str);
         }
 		else {
-			snprintf(str,32,"F:%dHz SR:%dHz",int(frequency),adc_srate);				
+			snprintf(str,32,"F:%dHz SR:%dkHz DB:%d",int(frequency),adc_srate/1000, int(db_level));				
 			lcd_drawString(0,0,sys_font,str);
 		}
 
