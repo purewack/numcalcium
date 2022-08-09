@@ -103,11 +103,19 @@ void mode_scope_on_process(){
 
     if(scope_hold) return;
     lcd_clear();
+		
         for(int i=trig_pos; i<128; i++){
             int yy = s16b[i];
             yy >>= 6;
             lcd_drawVline(i-trig_pos,0,yy);
         }
+		
+		//time base divisions
+        for(int i=0; i<8; i++){
+			char cc = 0xff;
+			lcd_drawTile(i*16,64-8,1,8,0,0,&cc,DRAWBITMAP_XOR);
+        }
+
 			
 			//info background
 			char p = 0xff;
