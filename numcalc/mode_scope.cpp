@@ -7,6 +7,7 @@ int16_t trig_lvl = 2400; //threshold for triggering
 uint16_t trig_pos = 0; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration = 0; //spl time spent front
 uint8_t trig_timebase = 1; //x axis zoom level in sw, adding / taking divisions
+uint8_t timebase_mode = 0; //current time base mode, determines srate
 int16_t y_gain = 255; //zoom level of the y axis in sw
 int8_t y_gain_ctrl = 0; //amplifier gain control, > 0 = more gain, < 0 = less gain
 double frequency; //calculated freq
@@ -25,6 +26,10 @@ void mode_scope_set_amp(int8_t mode){
 	gpio_write_bit(GPIOB,12,mode == 1 ? 1 : 0);
 	gpio_write_bit(GPIOB,6,mode == 2 ? 1 : 0);
 	gpio_write_bit(GPIOB,7,mode == 3 ? 1 : 0);
+}
+
+void mode_scope_set_tbase(uint_8 tb){
+ 	timebase_mode = tb;	
 }
 
 void mode_scope_on_begin(){
