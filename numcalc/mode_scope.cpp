@@ -37,6 +37,7 @@ void mode_scope_set_tbase(uint8_t tb){
 
 void mode_scope_on_begin(){
     scope_hold = 0; //hold display, dont update on 1
+    trig_duration = 0;
     trig_lvl = 2400/2; //threshold for triggering 
     trig_timebase = 1; //x axis zoom level in sw, adding / taking divisions
     timebase_mode = 0; //current time base mode, determines srate
@@ -94,19 +95,23 @@ void mode_scope_on_process(){
     }
 
     //signal acquisition, busy wait
-	adc_block_get((uint16_t*)(shared_int32_1024),1024);
-    while(IS_ADC_BUSY){}
+
+	adc_block_get((uint16_t*)(shared_int32_1024),512);
+    while(IS_ADC_BUSY){};
     auto s16b = (uint16_t*)shared_int32_1024;   
     
     //signal conditioning
     trig_pos = 0;
+    trig_duration = 0;
 	rms_total = 0;
-    for(int i=1; i<1024; i++){
-		auto a = double(s16b[i]-2048)/2048.0;
-		rms_total += sqrt(a*a);
+    int spl = 0;
+    for(int i=1; i<512; i++){
+        spl = s16b[i];
+		auto a = double(spl-2048)/2048.0;
+		rms_total += sqrt(a*a)*2;
 
 		trig_duration++;
-        if(s16b[i-1] > trig_lvl && s16b[i] <= trig_lvl){
+        if(s16b[i-1] < trig_lvl && s16b[i] >= trig_lvl){
 			if(!trig_pos)	
             	trig_pos = i;
 			
@@ -121,13 +126,13 @@ void mode_scope_on_process(){
 			}
         }
     }
-	db_level = 20*log10(rms_total / 128.0);
+	db_level = 20*log10(rms_total / 512.0);
 
     if(scope_hold) return;
     lcd_clear();
 		
         //plot data
-        for(int i=trig_pos; i<128; i++){
+        for(int i=trig_pos; i<128+trig_pos; i++){
             int yy = s16b[i];
             yy >>= 6;
             lcd_drawVline(i-trig_pos,0,yy);
@@ -140,8 +145,8 @@ void mode_scope_on_process(){
             char str[32];
 
             if(stats.fmode){
-                const char* pre = (stats.fmode == 1 ? "Timebase: %dus x%d" : (stats.fmode == 2 ? "Y-Scale" : "Thresh"));
-                int val = (stats.fmode == 1 ? trig_timebase : (stats.fmode == 3 ? trig_lvl : y_gain));
+                const char* pre = (stats.fmode == 1 ? "Timebase" : (stats.fmode == 2 ? "Y-Scale" : "Thresh"));
+                int val = (stats.fmode == 1 ? trig_pos : (stats.fmode == 3 ? trig_lvl : y_gain));
                 snprintf(str,32,"%s:%d",pre,val);
                 lcd_drawString(0,0,sys_font,str);
             }
