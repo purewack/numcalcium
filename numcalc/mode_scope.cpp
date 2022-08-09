@@ -28,7 +28,7 @@ void mode_scope_set_amp(int8_t mode){
 	gpio_write_bit(GPIOB,7,mode == 3 ? 1 : 0);
 }
 
-void mode_scope_set_tbase(uint_8 tb){
+void mode_scope_set_tbase(uint8_t tb){
  	timebase_mode = tb;	
 }
 
@@ -80,7 +80,7 @@ void mode_scope_on_process(){
     trig_pos = 0;
 	rms_total = 0;
     for(int i=1; i<1024; i++){
-		auto a = double(s16b[i])/2048.0;
+		auto a = double(s16b[i]-2048)/2048.0;
 		rms_total += sqrt(a*a);
 
 		trig_duration++;
@@ -112,7 +112,7 @@ void mode_scope_on_process(){
 		
 		//time base divisions
         for(int i=0; i<8; i++){
-			char cc = 0xff;
+			char cc = i%2 == 0 ? 0xf0 : 0xc0;
 			lcd_drawTile(i*16,64-8,1,8,0,0,&cc,DRAWBITMAP_XOR);
         }
 
