@@ -36,8 +36,20 @@ void mode_gpio_stats(){
 }
 
 void mode_gpio_on_begin(){
-  adc_block_init();
   io.turns_right |= 1;
+    timer_pause(TIMER4);
+    timer_set_prescaler(TIMER4, 49);
+    timer_set_compare(TIMER4, TIMER_CH1, 24-1);
+    timer_set_reload(TIMER4, 48-1);
+    timer_cc_enable(TIMER4, TIMER_CH1);
+    timer_resume(TIMER4);
+    gpio_set_mode(GPIOB,6,GPIO_AF_OUTPUT_PP);
+    gpio_set_mode(GPIOB,12,GPIO_OUTPUT_OD);
+    gpio_set_mode(GPIOB,13,GPIO_OUTPUT_OD);
+    gpio_set_mode(GPIOB,14,GPIO_OUTPUT_OD);
+    gpio_write_bit(GPIOB,12,1);
+    gpio_write_bit(GPIOB,13,1);
+    gpio_write_bit(GPIOB,14,1);
 }
 
 void mode_gpio_on_end(){
@@ -45,26 +57,47 @@ void mode_gpio_on_end(){
 }
 
 void mode_gpio_on_process(){
-  if(io.bscan_down & (1<<K_X)){
-    char p = 0xff;
-    lcd_drawTile(0,0,128,8,0,0,&p,DRAWBITMAP_XOR);
-    updateProgGFX();
-    io.bscan_down = 0;
+  if(io.bscan_down & (1<<K_1)){
+    timer_set_compare(TIMER4, TIMER_CH1, 12-1);
   }
-  if(io.bstate == (1<<K_X)){
-    delay_us(100000);
-    return;
+  if(io.bscan_down & (1<<K_2)){
+    timer_set_compare(TIMER4, TIMER_CH1, 24-1);
   }
-  if((io.turns_left || io.turns_right)){
-    stats.p_i += io.turns_right;
-    stats.p_i -= io.turns_left;
-    io.turns_left = 0;
-    io.turns_right = 0;
-    stats.p_i &= 0xf;
-    stats.p_i %= 4;
-    LOGL(stats.p_i);
+  if(io.bscan_down & (1<<K_3)){
+    timer_set_compare(TIMER4, TIMER_CH1, 36-1);
   }
-  mode_gpio_stats();
+  if(io.bscan_down & (1<<K_4)){
+    gpio_toggle_bit(GPIOB,12);
+  }
+  if(io.bscan_down & (1<<K_5)){
+    gpio_toggle_bit(GPIOB,13);
+  }
+  if(io.bscan_down & (1<<K_6)){
+    gpio_toggle_bit(GPIOB,14);
+  }
+
+  io.bscan_down = 0;
+
+  // if(io.bscan_down & (1<<K_X)){
+  //   char p = 0xff;
+  //   lcd_drawTile(0,0,128,8,0,0,&p,DRAWBITMAP_XOR);
+  //   updateProgGFX();
+  //   io.bscan_down = 0;
+  // }
+  // if(io.bstate == (1<<K_X)){
+  //   delay_us(100000);
+  //   return;
+  // }
+  // if((io.turns_left || io.turns_right)){
+  //   stats.p_i += io.turns_right;
+  //   stats.p_i -= io.turns_left;
+  //   io.turns_left = 0;
+  //   io.turns_right = 0;
+  //   stats.p_i &= 0xf;
+  //   stats.p_i %= 4;
+  //   LOGL(stats.p_i);
+  // }
+  // mode_gpio_stats();
   //   rep_count -= io.turns_left;
   //   rep_count += io.turns_right;
   //   if(rep_count < 0) rep_count = 0;
