@@ -6,18 +6,47 @@ bool scope_hold; //hold display, dont update on 1
 int16_t trig_lvl; //threshold for triggering 
 uint16_t trig_pos; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration; //spl time spent front
-uint8_t trig_timebase; //x axis zoom level in sw, adding / taking divisions
-uint8_t timebase_mode; //current time base mode, determines srate
-int16_t y_gain; //zoom level of the y axis in sw
+
+uint8_t x_zoom; //x axis zoom level in sw, adding / taking divisions
+int8_t x_timebase; //current time base mode, determines srate 0 == 32khz 1ms/div
+uint8_t y_zoom; //zoom level of the y axis in sw
 int8_t y_gain_ctrl; //amplifier gain control, > 0 = more gain, < 0 = less gain
+uint32_t us_per_div;
+int8_t y_scroll;
+int8_t x_scroll;
+
 double frequency; //calculated freq
 uint32_t freq_av; //average freq
 uint8_t freq_avc; //average freq counter
+
+double db_ref;
 double db_level; //db signal level of frame
 double rms_total; //rms total for average 
-int8_t dt_cursor; //time base cursor
+
+uint8_t dt_cursor; //time base cursor
+uint8_t dy_cursor; //time base cursor
 uint8_t details_view; //show hide ui
-int8_t info_view;
+uint8_t info_view;
+
+#define SCOPE_FMODE_TB 1
+#define SCOPE_FMODE_XZOOM 2
+#define SCOPE_FMODE_YZOOM 3
+#define SCOPE_FMODE_THRESH 4
+#define SCOPE_FMODE_XDELTA 5
+#define SCOPE_FMODE_YDELTA 6
+
+void mode_scope_line_dash(int p, int start, int len, int hor, int pattern){
+    char pat= pattern == 0 ? (!hor ? 0x0f : 0x1) : pattern;    
+    for(int i=start; i<start+len; i+=8){
+        lcd_drawTile(
+            hor ? i : p, //x
+            !hor ? i : p, //y
+            hor ? 4 : 1,
+            8,0,0,&pat,
+            DRAWBITMAP_XOR
+        );
+    }
+}
 
 void mode_scope_set_amp(int8_t mode){
 	y_gain_ctrl = mode;
@@ -31,33 +60,71 @@ void mode_scope_set_amp(int8_t mode){
 	gpio_write_bit(GPIOB,7,mode == 3 ? 1 : 0);
 }
 
-void mode_scope_set_tbase(uint8_t tb){
- 	timebase_mode = tb;	
+void mode_scope_set_tbase(int8_t tb){
+    if(tb < 0) return;
+    if(tb > 14) return;
+	
+    uint32_t sr = 32;
+    if(tb == 14){
+        sr = 820512;
+        adc_set_srate(-1);
+    }
+    else{
+        for(int j=0; j<tb; j++){
+            if(j%3 == 1) {
+                sr*=5; sr/=2;
+            }
+            else 
+                sr*=2;
+        }
+        adc_set_srate(sr);
+    }
+    x_timebase = tb;
+    us_per_div = (2000000/sr);// 2 * 1s in us / srate
+    us_per_div *= (128/8); //screen w * 8 divs
 }
 
 void mode_scope_on_begin(){
     scope_hold = 0; //hold display, dont update on 1
     trig_duration = 0;
-    trig_lvl = 2400/2; //threshold for triggering 
-    trig_timebase = 1; //x axis zoom level in sw, adding / taking divisions
-    timebase_mode = 0; //current time base mode, determines srate
-    y_gain = 255; //zoom level of the y axis in sw
+    trig_lvl = 16<<6; //threshold for triggering 
+    x_zoom = 0; //x axis zoom level in sw, adding / taking divisions
+    x_timebase = 0; //current time base mode, determines srate
+    y_zoom = 0; //zoom level of the y axis in sw
     y_gain_ctrl = 0; //amplifier gain control, > 0 = more gain, < 0 = less gain
+    
+    y_scroll = 0;
+    x_scroll = 0;
+
+    db_ref = 3.3;
     freq_avc = 0; //average freq counter
+    
+    dy_cursor = 0;
     dt_cursor = 0; //cursor for measuring time selection
     details_view = 1; //show or hide ui
     info_view = 1; //0 no info, 1 == signal freq db, 
 
-    adc_block_init();
-	gpio_set_mode(GPIOB,15,GPIO_OUTPUT_OD);// a/2
-	gpio_set_mode(GPIOB,14,GPIO_OUTPUT_OD);// a/5
-	gpio_set_mode(GPIOB,13,GPIO_OUTPUT_OD);// a/10
 
+    adc_block_init();
+	gpio_set_mode(GPIOB,15,GPIO_OUTPUT_OD);// a/10
+
+	gpio_set_mode(GPIOB,14,GPIO_OUTPUT_OD);//
+	gpio_set_mode(GPIOB,13,GPIO_OUTPUT_OD);//
 	gpio_set_mode(GPIOB,12,GPIO_OUTPUT_OD);// a*2
 	gpio_set_mode(GPIOB,6,GPIO_OUTPUT_OD);// a*5
 	gpio_set_mode(GPIOB,7,GPIO_OUTPUT_OD);// a*10
 	
 	mode_scope_set_amp(0);
+    mode_scope_set_tbase(10);
+
+    timer_pause(TIMER4);
+    timer_set_prescaler(TIMER4, 50-1);
+    timer_set_compare(TIMER4, TIMER_CH1, 24-1);
+    timer_set_reload(TIMER4, 48-1);
+    timer_cc_enable(TIMER4, TIMER_CH1);
+    timer_resume(TIMER4);
+    gpio_set_mode(GPIOB,6,GPIO_AF_OUTPUT_PP);
+
     LOGL("scope: done on_begin");
 }
 
@@ -74,9 +141,12 @@ void mode_scope_on_process(){
         }
         if(io.bscan_down & (1<<K_R)) scope_hold = !scope_hold;
         
-        if(io.bscan_down & (1<<K_F1)) stats.fmode = 1; //trig_timebase
-        else if(io.bscan_down & (1<<K_F2)) stats.fmode = 2; //y gain
-        else if(io.bscan_down & (1<<K_F3)) stats.fmode = 3; //trig_lvl
+        if(io.bscan_down & (1<<K_F1)) stats.fmode = SCOPE_FMODE_TB;
+        else if(io.bscan_down & (1<<K_F2) && stats.fmode == SCOPE_FMODE_YZOOM) stats.fmode = SCOPE_FMODE_XZOOM;
+        else if(io.bscan_down & (1<<K_F2) ) stats.fmode = SCOPE_FMODE_YZOOM;
+        else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_THRESH) stats.fmode = SCOPE_FMODE_XDELTA; 
+        else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_XDELTA) stats.fmode = SCOPE_FMODE_YDELTA;
+        else if(io.bscan_down & (1<<K_F3)) stats.fmode = SCOPE_FMODE_THRESH;
         
         if(stats.fmode) details_view = 1;
         io.bscan_down = 0;
@@ -85,33 +155,45 @@ void mode_scope_on_process(){
 
     if((io.turns_left || io.turns_right)){
         int tt = io.turns_right - io.turns_left;
-        if(io.bstate & (1<<K_Y)) tt*=25;
-        if(!stats.fmode)
+        if(stats.fmode == SCOPE_FMODE_TB)
+            mode_scope_set_tbase(x_timebase+tt);
+        else if(stats.fmode == SCOPE_FMODE_YZOOM)
+            y_zoom = (y_zoom+tt)%63;
+        else if(stats.fmode == SCOPE_FMODE_XZOOM)
+            x_zoom = (x_zoom+tt)%5;
+        else if(stats.fmode == SCOPE_FMODE_THRESH) {
+            if(io.bstate & (1<<K_Y)) tt*=25;
+            trig_lvl = (trig_lvl+(tt<<2))%2048;
+        }
+        else if(stats.fmode == SCOPE_FMODE_XDELTA) 
             dt_cursor = (dt_cursor+tt)%127;
-        else if(stats.fmode == 3) 
-            trig_lvl = (trig_lvl+tt)%2047;
+        else if(stats.fmode == SCOPE_FMODE_YDELTA) 
+            dy_cursor = (dy_cursor+tt)%31;
         io.turns_left = 0;
         io.turns_right = 0;
     }
 
+    const int spl_count = 256;
+    auto s16b = (int16_t*)shared_int32_1024;  
     //signal acquisition, busy wait
+    if(!scope_hold){
+	    adc_block_get((uint16_t*)s16b,spl_count);
+        while(IS_ADC_BUSY){};
+    }
 
-	adc_block_get((uint16_t*)(shared_int32_1024),512);
-    while(IS_ADC_BUSY){};
-    auto s16b = (uint16_t*)shared_int32_1024;   
-    
-    //signal conditioning
+    //signal conditioning 
     trig_pos = 0;
     trig_duration = 0;
 	rms_total = 0;
     int spl = 0;
-    for(int i=1; i<512; i++){
+    const int tt = trig_lvl;
+    for(int i=1; i<spl_count; i++){
         spl = s16b[i];
 		auto a = double(spl-2048)/2048.0;
 		rms_total += sqrt(a*a)*2;
 
 		trig_duration++;
-        if(s16b[i-1] < trig_lvl && s16b[i] >= trig_lvl){
+        if(s16b[i-1] < tt && s16b[i] >= tt){
 			if(!trig_pos)	
             	trig_pos = i;
 			
@@ -126,15 +208,16 @@ void mode_scope_on_process(){
 			}
         }
     }
-	db_level = 20*log10(rms_total / 512.0);
+	//db_level = 20*log10((rms_total/double(spl_count)));
 
-    if(scope_hold) return;
     lcd_clear();
 		
         //plot data
         for(int i=trig_pos; i<128+trig_pos; i++){
-            int yy = s16b[i];
+            int yy = s16b[i/(x_zoom)]-2048;
+            //yy *= (y_zoom);
             yy >>= 6;
+            yy += 32;
             lcd_drawVline(i-trig_pos,0,yy);
         }
 		
@@ -144,17 +227,25 @@ void mode_scope_on_process(){
             lcd_drawTile(0,0,128,8,0,0,&p,DRAWBITMAP_XOR);
             char str[32];
 
-            if(stats.fmode){
-                const char* pre = (stats.fmode == 1 ? "Timebase" : (stats.fmode == 2 ? "Y-Scale" : "Thresh"));
-                int val = (stats.fmode == 1 ? trig_pos : (stats.fmode == 3 ? trig_lvl : y_gain));
-                snprintf(str,32,"%s:%d",pre,val);
+            if(stats.fmode == SCOPE_FMODE_TB){
+                snprintf(str,32,"us/Div: %d",us_per_div);
+                lcd_drawString(0,0,sys_font,str);
+            }
+            else if(stats.fmode == SCOPE_FMODE_XZOOM || stats.fmode == SCOPE_FMODE_YZOOM){
+                snprintf(str,32,"X*%d Y*%d",x_zoom+1, y_zoom+1);
+                lcd_drawString(0,0,sys_font,str);
+            }
+            else if(stats.fmode == SCOPE_FMODE_THRESH){
+                snprintf(str,32,"Thresh:%d%%",trig_lvl*100 / 32);
+                lcd_drawString(0,0,sys_font,str);
+            }
+            else if(stats.fmode == SCOPE_FMODE_XDELTA || stats.fmode == SCOPE_FMODE_YDELTA){
+                snprintf(str,32,"DX:%d DY:%d",dt_cursor, dy_cursor);
                 lcd_drawString(0,0,sys_font,str);
             }
             else {
-                if(info_view == 1){
-                    snprintf(str,32,"%ddB f:%dHz",int(db_level), int(frequency));				
-                    lcd_drawString(0,0,sys_font,str);
-                }
+                snprintf(str,32,"%ddB f:%dHz",int(db_level), int(frequency));				
+                lcd_drawString(0,0,sys_font,str);
             }
 
             //if(details_view == 2){
@@ -165,23 +256,19 @@ void mode_scope_on_process(){
             //}
 
             //thresh indicator
-            if(stats.fmode == 3){
-                p=0x1;    
-                int ty = trig_lvl>>6;
-                for(int i=0; i<128; i+=8){
-                    lcd_drawTile(i,ty,4,8,0,0,&p,DRAWBITMAP_XOR);
-                    lcd_drawTile(i,64-ty,4,8,0,0,&p,DRAWBITMAP_XOR);
-                }
+            if(stats.fmode == SCOPE_FMODE_THRESH){
+                mode_scope_line_dash(trig_lvl>>6,0,128,1,0);
+            }
+            //delta indicator
+            if(stats.fmode == SCOPE_FMODE_YDELTA || stats.fmode == SCOPE_FMODE_XDELTA){
+                mode_scope_line_dash(dy_cursor,0,128,1,0);
+                mode_scope_line_dash(64-dy_cursor,0,128,1,0);
+                mode_scope_line_dash(dt_cursor,0,64,0,0);
             }
             else{
                 //time base divisions
                 for(int x=0; x<8; x++){
-                    for(int i=1; i<8; i++){
-                        char cc = 0x55;
-                        lcd_drawTile(x*16,i*8,1,8,0,0,&cc,DRAWBITMAP_XOR);
-                        cc = 0xaa;
-                        lcd_drawTile(dt_cursor,i*8,1,8,0,0,&cc,DRAWBITMAP_XOR);
-                    }
+                    mode_scope_line_dash(x*16, 8,64-8, 0,0x55);
                 }
             }
         }
