@@ -6,6 +6,7 @@ bool scope_hold; //hold display, dont update on 1
 int16_t trig_lvl; //threshold for triggering 
 uint16_t trig_pos; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration; //spl time spent front
+uint8_t trig_filter;
 
 uint8_t x_zoom; //x axis zoom level in sw, adding / taking divisions
 uint8_t y_zoom; //zoom level of the y axis in sw
@@ -98,7 +99,9 @@ void mode_scope_set_tbase(int8_t tb){
 void mode_scope_on_begin(){
     scope_hold = 0; //hold display, dont update on 1
     trig_duration = 0;
-    trig_lvl = 16<<6; //threshold for triggering 
+    trig_lvl = 32<<6; //threshold for triggering 
+    trig_filter = 3;
+
     x_zoom = 0; //x axis zoom level in sw, adding / taking divisions
     x_timebase = 0; //current time base mode, determines srate
     y_zoom = 0; //zoom level of the y axis in sw
@@ -225,7 +228,11 @@ void mode_scope_on_process(){
 		rms_total += sqrt(a*a)*2;
 
 		trig_duration++;
-        if(s16b[i-1] < tt && s16b[i] >= tt){
+        auto tr_spl_a = s16b[i-1]>>trig_filter;
+        auto tr_spl_b = s16b[i]>>trig_filter;
+        tr_spl_a <<= trig_filter;
+        tr_spl_b <<= trig_filter;
+        if(tr_spl_a < tt && tr_spl_b >= tt){
 			if(!trig_pos)	
             	trig_pos = i;
 			
@@ -245,13 +252,14 @@ void mode_scope_on_process(){
     lcd_clear();
 		
         //plot data
-        for(int i=trig_pos; i<128+trig_pos; i++){
+        auto tr = trig_pos*(x_zoom+1);
+        for(int i=tr; i<128+tr; i++){
             int yy = s16b[(i/(x_zoom+1))+x_scroll]-2048;
-            yy *= (y_zoom+1);
+            yy *= -(y_zoom+1);
             yy >>= 6;
             yy += 32;
             yy += y_scroll;
-            lcd_drawVline(i-trig_pos,0,yy);
+            lcd_drawVline(i-tr,0,yy);
         }
 		
         //info background
