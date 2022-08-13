@@ -8,8 +8,8 @@ uint16_t trig_pos; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration; //spl time spent front
 
 uint8_t x_zoom; //x axis zoom level in sw, adding / taking divisions
-int8_t x_timebase; //current time base mode, determines srate 0 == 32khz 1ms/div
 uint8_t y_zoom; //zoom level of the y axis in sw
+int8_t x_timebase; //current time base mode, determines srate 0 == 32khz 1ms/div
 int8_t y_gain_ctrl; //amplifier gain control, > 0 = more gain, < 0 = less gain
 uint32_t us_per_div;
 int8_t y_scroll;
@@ -157,23 +157,33 @@ void mode_scope_on_process(){
         int tt = io.turns_right - io.turns_left;
         if(stats.fmode == SCOPE_FMODE_TB)
             mode_scope_set_tbase(x_timebase+tt);
-        else if(stats.fmode == SCOPE_FMODE_YZOOM)
-            y_zoom = (y_zoom+tt)%63;
-        else if(stats.fmode == SCOPE_FMODE_XZOOM)
-            x_zoom = (x_zoom+tt)%5;
+        else if(stats.fmode == SCOPE_FMODE_YZOOM){
+            y_zoom += tt;
+            y_zoom %= 64;
+        }
+        else if(stats.fmode == SCOPE_FMODE_XZOOM){
+            x_zoom += tt;
+            x_zoom %= 16;
+        }
         else if(stats.fmode == SCOPE_FMODE_THRESH) {
             if(io.bstate & (1<<K_Y)) tt*=25;
-            trig_lvl = (trig_lvl+(tt<<2))%2048;
+            trig_lvl -= tt;
+            trig_lvl %= 4096;
         }
-        else if(stats.fmode == SCOPE_FMODE_XDELTA) 
-            dt_cursor = (dt_cursor+tt)%127;
-        else if(stats.fmode == SCOPE_FMODE_YDELTA) 
-            dy_cursor = (dy_cursor+tt)%31;
+        else if(stats.fmode == SCOPE_FMODE_XDELTA){ 
+            dt_cursor += tt;
+            dt_cursor %= 128;
+        }
+        else if(stats.fmode == SCOPE_FMODE_YDELTA) {
+            dy_cursor += tt;
+            dy_cursor %= 32;
+        }
+
         io.turns_left = 0;
         io.turns_right = 0;
     }
 
-    const int spl_count = 256;
+    const int spl_count = 512;
     auto s16b = (int16_t*)shared_int32_1024;  
     //signal acquisition, busy wait
     if(!scope_hold){
@@ -208,7 +218,7 @@ void mode_scope_on_process(){
 			}
         }
     }
-	//db_level = 20*log10((rms_total/double(spl_count)));
+	db_level = 20.0*log10((rms_total/double(spl_count)));
 
     lcd_clear();
 		
@@ -228,7 +238,10 @@ void mode_scope_on_process(){
             char str[32];
 
             if(stats.fmode == SCOPE_FMODE_TB){
-                snprintf(str,32,"us/Div: %d",us_per_div);
+                if(us_per_div < 1000)
+                    snprintf(str,32,"T/Div: %dus",us_per_div);
+                else
+                    snprintf(str,32,"T/Div: %dms",us_per_div/1000);
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_XZOOM || stats.fmode == SCOPE_FMODE_YZOOM){
@@ -236,11 +249,13 @@ void mode_scope_on_process(){
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_THRESH){
-                snprintf(str,32,"Thresh:%d%%",trig_lvl*100 / 32);
+                snprintf(str,32,"Thresh:%d%% (%d)",(trig_lvl>>6)*100 / 64,trig_lvl);
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_XDELTA || stats.fmode == SCOPE_FMODE_YDELTA){
-                snprintf(str,32,"DX:%d DY:%d",dt_cursor, dy_cursor);
+                auto dtt = (dt_cursor*us_per_div*8)/128;
+                const char* dtt_unit = "us"; 
+                snprintf(str,32,"DX:%d%s DY:%d",dtt,dtt_unit,dy_cursor);
                 lcd_drawString(0,0,sys_font,str);
             }
             else {
@@ -249,10 +264,8 @@ void mode_scope_on_process(){
             }
 
             //if(details_view == 2){
-                
                 p=0x1;    
                 lcd_drawTile(0,32,128,1,0,0,&p,DRAWBITMAP_XOR); 
-                
             //}
 
             //thresh indicator
