@@ -11,9 +11,10 @@ uint8_t x_zoom; //x axis zoom level in sw, adding / taking divisions
 uint8_t y_zoom; //zoom level of the y axis in sw
 int8_t x_timebase; //current time base mode, determines srate 0 == 32khz 1ms/div
 int8_t y_gain_ctrl; //amplifier gain control, > 0 = more gain, < 0 = less gain
-uint32_t us_per_div;
+uint32_t us_per_div;//per div microseconds
+uint32_t uv_per_div;//per div microvolts
 int8_t y_scroll;
-int8_t x_scroll;
+uint8_t x_scroll;
 
 double frequency; //calculated freq
 uint32_t freq_av; //average freq
@@ -30,11 +31,21 @@ uint8_t info_view;
 
 #define SCOPE_FMODE_TB 1
 #define SCOPE_FMODE_XZOOM 2
-#define SCOPE_FMODE_YZOOM 3
-#define SCOPE_FMODE_THRESH 4
-#define SCOPE_FMODE_XDELTA 5
-#define SCOPE_FMODE_YDELTA 6
+#define SCOPE_FMODE_XSCROLL 3
+#define SCOPE_FMODE_YAMP 4
+#define SCOPE_FMODE_YZOOM 5
+#define SCOPE_FMODE_YSCROLL 6
+#define SCOPE_FMODE_THRESH 7
+#define SCOPE_FMODE_XDELTA 8
+#define SCOPE_FMODE_YDELTA 9
 
+/* 
+    p = position, either x or y coord based on hoz
+    start = line start,
+    len = line len from start,
+    hor = is line horizontal
+    pattern = line pattern for drawTile
+*/
 void mode_scope_line_dash(int p, int start, int len, int hor, int pattern){
     char pat= pattern == 0 ? (!hor ? 0x0f : 0x1) : pattern;    
     for(int i=start; i<start+len; i+=8){
@@ -141,9 +152,12 @@ void mode_scope_on_process(){
         }
         if(io.bscan_down & (1<<K_R)) scope_hold = !scope_hold;
         
-        if(io.bscan_down & (1<<K_F1)) stats.fmode = SCOPE_FMODE_TB;
-        else if(io.bscan_down & (1<<K_F2) && stats.fmode == SCOPE_FMODE_YZOOM) stats.fmode = SCOPE_FMODE_XZOOM;
-        else if(io.bscan_down & (1<<K_F2) ) stats.fmode = SCOPE_FMODE_YZOOM;
+        if(io.bscan_down & (1<<K_F1) && stats.fmode == SCOPE_FMODE_XZOOM) stats.fmode = SCOPE_FMODE_XSCROLL; 
+        else if(io.bscan_down & (1<<K_F1) && stats.fmode == SCOPE_FMODE_TB) stats.fmode = SCOPE_FMODE_XZOOM;
+        else if(io.bscan_down & (1<<K_F1)) stats.fmode = SCOPE_FMODE_TB;
+        else if(io.bscan_down & (1<<K_F2) && stats.fmode == SCOPE_FMODE_YZOOM) stats.fmode = SCOPE_FMODE_YSCROLL;
+        else if(io.bscan_down & (1<<K_F2) && stats.fmode == SCOPE_FMODE_YAMP) stats.fmode = SCOPE_FMODE_YZOOM;
+        else if(io.bscan_down & (1<<K_F2) ) stats.fmode = SCOPE_FMODE_YAMP;
         else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_THRESH) stats.fmode = SCOPE_FMODE_XDELTA; 
         else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_XDELTA) stats.fmode = SCOPE_FMODE_YDELTA;
         else if(io.bscan_down & (1<<K_F3)) stats.fmode = SCOPE_FMODE_THRESH;
@@ -164,6 +178,14 @@ void mode_scope_on_process(){
         else if(stats.fmode == SCOPE_FMODE_XZOOM){
             x_zoom += tt;
             x_zoom %= 16;
+        }
+        else if(stats.fmode == SCOPE_FMODE_YSCROLL){
+            y_scroll += tt;
+            y_scroll %= 2048;
+        }
+        else if(stats.fmode == SCOPE_FMODE_XSCROLL){
+            x_scroll += tt;
+            x_scroll %= 128;
         }
         else if(stats.fmode == SCOPE_FMODE_THRESH) {
             if(io.bstate & (1<<K_Y)) tt*=25;
@@ -224,10 +246,11 @@ void mode_scope_on_process(){
 		
         //plot data
         for(int i=trig_pos; i<128+trig_pos; i++){
-            int yy = s16b[i/(x_zoom+1)]-2048;
+            int yy = s16b[(i/(x_zoom+1))+x_scroll]-2048;
             yy *= (y_zoom+1);
             yy >>= 6;
             yy += 32;
+            yy += y_scroll;
             lcd_drawVline(i-trig_pos,0,yy);
         }
 		
@@ -244,8 +267,12 @@ void mode_scope_on_process(){
                     snprintf(str,32,"T/Div: %dms",us_per_div/1000);
                 lcd_drawString(0,0,sys_font,str);
             }
-            else if(stats.fmode == SCOPE_FMODE_XZOOM || stats.fmode == SCOPE_FMODE_YZOOM){
-                snprintf(str,32,"X*%d Y*%d",x_zoom+1, y_zoom+1);
+            else if(stats.fmode == SCOPE_FMODE_XSCROLL || stats.fmode == SCOPE_FMODE_XZOOM){
+                snprintf(str,32,"X*%d X->%d",x_zoom+1, x_scroll);
+                lcd_drawString(0,0,sys_font,str);
+            }
+            else if(stats.fmode == SCOPE_FMODE_YSCROLL || stats.fmode == SCOPE_FMODE_YZOOM){
+                snprintf(str,32,"Y*%d Y^%d",y_zoom+1, y_scroll);
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_THRESH){
@@ -253,7 +280,7 @@ void mode_scope_on_process(){
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_XDELTA || stats.fmode == SCOPE_FMODE_YDELTA){
-                auto dtt = (dt_cursor*us_per_div*8)/128;
+                auto dtt = (dt_cursor*us_per_div*8/2)/128;
                 const char* dtt_unit = "us"; 
                 snprintf(str,32,"DX:%d%s DY:%d",dtt,dtt_unit,dy_cursor);
                 lcd_drawString(0,0,sys_font,str);
@@ -270,7 +297,11 @@ void mode_scope_on_process(){
 
             //thresh indicator
             if(stats.fmode == SCOPE_FMODE_THRESH){
-                mode_scope_line_dash(trig_lvl>>6,0,128,1,0);
+                auto tt = trig_lvl-2048;
+                tt *= y_zoom;
+                tt >>= 6;
+                tt += 2048;
+                mode_scope_line_dash(tt,0,128,1,0);
             }
             //delta indicator
             if(stats.fmode == SCOPE_FMODE_YDELTA || stats.fmode == SCOPE_FMODE_XDELTA){
@@ -284,6 +315,10 @@ void mode_scope_on_process(){
                     mode_scope_line_dash(x*16, 8,64-8, 0,0x55);
                 }
             }
+        }
+
+        if(scope_hold){
+            lcd_drawChar(128-6,0,sys_font,'H');
         }
 
     lcd_update();
