@@ -214,8 +214,8 @@ void mode_scope_on_process(){
 		
         //plot data
         for(int i=trig_pos; i<128+trig_pos; i++){
-            int yy = s16b[i/(x_zoom)]-2048;
-            //yy *= (y_zoom);
+            int yy = s16b[i/(x_zoom+1)]-2048;
+            yy *= (y_zoom+1);
             yy >>= 6;
             yy += 32;
             lcd_drawVline(i-trig_pos,0,yy);
