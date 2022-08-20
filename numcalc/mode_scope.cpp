@@ -61,9 +61,11 @@ void mode_scope_line_dash(int p, int start, int len, int hor, int pattern){
 }
 
 void mode_scope_set_amp(int8_t mode){
+    if(mode > 3) return;
+    if(mode < -2) return;
 	y_gain_ctrl = mode;
 
-	gpio_write_bit(GPIOB,15,1);//mode == -1 ? 1 : 0);
+	gpio_write_bit(GPIOB,15,mode == -1 ? 1 : 0);
 	gpio_write_bit(GPIOB,14,mode == -2 ? 1 : 0);
 	gpio_write_bit(GPIOB,13,mode == -3 ? 1 : 0);
 
@@ -176,6 +178,9 @@ void mode_scope_on_process(){
         int tt = io.turns_right - io.turns_left;
         if(stats.fmode == SCOPE_FMODE_TB)
             mode_scope_set_tbase(x_timebase+tt);
+        else if(stats.fmode == SCOPE_FMODE_YAMP){
+            mode_scope_set_amp(y_gain_ctrl+tt);
+        }
         else if(stats.fmode == SCOPE_FMODE_YZOOM){
             y_zoom += tt;
             y_zoom %= 64;
@@ -279,6 +284,10 @@ void mode_scope_on_process(){
             }
             else if(stats.fmode == SCOPE_FMODE_XSCROLL || stats.fmode == SCOPE_FMODE_XZOOM){
                 snprintf(str,32,"X*%d X->%d",x_zoom+1, x_scroll);
+                lcd_drawString(0,0,sys_font,str);
+            }
+            else if(stats.fmode == SCOPE_FMODE_YAMP){
+                snprintf(str,32,"Y_AMP:%d",y_gain_ctrl);
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_YSCROLL || stats.fmode == SCOPE_FMODE_YZOOM){
