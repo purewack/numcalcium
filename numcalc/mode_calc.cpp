@@ -24,17 +24,19 @@ typedef struct Token
 
   #define S_END -2
   #define S_GRP -1
-  #define S_EQU 0
+  #define S_ANS 0
   #define S_SUB 1
   #define S_ADD 2
   #define S_MUL 3
   #define S_DIV 4
   #define S_POW 5
-  #define S_SQR 6
-  #define S_SIN 7
-  #define S_COS 8
-  #define S_TAN 9
-  #define S_ABS 10
+  #define S_LOG 6
+  #define S_LN  7
+  #define S_SQR 8
+  #define S_SIN 9
+  #define S_COS 10
+  #define S_TAN 11
+  #define S_ABS 12
   
   int order;
   int symbol;
@@ -276,6 +278,8 @@ compute_expr (token_t * r)
     
   if (r->order == O_NUM)
     return computeNumber(r->value);
+  if (r->order == S_ANS)
+    return result;
   if (r->symbol == S_SUB)
     return rl - rr;
   if (r->symbol == S_ADD)
@@ -300,6 +304,10 @@ compute_expr (token_t * r)
         return sqrt (rl + rr);
   }
   
+  if (r->symbol == S_LN) 
+    return log (rl + rr);
+  if (r->symbol == S_LOG) 
+    return log10 (rl + rr);
   if (r->symbol == S_COS) 
     return cos (rl + rr);
   if (r->symbol == S_SIN) 
@@ -419,10 +427,13 @@ void clearAll(){
 }
 
 void mode_calc_on_begin(){
+  stats.fmode = 0;
   eng = 1;
   expr.lim = 100;
   expr.buf = expr_buf; 
+
   clearAll();
+
   lcd_clear();
   drawTitle();
   lcd_update();
@@ -438,6 +449,11 @@ void mode_calc_on_process(){
     
 
     if(io.turns_left || io.turns_right){
+        if(ans) {
+            ans = 0;
+            return;
+        }
+
         int d = 0;
         if(io.turns_left){
             d = -io.turns_left;
@@ -496,6 +512,33 @@ void mode_calc_on_process(){
         if(shift && i==(1<<K_F3)){
             clearAll();
             return;
+        }  
+        else if(i== (1<<K_F3) && stats.fmode==0){
+            if(expr.buf[expr_cursor].order == O_NUM){
+            auto del = numberInputBackspace(expr.buf[expr_cursor].value, expr_cursor_inter);
+            if(del) {
+                sarray_remove(expr,expr_cursor);
+                expr_cursor--;
+            }
+            else{
+                expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
+                if(expr_cursor_inter > expr_buf[expr_cursor].vlen)
+                expr_cursor_inter--;
+            }
+            }
+            else{
+            expr.buf[expr_cursor].order = O_NONE;
+            expr.buf[expr_cursor].vlen = 0;
+            sarray_remove(expr,expr_cursor);
+            expr_cursor--;
+            }
+
+            if(expr_cursor < 0) 
+            expr_cursor = 0;
+        }
+
+        if(result){
+            expr_insert_number();
         }
 
         if(i== (1<<K_R)) {
@@ -540,32 +583,9 @@ void mode_calc_on_process(){
             expr_insert_symbol(S_DIV);
         }
         else if(i== (1<<K_X)) {
-            if(!shift)
                 expr_insert_symbol(S_MUL);
-            else{
-                if(expr.buf[expr_cursor].order == O_NUM){
-                auto del = numberInputBackspace(expr.buf[expr_cursor].value, expr_cursor_inter);
-                if(del) {
-                    sarray_remove(expr,expr_cursor);
-                    expr_cursor--;
-                }
-                else{
-                    expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
-                    if(expr_cursor_inter > expr_buf[expr_cursor].vlen)
-                    expr_cursor_inter--;
-                }
-                }
-                else{
-                expr.buf[expr_cursor].order = O_NONE;
-                expr.buf[expr_cursor].vlen = 0;
-                sarray_remove(expr,expr_cursor);
-                expr_cursor--;
-                }
-
-                if(expr_cursor < 0) 
-                expr_cursor = 0;
-            }
-        }
+        } 
+    
         else{
         if(shift){
             if(i==(1<<K_DOT)) expr_insert_symbol(S_GRP);
