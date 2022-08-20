@@ -219,8 +219,10 @@ void mode_scope_on_process(){
     auto s16b = (int16_t*)shared_int32_1024;  
     //signal acquisition, busy wait
     if(!scope_hold){
+        timer_pause(TIMER3);
 	    adc_block_get((uint16_t*)s16b,spl_count);
         while(IS_ADC_BUSY){};
+        timer_resume(TIMER3);
     }
 
     //signal conditioning 
