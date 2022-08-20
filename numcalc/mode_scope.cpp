@@ -7,6 +7,7 @@ int16_t trig_lvl; //threshold for triggering
 uint16_t trig_pos; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration; //spl time spent front
 uint8_t trig_filter;
+bool slow_acquire;
 
 uint8_t x_zoom; //x axis zoom level in sw, adding / taking divisions
 uint8_t y_zoom; //zoom level of the y axis in sw
@@ -103,6 +104,7 @@ void mode_scope_on_begin(){
     trig_duration = 0;
     trig_lvl = 32<<6; //threshold for triggering 
     trig_filter = 3;
+    slow_acquire = 0;
 
     x_zoom = 0; //x axis zoom level in sw, adding / taking divisions
     x_timebase = 0; //current time base mode, determines srate
@@ -215,14 +217,26 @@ void mode_scope_on_process(){
         io.turns_right = 0;
     }
 
-    const int spl_count = 512;
+    const int spl_count = 256;
     auto s16b = (int16_t*)shared_int32_1024;  
     //signal acquisition, busy wait
     if(!scope_hold){
-        timer_pause(TIMER3);
-	    adc_block_get((uint16_t*)s16b,spl_count);
-        while(IS_ADC_BUSY){};
-        timer_resume(TIMER3);
+        if(us_per_div < 20000){
+            if(us_per_div < 400)
+            timer_pause(TIMER3);
+                adc_block_get((uint16_t*)s16b,spl_count);
+                while(IS_ADC_BUSY){};
+            if(us_per_div < 400)
+            timer_resume(TIMER3);
+        }
+        else{
+            if(!slow_acquire){
+                slow_acquire = 1;
+                for(int i=0; i<spl_count; i++) s16b[i] = 0;
+                adc_block_get((uint16_t*)s16b,spl_count);
+            }
+            if(!IS_ADC_BUSY && slow_acquire) slow_acquire = 0;
+        }
     }
 
     //signal conditioning 
@@ -242,20 +256,21 @@ void mode_scope_on_process(){
         tr_spl_a <<= trig_filter;
         tr_spl_b <<= trig_filter;
         if(tr_spl_a < tt && tr_spl_b >= tt){
-			if(!trig_pos)	
+            if(!trig_pos)	
             	trig_pos = i;
 			
             freq_av += (adc_srate / trig_duration);  
-			trig_duration = 0;
+            trig_duration = 0;
 
-			freq_avc++;
-			if(freq_avc == 10){
-				frequency = double(freq_av) / double(freq_avc);
-				freq_avc = 0;
-				freq_av = 0;
-			}
+            freq_avc++;
+            if(freq_avc == 10){
+                frequency = double(freq_av) / double(freq_avc);
+                freq_avc = 0;
+                freq_av = 0;
+            }
         }
     }
+    
 	db_level = 20.0*log10((rms_total/double(spl_count)));
 
     lcd_clear();
@@ -264,7 +279,7 @@ void mode_scope_on_process(){
         auto tr = trig_pos*(x_zoom+1);
         for(int i=tr; i<128+tr; i++){
             int yy = s16b[(i/(x_zoom+1))+x_scroll]-2048;
-            yy *= -(y_zoom+1);
+            yy *= (y_zoom+1);
             yy >>= 6;
             yy += 32;
             yy += y_scroll;
