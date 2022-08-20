@@ -131,13 +131,15 @@ void mode_scope_on_begin(){
 	mode_scope_set_amp(0);
     mode_scope_set_tbase(10);
 
-    timer_pause(TIMER4);
-    timer_set_prescaler(TIMER4, 50-1);
-    timer_set_compare(TIMER4, TIMER_CH1, 24-1);
-    timer_set_reload(TIMER4, 48-1);
-    timer_cc_enable(TIMER4, TIMER_CH1);
-    timer_resume(TIMER4);
-    gpio_set_mode(GPIOB,6,GPIO_AF_OUTPUT_PP);
+    //disabled as pre-amp boards are expected to generate their own supply rails
+    ////clock for negative supply rail
+    // timer_pause(TIMER4);
+    // timer_set_prescaler(TIMER4, 48-1);
+    // timer_set_compare(TIMER4, TIMER_CH1, 50-1);
+    // timer_set_reload(TIMER4, 100-1);
+    // timer_cc_enable(TIMER4, TIMER_CH1);
+    // timer_resume(TIMER4);
+    // gpio_set_mode(GPIOB,6,GPIO_AF_OUTPUT_PP);
 
     LOGL("scope: done on_begin");
 }
