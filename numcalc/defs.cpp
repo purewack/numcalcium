@@ -77,7 +77,7 @@ void updateProgGFX(){
 }
 
 
-double computeNumber(vnum_t &n){
+double doubleFromNumber(vnum_t &n){
     auto e = double(n.e_int);
     auto m = double(n.m_int);
     auto mm = m / pow(10.0,n.m_dc);
@@ -92,6 +92,40 @@ void clearNumber(vnum_t &n){
     n.e_int = 0;
     n.m_int = 0;
     n.result = 0.0;
+}
+
+vnum_t numberFromDouble(double dnum){
+    vnum_t vnum = {0};
+    clearNumber(vnum);
+    vnum.result = dnum;
+
+    if(dnum < 0.0){
+        dnum *= -1.0;
+    }
+    
+    vnum.e_int = uint64_t(dnum);
+    auto eint = vnum.e_int;
+    while(eint > 0){
+        eint /= 10;
+        vnum.e_dc++;
+    }
+    
+    dnum -= double(vnum.e_int);
+    if(dnum != 0.0) vnum.dot = true;
+    for(int i=0; i<12; i++){
+        dnum *= 10.0;
+        vnum.m_int = uint64_t(dnum);
+    }
+    uint64_t mdc = 0;
+    for(int i=0; i<12; i++){
+        if(vnum.m_int & 0x1) {
+            vnum.m_dc = 12-mdc;
+            break;
+        }
+        mdc++;
+        vnum.m_int /= 10;
+    }
+    return vnum;
 }
 
 void decimalInsert(uint64_t& n, uint16_t dc, int pos, int digit){
