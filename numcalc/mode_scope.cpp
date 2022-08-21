@@ -100,6 +100,9 @@ void mode_scope_set_tbase(int8_t tb){
 }
 
 void mode_scope_on_begin(){
+    io.bscan_down = 0;
+    io.bscan_up = 0;
+    
     scope_hold = 0; //hold display, dont update on 1
     trig_duration = 0;
     trig_lvl = 32<<6; //threshold for triggering 
