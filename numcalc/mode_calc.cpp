@@ -5,10 +5,10 @@
 #include "include/util.h"
 #include "include/number.h"
 
-#undef LOGL
-#define LOGL(X) 
-#undef LOG
-#define LOG(X) 
+// #undef LOGL
+// #define LOGL(X) 
+// #undef LOG
+// #define LOG(X) 
 
 typedef struct Token token_t;
 
@@ -31,7 +31,7 @@ typedef struct Token
   #define S_DIV 4
   #define S_POW 5
   #define S_LOG 6
-  #define S_LN  7
+  #define S_L10 7
   #define S_SQR 8
   #define S_SIN 9
   #define S_COS 10
@@ -59,7 +59,8 @@ bool eng;
 bool shift;
 bool secondF;
 int calc_new_bytes = 0;
-double result;
+double ans;
+vnum_t vans;
 token_t* parsed;
 
 
@@ -73,7 +74,7 @@ void print_token(token_t* r){
     if(r->order == O_NONE)
         LOG("?");
     else if(r->order == O_NUM)
-        LOG(computeNumber(r->value));
+        LOG(doubleFromNumber(r->value));
     else if(r->order == O_PM && r->symbol == S_ADD)
         LOG("-");
     else if(r->order == O_PM && r->symbol == S_SUB)
@@ -277,9 +278,9 @@ compute_expr (token_t * r)
   LOG(">>>>>>>>>>");
     
   if (r->order == O_NUM)
-    return computeNumber(r->value);
-  if (r->order == S_ANS)
-    return result;
+    return doubleFromNumber(r->value);
+//   if (r->order == S_ANS)
+//     return ans;
   if (r->symbol == S_SUB)
     return rl - rr;
   if (r->symbol == S_ADD)
@@ -304,10 +305,10 @@ compute_expr (token_t * r)
         return sqrt (rl + rr);
   }
   
-  if (r->symbol == S_LN) 
-    return log (rl + rr);
-  if (r->symbol == S_LOG) 
+  if (r->symbol == S_L10) 
     return log10 (rl + rr);
+  if (r->symbol == S_LOG) 
+    return log (rl + rr);
   if (r->symbol == S_COS) 
     return cos (rl + rr);
   if (r->symbol == S_SIN) 
@@ -341,6 +342,8 @@ int expr_insert_number(){
   return 0;
  }
 
+
+
 int expr_insert_symbol(int sym){
   
     // if(keypad_num_inputting){
@@ -350,6 +353,31 @@ int expr_insert_symbol(int sym){
     if(expr.buf[expr_cursor].order != O_NONE)
       expr_cursor++;
     
+    auto preMultiply = [=](){
+        if(expr_cursor==0)return;
+        LOGL("pre");
+        //insert mult is inserting function
+        if(expr.buf[expr_cursor-1].order == O_NUM){
+            token_t nn;
+            nn.symbol = S_MUL;
+            nn.order = O_MD;
+            nn.vlen = 1;
+            sarray_insert(expr,nn,expr_cursor);
+            expr_cursor++;
+            LOGL("pre ins1");
+        }
+    };
+
+    auto substituteSingle = [=](){
+        auto oo = expr.buf[expr_cursor-1].order;
+        LOGL("sub order");
+        LOGL(oo);
+        if(oo == O_PM || oo == O_MD || oo == O_PWR){
+            sarray_remove(expr,expr_cursor-1);
+            expr_cursor--;
+            LOGL("sub rem");
+        }
+    };
 
     token_t nn;
     nn.symbol = sym;
@@ -361,44 +389,64 @@ int expr_insert_symbol(int sym){
 
         case S_SUB:
         case S_ADD:
+            substituteSingle();
             nn.order = O_PM;
             nn.vlen = 1;
         break;
 
         case S_MUL:
         case S_DIV:
+            substituteSingle();
             nn.order = O_MD;
             nn.vlen = 1;
         break;
 
         case S_POW:
+            substituteSingle();
             nn.order = O_PWR;
             nn.vlen = 1;
         break;
         
         case S_COS:
+            preMultiply();
             nn.order = O_FN;
             nn.vlen = 4;
         break;
 
         case S_SIN:
+            preMultiply();
             nn.order = O_FN;
             nn.vlen = 4;
         break;
 
         case S_TAN:
+            preMultiply();
             nn.order = O_FN;
             nn.vlen = 4;
         break;
 
         case S_ABS:
+            preMultiply();
             nn.order = O_FN;
             nn.vlen = 4;
         break;
 
         case S_SQR:
+            preMultiply();
             nn.order = O_FN;
             nn.vlen = 5;
+        break;
+
+        case S_LOG:
+            preMultiply();
+            nn.order = O_FN;
+            nn.vlen = 4;
+        break;
+
+        case S_L10:
+            preMultiply();
+            nn.order = O_FN;
+            nn.vlen = 6;
         break;
 
         default:
@@ -420,10 +468,12 @@ void clearAll(){
   cv.order = O_NONE;
   cv.symbol = S_END;
   sarray_clear(expr, cv); 
-  result = 0.0;
+  ans = 0.0;
+  clearNumber(vans);
   parsed = nullptr;
   secondF = false;
   calc_new_bytes = 1;
+  shift = 0;
 }
 
 void mode_calc_on_begin(){
@@ -433,6 +483,8 @@ void mode_calc_on_begin(){
   expr.buf = expr_buf; 
 
   clearAll();
+  io.bscan_down = 0;
+  io.bscan_up = 0;
 
   lcd_clear();
   drawTitle();
@@ -444,23 +496,17 @@ void mode_calc_on_end(){
 }
 
 void mode_calc_on_process(){
-//void mode_calc_on_nav(int d){
-
-    
 
     if(io.turns_left || io.turns_right){
-        if(ans) {
-            ans = 0;
-            return;
-        }
+        // if(ans) {
+        //     ans = 0;
+        //     return;
+        // }
 
         int d = 0;
-        if(io.turns_left){
-            d = -io.turns_left;
+        if(io.turns_left || io.turns_right){
+            d = io.turns_right - io.turns_left;
             io.turns_left = 0;
-        }
-        else if(io.turns_right){
-            d = io.turns_right;
             io.turns_right = 0;
         }
         auto e = &expr.buf[expr_cursor];
@@ -495,6 +541,12 @@ void mode_calc_on_process(){
     if(io.bscan_down & (1<<K_Y)){
         io.bscan_down = 0;
         shift = 1;
+        calc_new_bytes = 1;
+        LOGL("cur");
+        LOGL(expr_cursor);
+        LOGL("expr");
+        for(int i=0; i<5;i++)
+            LOGL(expr.buf[i].order);
         return;
     }
 
@@ -513,18 +565,18 @@ void mode_calc_on_process(){
             clearAll();
             return;
         }  
-        else if(i== (1<<K_F3) && stats.fmode==0){
+        else if(i== (1<<K_F3)){
             if(expr.buf[expr_cursor].order == O_NUM){
-            auto del = numberInputBackspace(expr.buf[expr_cursor].value, expr_cursor_inter);
-            if(del) {
-                sarray_remove(expr,expr_cursor);
-                expr_cursor--;
-            }
-            else{
-                expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
-                if(expr_cursor_inter > expr_buf[expr_cursor].vlen)
-                expr_cursor_inter--;
-            }
+                auto del = numberInputBackspace(expr.buf[expr_cursor].value, expr_cursor_inter);
+                if(del) {
+                    sarray_remove(expr,expr_cursor);
+                    expr_cursor--;
+                }
+                else{
+                    expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
+                    if(expr_cursor_inter > expr_buf[expr_cursor].vlen)
+                    expr_cursor_inter--;
+                }
             }
             else{
             expr.buf[expr_cursor].order = O_NONE;
@@ -535,11 +587,12 @@ void mode_calc_on_process(){
 
             if(expr_cursor < 0) 
             expr_cursor = 0;
+            return;
         }
 
-        if(result){
-            expr_insert_number();
-        }
+        // if(ans){
+        //     expr_insert_number();
+        // }
 
         if(i== (1<<K_R)) {
             if(shift){
@@ -550,8 +603,8 @@ void mode_calc_on_process(){
             if(!parsed){
                 LOGL("clear expr childs");
                 for(int i=0; i<expr.count; i++){
-                expr.buf[i].o1 = nullptr;
-                expr.buf[i].o2 = nullptr;
+                    expr.buf[i].o1 = nullptr;
+                    expr.buf[i].o2 = nullptr;
                 }
             }
 
@@ -564,9 +617,10 @@ void mode_calc_on_process(){
             LOGL("end parse");
             
             if(parsed) LOGL("have tree");
-            result = compute_expr(parsed);
-            LOGL(result);
-            LOGL("result");
+            ans = compute_expr(parsed);
+            vans = numberFromDouble(ans);
+            LOGL(ans);
+            LOGL("ans");
             return;
         }
 
@@ -578,39 +632,35 @@ void mode_calc_on_process(){
         else if(i== (1<<K_N)) {
             expr_insert_symbol(S_SUB);
         }
-        else if(i== (1<<K_D)) 
-        {
+        else if(i== (1<<K_D)) {
             expr_insert_symbol(S_DIV);
         }
         else if(i== (1<<K_X)) {
-                expr_insert_symbol(S_MUL);
+            expr_insert_symbol(S_MUL);
         } 
     
         else{
-        if(shift){
-            if(i==(1<<K_DOT)) expr_insert_symbol(S_GRP);
-            if(i==(1<<K_2)) secondF = true;
-            return;
-        }else if(secondF){
-            if(i==(1<<K_1)) expr_insert_symbol(S_SIN);
-            if(i==(1<<K_2)) expr_insert_symbol(S_COS);
-            if(i==(1<<K_3)) expr_insert_symbol(S_TAN);
-            if(i==(1<<K_4)) expr_insert_symbol(S_SQR);
-            if(i==(1<<K_5)) expr_insert_symbol(S_ABS);
-            secondF = false;
-            return;
+            if(shift){
+                if(i==(1<<K_DOT)) expr_insert_symbol(S_GRP);
+                if(i==(1<<K_1))   expr_insert_symbol(S_SIN);
+                if(i==(1<<K_2))   expr_insert_symbol(S_COS);
+                if(i==(1<<K_3))   expr_insert_symbol(S_TAN);
+                if(i==(1<<K_4))   expr_insert_symbol(S_SQR);
+                if(i==(1<<K_5))   expr_insert_symbol(S_ABS);
+                if(i==(1<<K_7))   expr_insert_symbol(S_LOG);
+                if(i==(1<<K_8))   expr_insert_symbol(S_L10);
+                return;
+            }
+
+            if(expr.buf[expr_cursor].order != O_NUM){
+                expr_insert_number();
+                expr.buf[expr_cursor].vlen = 0;
+            }
+
+            numberInputKey(expr.buf[expr_cursor].value, i, expr_cursor_inter);
+            expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
         }
 
-        if(expr.buf[expr_cursor].order != O_NUM){
-            expr_insert_number();
-            expr.buf[expr_cursor].vlen = 0;
-        }
-
-        numberInputKey(expr.buf[expr_cursor].value, i, expr_cursor_inter);
-        expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
-        }
-
-        
         return;
     }
 
@@ -620,14 +670,6 @@ void mode_calc_on_process(){
     if(!calc_new_bytes) return;
     calc_new_bytes = 0;
     clearProgGFX();
-
-// if(secondF){
-//     hud.setCursor(0,18);
-//     hud.print("1=sin 2=cos 3=tan");
-//     hud.setCursor(0,18+9*1);
-//     hud.print("4=sqrt 5=abs P=pow");
-//     return;
-// }
 
     //vlla == 21 max
     const int y = 32-8;
@@ -640,40 +682,38 @@ void mode_calc_on_process(){
     for(int i=0; i<expr.count; i++){
         auto r = &expr.buf[i];
         
-        if(i == expr_cursor){
-        cpx = vlc+1;
-        }
-
+        if(i == expr_cursor)
+            cpx = vlc+1;
+        
         ll = r->vlen;
         vlc += ll;
 
         if(i == expr_cursor){
-        cpl = ll;  
-        if(expr_cursor_inter>0){
-            cx = cpl-ll;
-            cx += expr_cursor_inter;
+            cpl = ll;  
+            if(expr_cursor_inter>0){
+                cx = cpl-ll;
+                cx += expr_cursor_inter;
+            }
         }
-        }
-    
     } 
 
-    #define WINW 21
+    const int winw = 21;
     int cpos = (cx < 1 ? cpx+cpl-1 : cpx+cx-1);
     if(cpos <= wstart) wstart = cpos-1;
-    if(cpos > wstart+WINW) wstart = cpos-WINW;
+    if(cpos > wstart+winw) wstart = cpos-winw;
     if(wstart < 0) wstart = 0;
 
-    LOGL("======= ");
-    LOG("ll - ");LOGL(ll);
-    LOG("vcl - ");LOGL(vlc);
-    LOG("cpx - "); LOGL(cpx);
-    LOG("cpl - ");LOGL(cpl);
-    LOG("cx - ");LOGL(cx);
-    LOG("expr_cursor - "); LOGL(expr_cursor);
-    LOG("expr inter - "); LOGL(expr_cursor_inter);
-    LOG("cpos - "); LOGL(cpos);
-    LOG("wstart "); LOGL(wstart);
-    LOGL("======= ");
+    // LOGL("======= ");
+    // LOG("ll - ");LOGL(ll);
+    // LOG("vcl - ");LOGL(vlc);
+    // LOG("cpx - "); LOGL(cpx);
+    // LOG("cpl - ");LOGL(cpl);
+    // LOG("cx - ");LOGL(cx);
+    // LOG("expr_cursor - "); LOGL(expr_cursor);
+    // LOG("expr inter - "); LOGL(expr_cursor_inter);
+    // LOG("cpos - "); LOGL(cpos);
+    // LOG("wstart "); LOGL(wstart);
+    // LOGL("======= ");
 
     int x = (wstart)*(-6);
 
@@ -699,24 +739,24 @@ void mode_calc_on_process(){
                 lcd_drawChar(x,y,sys_font,'/');
             else if (r->symbol == S_POW)
                 lcd_drawChar(x,y,sys_font,'^');
+            else if (r->symbol == S_GRP)
+                lcd_drawChar(x,y,sys_font,'(');
+            else if (r->symbol == S_END)
+                lcd_drawChar(x,y,sys_font,')');
             else if (r->symbol == S_COS)
                 lcd_drawString(x,y,sys_font,"cos(");
             else if (r->symbol == S_SIN)
                 lcd_drawString(x,y,sys_font,"sin(");
-            else if (r->symbol == S_COS)
-                lcd_drawString(x,y,sys_font,"cos(");
             else if (r->symbol == S_TAN)
                 lcd_drawString(x,y,sys_font,"tan(");
             else if (r->symbol == S_ABS)
                 lcd_drawString(x,y,sys_font,"abs(");
             else if (r->symbol == S_SQR)
                 lcd_drawString(x,y,sys_font,"sqrt(");
-            else if (r->symbol == S_SQR)
-                lcd_drawString(x,y,sys_font,"sqrt(");
-            else if (r->symbol == S_GRP)
-                lcd_drawChar(x,y,sys_font,'(');
-            else if (r->symbol == S_END)
-                lcd_drawChar(x,y,sys_font,')');
+            else if (r->symbol == S_L10)
+                lcd_drawString(x,y,sys_font,"log10(");
+            else if (r->symbol == S_LOG)
+                lcd_drawString(x,y,sys_font,"log(");
 
             x += 6*r->vlen;
         }
@@ -742,8 +782,8 @@ void mode_calc_on_process(){
 
     
     char str[64];
-    const char* sign = (result < 0) ? "-" : " ";
-    double val = (result < 0) ? -result : result;
+    const char* sign = (ans < 0) ? "-" : " ";
+    double val = (ans < 0) ? -ans : ans;
     long exp = long(val);
     double frac_d = val-double(exp);
     int cc = snprintf(str,64,"%ld",exp);
@@ -761,31 +801,33 @@ void mode_calc_on_process(){
     lcd_drawString(8,64-10,sys_font,str);
 
     if(eng){//engineering notation
-    	
-	if(abs(result) < 1){
-    	lcd_drawChar(0,64-10-8,sys_font,'=');
-	      	if(result < 0.000000001) {
-    			long frac = long(frac_d * pow(10,12));
-	       		snprintf(str,64,"%dp",frac);	       
-		}
-		else if(result < 0.000001) {
-    			long frac = long(frac_d * pow(10,9));
-	       		snprintf(str,64,"%dn",frac);	       
-		}
-		else if(result < 0.001) {
-    			long frac = long(frac_d * pow(10,6));
-	       		snprintf(str,64,"%du",frac);	       
-		}
-		else{
-    			long frac = long(frac_d * pow(10,3));
-	       		snprintf(str,64,"%dm",frac);	       
-		}
-		lcd_drawString(16,64-10-8,sys_font,str);
-	}
+        if(abs(ans) < 1){
+            lcd_drawChar(0,64-10-8,sys_font,'=');
+                if(ans < 0.000000001) {
+                    long frac = long(frac_d * pow(10,12));
+                    snprintf(str,64,"%dp",frac);	       
+            }
+            else if(ans < 0.000001) {
+                    long frac = long(frac_d * pow(10,9));
+                    snprintf(str,64,"%dn",frac);	       
+            }
+            else if(ans < 0.001) {
+                    long frac = long(frac_d * pow(10,6));
+                    snprintf(str,64,"%du",frac);	       
+            }
+            else{
+                    long frac = long(frac_d * pow(10,3));
+                    snprintf(str,64,"%dm",frac);	       
+            }
+            lcd_drawString(16,64-10-8,sys_font,str);
+        }
     }
     else{ //SI notation
     
     }
+
+    if(shift)
+    lcd_drawChar(128-6,64-8,sys_font,'^');
 
     updateProgGFX();
 }
