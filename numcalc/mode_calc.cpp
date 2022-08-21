@@ -22,9 +22,10 @@ typedef struct Token
   #define O_FN 4 //func ( or (
   #define O_FN_END 5// )
 
+  #define S_VAR -3
   #define S_END -2
   #define S_GRP -1
-  #define S_ANS 0
+  #define S_NUM 0
   #define S_SUB 1
   #define S_ADD 2
   #define S_MUL 3
@@ -59,8 +60,8 @@ bool eng;
 bool shift;
 bool secondF;
 int calc_new_bytes = 0;
-double ans;
-vnum_t vans;
+double result;
+vnum_t var1;
 token_t* parsed;
 
 
@@ -76,9 +77,9 @@ void print_token(token_t* r){
     else if(r->order == O_NUM)
         LOG(doubleFromNumber(r->value));
     else if(r->order == O_PM && r->symbol == S_ADD)
-        LOG("-");
-    else if(r->order == O_PM && r->symbol == S_SUB)
         LOG("+");
+    else if(r->order == O_PM && r->symbol == S_SUB)
+        LOG("-");
     else if(r->order == O_MD && r->symbol == S_MUL)
         LOG("*");
     else if(r->order == O_MD && r->symbol == S_DIV)
@@ -91,6 +92,8 @@ void print_token(token_t* r){
         LOG("(");
     else if(r->order == O_FN_END)
         LOG(")");
+    else 
+        LOG("SYM");
 #endif
 }
 
@@ -277,10 +280,10 @@ compute_expr (token_t * r)
   LOG(rr);
   LOG(">>>>>>>>>>");
     
-  if (r->order == O_NUM)
+  if (r->symbol == S_VAR || r->order == O_NUM)
     return doubleFromNumber(r->value);
 //   if (r->order == S_ANS)
-//     return ans;
+//     return result;
   if (r->symbol == S_SUB)
     return rl - rr;
   if (r->symbol == S_ADD)
@@ -321,7 +324,19 @@ compute_expr (token_t * r)
   return rl + rr;
 }
 
+int expr_insert_var(double v){
+    if(expr_cursor+1 == 100) return 0 ;
+    if(expr.buf[expr_cursor].order > O_NUM)
+        expr_cursor++;
 
+    
+    token_t nn;
+    nn.symbol = S_VAR;
+    nn.order = O_NUM;
+    nn.value = numberFromDouble(v);
+    nn.vlen = 3;
+    sarray_insert(expr,nn,expr_cursor);
+}
 
 int expr_insert_number(){
   if(expr_cursor+1 == 100) return 0 ;
@@ -336,6 +351,7 @@ int expr_insert_number(){
     expr_cursor++;
 
   token_t nn;
+  nn.symbol = S_NUM;
   nn.order = O_NUM;
   clearNumber(nn.value);
   sarray_insert(expr,nn,expr_cursor);
@@ -468,8 +484,8 @@ void clearAll(){
   cv.order = O_NONE;
   cv.symbol = S_END;
   sarray_clear(expr, cv); 
-  ans = 0.0;
-  clearNumber(vans);
+  result = 0.0;
+  clearNumber(var1);
   parsed = nullptr;
   secondF = false;
   calc_new_bytes = 1;
@@ -483,6 +499,7 @@ void mode_calc_on_begin(){
   expr.buf = expr_buf; 
 
   clearAll();
+  clearNumber(var1);
   io.bscan_down = 0;
   io.bscan_up = 0;
 
@@ -498,11 +515,9 @@ void mode_calc_on_end(){
 void mode_calc_on_process(){
 
     if(io.turns_left || io.turns_right){
-        // if(ans) {
-        //     ans = 0;
-        //     return;
-        // }
-
+        result = 0.0;
+        if(expr_cursor == -1) expr_cursor = expr.count-1;
+        
         int d = 0;
         if(io.turns_left || io.turns_right){
             d = io.turns_right - io.turns_left;
@@ -510,7 +525,7 @@ void mode_calc_on_process(){
             io.turns_right = 0;
         }
         auto e = &expr.buf[expr_cursor];
-        if(e->order == O_NUM && expr_cursor_inter != -1){
+        if(e->order == O_NUM && e->symbol == S_NUM && expr_cursor_inter != -1){
             if(expr_cursor_inter == 0)
                 expr_cursor_inter = d > 0 ? 1 : e->vlen;
             else if(expr_cursor_inter != -1){
@@ -565,6 +580,15 @@ void mode_calc_on_process(){
             clearAll();
             return;
         }  
+        else if(result){
+            auto r = result;
+            LOGL("adding ANS");
+            LOGL(result);
+            clearAll();
+            expr_insert_var(r);
+            LOGL(doubleFromNumber(expr_buf[0].value));
+            return;
+        }
         else if(i== (1<<K_F3)){
             if(expr.buf[expr_cursor].order == O_NUM){
                 auto del = numberInputBackspace(expr.buf[expr_cursor].value, expr_cursor_inter);
@@ -590,10 +614,6 @@ void mode_calc_on_process(){
             return;
         }
 
-        // if(ans){
-        //     expr_insert_number();
-        // }
-
         if(i== (1<<K_R)) {
             if(shift){
                 expr_insert_symbol(S_END);
@@ -617,10 +637,14 @@ void mode_calc_on_process(){
             LOGL("end parse");
             
             if(parsed) LOGL("have tree");
-            ans = compute_expr(parsed);
-            vans = numberFromDouble(ans);
-            LOGL(ans);
-            LOGL("ans");
+            result = compute_expr(parsed);
+            var1 = numberFromDouble(result);
+            LOGL("var1");
+            LOGL(doubleFromNumber(var1));
+            LOGL(result);
+            LOGL("result");
+            expr_cursor = -1;
+            expr_cursor_inter = 0;
             return;
         }
 
@@ -657,8 +681,10 @@ void mode_calc_on_process(){
                 expr.buf[expr_cursor].vlen = 0;
             }
 
-            numberInputKey(expr.buf[expr_cursor].value, i, expr_cursor_inter);
-            expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
+            if(expr.buf[expr_cursor].symbol != S_VAR){
+                numberInputKey(expr.buf[expr_cursor].value, i, expr_cursor_inter);
+                expr.buf[expr_cursor].vlen = numberLength(expr.buf[expr_cursor].value);
+            }
         }
 
         return;
@@ -761,7 +787,12 @@ void mode_calc_on_process(){
             x += 6*r->vlen;
         }
         else {
-            printNumber(r->value,x,y);
+            if(r->symbol == S_VAR){
+                lcd_drawString(x,y,sys_font,"ANS");
+                x+=6*r->vlen;
+            }
+            else
+                printNumber(r->value,x,y);
         }
         
         if(i == expr_cursor){
@@ -782,8 +813,8 @@ void mode_calc_on_process(){
 
     
     char str[64];
-    const char* sign = (ans < 0) ? "-" : " ";
-    double val = (ans < 0) ? -ans : ans;
+    const char* sign = (result < 0) ? "-" : " ";
+    double val = (result < 0) ? -result : result;
     long exp = long(val);
     double frac_d = val-double(exp);
     int cc = snprintf(str,64,"%ld",exp);
@@ -801,17 +832,17 @@ void mode_calc_on_process(){
     lcd_drawString(8,64-10,sys_font,str);
 
     if(eng){//engineering notation
-        if(abs(ans) < 1){
+        if(abs(result) < 1){
             lcd_drawChar(0,64-10-8,sys_font,'=');
-                if(ans < 0.000000001) {
+                if(result < 0.000000001) {
                     long frac = long(frac_d * pow(10,12));
                     snprintf(str,64,"%dp",frac);	       
             }
-            else if(ans < 0.000001) {
+            else if(result < 0.000001) {
                     long frac = long(frac_d * pow(10,9));
                     snprintf(str,64,"%dn",frac);	       
             }
-            else if(ans < 0.001) {
+            else if(result < 0.001) {
                     long frac = long(frac_d * pow(10,6));
                     snprintf(str,64,"%du",frac);	       
             }
