@@ -203,7 +203,7 @@ void setup(){
   // if(p >= P_COUNT) p = 0;
   // if(f > 2) f = 0;
 
-  changeToProg(P_COMMS);
+  changeToProg(P_CALC);
   stats.fmode = 0;
   LOGL("sched start");
 
