@@ -10,8 +10,9 @@ struct vnum_t{
     double result;
 };
 
-double computeNumber(vnum_t &n);
 void clearNumber(vnum_t &n);
+double doubleFromNumber(vnum_t &n);
+vnum_t numberFromDouble(double dnum);
 void numberInputKey(vnum_t& n, uint32_t i, int pos);
 bool numberInputBackspace(vnum_t &n, int pos);
 void printNumber(vnum_t& n, int &x, const int y);
