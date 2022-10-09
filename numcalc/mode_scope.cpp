@@ -4,6 +4,7 @@
 
 bool scope_hold; //hold display, dont update on 1
 int16_t trig_lvl; //threshold for triggering 
+bool trig_down;
 uint16_t trig_pos; //flag if signal passed thresh and n of sample in buf
 uint32_t trig_duration; //spl time spent front
 uint8_t trig_filter;
@@ -38,8 +39,9 @@ uint8_t info_view;
 #define SCOPE_FMODE_YZOOM 5
 #define SCOPE_FMODE_YSCROLL 6
 #define SCOPE_FMODE_THRESH 7
-#define SCOPE_FMODE_XDELTA 8
-#define SCOPE_FMODE_YDELTA 9
+#define SCOPE_FMODE_TRIG 8
+#define SCOPE_FMODE_XDELTA 9
+#define SCOPE_FMODE_YDELTA 10
 
 /* 
     p = position, either x or y coord based on hoz
@@ -108,6 +110,7 @@ void mode_scope_on_begin(){
     trig_lvl = 32<<6; //threshold for triggering 
     trig_filter = 3;
     slow_acquire = 0;
+    trig_down = true;
 
     x_zoom = 0; //x axis zoom level in sw, adding / taking divisions
     x_timebase = 0; //current time base mode, determines srate
@@ -170,7 +173,8 @@ void mode_scope_on_process(){
         else if(io.bscan_down & (1<<K_F2) && stats.fmode == SCOPE_FMODE_YZOOM) stats.fmode = SCOPE_FMODE_YSCROLL;
         else if(io.bscan_down & (1<<K_F2) && stats.fmode == SCOPE_FMODE_YAMP) stats.fmode = SCOPE_FMODE_YZOOM;
         else if(io.bscan_down & (1<<K_F2) ) stats.fmode = SCOPE_FMODE_YAMP;
-        else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_THRESH) stats.fmode = SCOPE_FMODE_XDELTA; 
+        else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_THRESH) stats.fmode = SCOPE_FMODE_TRIG; 
+        else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_TRIG) stats.fmode = SCOPE_FMODE_XDELTA; 
         else if(io.bscan_down & (1<<K_F3) && stats.fmode == SCOPE_FMODE_XDELTA) stats.fmode = SCOPE_FMODE_YDELTA;
         else if(io.bscan_down & (1<<K_F3)) stats.fmode = SCOPE_FMODE_THRESH;
         
@@ -206,6 +210,9 @@ void mode_scope_on_process(){
             if(io.bstate & (1<<K_Y)) tt*=25;
             trig_lvl -= tt;
             trig_lvl %= 4096;
+        }
+        else if(stats.fmode == SCOPE_FMODE_TRIG) {
+            trig_down = !trig_down;
         }
         else if(stats.fmode == SCOPE_FMODE_XDELTA){ 
             dt_cursor += tt;
@@ -258,7 +265,7 @@ void mode_scope_on_process(){
         auto tr_spl_b = s16b[i]>>trig_filter;
         tr_spl_a <<= trig_filter;
         tr_spl_b <<= trig_filter;
-        if(tr_spl_a < tt && tr_spl_b >= tt){
+        if((trig_down && tr_spl_a < tt && tr_spl_b >= tt) || (!trig_down && tr_spl_a > tt && tr_spl_b <= tt)){
             if(!trig_pos)	
             	trig_pos = i;
 			
