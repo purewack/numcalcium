@@ -18,6 +18,7 @@ uint32_t us_per_div;//per div microseconds
 uint32_t uv_per_div;//per div microvolts
 int8_t y_scroll;
 uint8_t x_scroll;
+double y_factor;
 
 double frequency; //calculated freq
 uint32_t freq_av; //average freq
@@ -64,17 +65,34 @@ void mode_scope_line_dash(int p, int start, int len, int hor, int pattern){
 }
 
 void mode_scope_set_amp(int8_t mode){
-    if(mode > 3) return;
-    if(mode < -2) return;
+    if(mode > 1) return;
+    if(mode < -3) return;
 	y_gain_ctrl = mode;
 
-	gpio_write_bit(GPIOB,15,mode == -1 ? 1 : 0);
-	gpio_write_bit(GPIOB,14,mode == -2 ? 1 : 0);
-	gpio_write_bit(GPIOB,13,mode == -3 ? 1 : 0);
+	gpio_write_bit(GPIOB,15,mode == -1 ? 0 : 1);
+	gpio_write_bit(GPIOB,14,mode == -2 ? 0 : 1);
+	gpio_write_bit(GPIOB,13,mode == -3 ? 0 : 1);
+	gpio_write_bit(GPIOB,6,mode == 1 ? 0 : 1);
 
-	gpio_write_bit(GPIOB,12,mode == 1 ? 1 : 0);
-	gpio_write_bit(GPIOB,6,mode == 2 ? 1 : 0);
-	gpio_write_bit(GPIOB,7,mode == 3 ? 1 : 0);
+    switch (mode)
+    {
+    case -1:
+        y_factor = -1.5;
+        break;
+    case -2:
+        y_factor = -4.0;
+        break;
+    case -3:
+        y_factor = -11.0;
+        break;
+    case 1:
+        y_factor = 11.0;
+        break;
+    
+    default:
+        y_factor = 0.0;
+        break;
+    }
 }
 
 void mode_scope_set_tbase(int8_t tb){
@@ -130,13 +148,14 @@ void mode_scope_on_begin(){
 
 
     adc_block_init();
-	gpio_set_mode(GPIOB,15,GPIO_OUTPUT_OD);// a/10
+    
+	gpio_set_mode(GPIOA,1,GPIO_OUTPUT_OD);// GND ref
+	gpio_write_bit(GPIOA,1,0);
 
-	gpio_set_mode(GPIOB,14,GPIO_OUTPUT_OD);//
-	gpio_set_mode(GPIOB,13,GPIO_OUTPUT_OD);//
-	gpio_set_mode(GPIOB,12,GPIO_OUTPUT_OD);// a*2
-	gpio_set_mode(GPIOB,6,GPIO_OUTPUT_OD);// a*5
-	gpio_set_mode(GPIOB,7,GPIO_OUTPUT_OD);// a*10
+	gpio_set_mode(GPIOB,15,GPIO_OUTPUT_OD);// a/1.5
+	gpio_set_mode(GPIOB,14,GPIO_OUTPUT_OD);// a/4
+	gpio_set_mode(GPIOB,13,GPIO_OUTPUT_OD);// a/11
+	gpio_set_mode(GPIOB,6,GPIO_OUTPUT_OD);// a*11
 	
 	mode_scope_set_amp(0);
     mode_scope_set_tbase(10);
@@ -314,15 +333,15 @@ void mode_scope_on_process(){
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_YAMP){
-                snprintf(str,32,"Y_AMP:%d",y_gain_ctrl);
+                snprintf(str,32,"Y_AMP:%d %d",y_gain_ctrl,int(y_factor*2.0));
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_YSCROLL || stats.fmode == SCOPE_FMODE_YZOOM){
                 snprintf(str,32,"Y*%d Y^%d",y_zoom+1, y_scroll);
                 lcd_drawString(0,0,sys_font,str);
             }
-            else if(stats.fmode == SCOPE_FMODE_THRESH){
-                snprintf(str,32,"Thresh:%d%% (%d)",(trig_lvl>>6)*100 / 64,trig_lvl);
+            else if(stats.fmode == SCOPE_FMODE_THRESH || stats.fmode == SCOPE_FMODE_TRIG){
+                snprintf(str,32,"Thresh:%d%% (%d) %s",(trig_lvl>>6)*100 / 64,trig_lvl, trig_down ? "v" : "^");
                 lcd_drawString(0,0,sys_font,str);
             }
             else if(stats.fmode == SCOPE_FMODE_XDELTA || stats.fmode == SCOPE_FMODE_YDELTA){
@@ -343,10 +362,11 @@ void mode_scope_on_process(){
 
             //thresh indicator
             if(stats.fmode == SCOPE_FMODE_THRESH){
-                auto tt = trig_lvl-2048;
-                tt *= y_zoom;
+                auto tt = trig_lvl;
+                // auto zz = int(y_zoom);
+                // tt *= zz;
+                // tt += 2048;
                 tt >>= 6;
-                tt += 2048;
                 mode_scope_line_dash(tt,0,128,1,0);
             }
             //delta indicator
