@@ -147,10 +147,9 @@ void setup(){
   stats.progs[P_CALC].inactive_lim = 10000;
   stats.progs[P_CALC].no_input_lim = 240000; //20mins
 
-  // stats.progs[P_MIDI].onBegin = mode_midi_on_begin;
-  // stats.progs[P_MIDI].onEnd = mode_midi_on_end;
-  // stats.progs[P_MIDI].onPress = mode_midi_on_press;
-  // stats.progs[P_MIDI].onRelease = mode_midi_on_release;
+  stats.progs[P_MIDI].onBegin = mode_midi_on_begin;
+  stats.progs[P_MIDI].onEnd = mode_midi_on_end;
+  stats.progs[P_MIDI].onProcess = mode_midi_on_process;
   stats.progs[P_MIDI].title = "MIDI";
   stats.progs[P_MIDI].txt_f1 = nullptr;
   stats.progs[P_MIDI].txt_f2 = nullptr;
@@ -199,6 +198,8 @@ void setup(){
 
   USBComposite.clear();
   USBComposite.setProductId(0x0031);
+  USBComposite.setManufacturerString("M O T I F");
+  USBComposite.setProductString("Numcalcium");
   HID.registerComponent();
   HID.setReportDescriptor(HID_KEYBOARD); 
   USB_midi.registerComponent();
