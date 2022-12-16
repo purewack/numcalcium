@@ -118,7 +118,7 @@ void resetInactiveTime(){
 void setup(){
   gpio_set_mode(GPIOC,13,GPIO_INPUT_FLOATING);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   stats.progs[P_NUMPAD].onBegin = mode_numpad_on_begin;
   stats.progs[P_NUMPAD].onEnd = mode_numpad_on_end;
