@@ -1,0 +1,6 @@
+*backups
+*cache
+*.kicad_prl
+*.lck
+*auto*
+_*
