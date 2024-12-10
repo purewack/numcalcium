@@ -1,0 +1,14 @@
+(kicad_sch (version 20230121) (generator eeschema)
+
+  (uuid 8248baff-0f94-4bb3-b73c-772234060829)
+
+  (paper "A4")
+
+  (title_block
+    (title "Matrix")
+  )
+
+  (lib_symbols
+  )
+
+)

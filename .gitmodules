@@ -4,3 +4,6 @@
 [submodule "numcalc/libintdsp"]
 	path = numcalc/libintdsp
 	url = https://github.com/purewack/libintdsp.git
+[submodule "micropython"]
+	path = micropython
+	url = https://github.com/micropython/micropython.git
