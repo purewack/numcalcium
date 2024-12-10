@@ -1,0 +1,14 @@
+{signal: [
+  {name: 'CK',     wave: '0.P.......x....'},
+  {name: 'D',     wave: 'x.22222222x....', data: [1,2,3,4,5,6,7,8], phase: 0.5},
+  {},
+  {name: 'OD',    wave: '0H........l..H.'},
+  {name: 'LAT (#OD)',    wave: '1l........H..l.'},
+  
+  ['GPIO',
+    {name: 'CK', wave: 'x3........7.4x.', data: ['out', 'in', 'read']},
+    {name: 'D', wave: 'x3........7.4x.', data: ['out', 'in', 'read']},
+    {name: 'T', wave: 'x7..........4x.', data: ['in','read']},
+    {name: 'OD', wave: 'x3...........x.', data: ['out']}
+  ]
+]}

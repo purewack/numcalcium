@@ -1,0 +1,251 @@
+(footprint "Combo_MechanicalSwitch"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at -0.501 -8.382 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "b340cc9b-3d8b-4f99-a211-256eb08fc8e1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "Combo_MechanicalSwitch"
+		(at 0.01 9.27 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "5546a8eb-b07e-428e-a960-19cf4d603681")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d5af57ee-7334-4299-aa1e-d74e99d32df3")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "b9b86d5f-b3ba-4e50-975a-7fea2bc0e7cc")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "8b5c5a29-2f8a-4c6e-89fe-2dfda00e4baa")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -7.493 5.08)
+		(end -5.08 7.493)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "9570382c-8d93-40fd-ac0a-d4cebd295905")
+	)
+	(fp_line
+		(start 7.493 5.08)
+		(end 5.08 7.493)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "42028f54-4406-4d06-89ac-f90d2097b9d3")
+	)
+	(fp_rect
+		(start 7.5 -7.5)
+		(end -7.5 7.5)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(fill none)
+		(layer "F.SilkS")
+		(uuid "245b15ec-c3fe-4677-8390-b40070f8b702")
+	)
+	(fp_circle
+		(center 0 0)
+		(end 2.75 0)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(fill none)
+		(layer "Edge.Cuts")
+		(uuid "89a828db-b8fc-49af-b025-af42705a5da2")
+	)
+	(fp_rect
+		(start -7.85 -7.874)
+		(end 7.874 7.874)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(fill none)
+		(layer "F.CrtYd")
+		(uuid "f4e22e78-1241-436c-8630-9c4f3cd79743")
+	)
+	(fp_rect
+		(start -9.165 -9.08)
+		(end 9.185 9.27)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(fill none)
+		(layer "F.Fab")
+		(uuid "806820bf-8041-4670-a6bc-2dc43a8195e9")
+	)
+	(fp_text user "MX"
+		(at -0.508 -4.572 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "39777d92-b69d-4b86-87ca-d320cb2de86f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+			(justify left bottom)
+		)
+	)
+	(fp_text user "GT"
+		(at -2.032 6.096 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "824b58d0-bdf2-417b-b71d-b2ddcb8433ec")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+			(justify left bottom)
+		)
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0.01 10.77 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "1abec433-a363-471a-b49d-7627a85b75ef")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole roundrect
+		(at 2.5 -5.715)
+		(size 2 2)
+		(drill oval 1.5 0.75)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.25)
+		(uuid "008147d0-3880-45dc-9552-97359c3b2a10")
+	)
+	(pad "1" thru_hole roundrect
+		(at 2.6 5.5)
+		(size 2 2)
+		(drill oval 1.5 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.25)
+		(uuid "48664354-ec65-490a-b914-79569cf8408e")
+	)
+	(pad "2" thru_hole roundrect
+		(at -4.4 4.7)
+		(size 2 2)
+		(drill oval 0.8 1.5)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.25)
+		(uuid "fb79144f-7757-4261-b64a-03c2b5d3e9e5")
+	)
+	(pad "2" thru_hole roundrect
+		(at -3.65 -3.175)
+		(size 2 2)
+		(drill oval 1.5 0.75)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.25)
+		(uuid "09369e3b-e0bd-4795-b3f5-53337a3c1e6b")
+	)
+	(model "${KIPRJMOD}/Cherry MX.STEP"
+		(hide yes)
+		(offset
+			(xyz 0 1.5 1)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 0 0)
+		)
+	)
+	(model "${KIPRJMOD}/keycap_dsa_signatureplastics_r3.STEP"
+		(hide yes)
+		(offset
+			(xyz 0 0.5 9.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+	(model "${KIPRJMOD}/Gateron KS-33.step"
+		(offset
+			(xyz 0 0 2.75)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+	(model "${KIPRJMOD}/Kailh LP Choc PC Keycap.step"
+		(offset
+			(xyz 0 0 4)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
