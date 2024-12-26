@@ -26,52 +26,45 @@ static void init_ulp_program(void)
     esp_err_t err = ulp_riscv_load_binary(ulp_main_bin_start, (ulp_main_bin_end - ulp_main_bin_start));
     ESP_ERROR_CHECK(err);
 
-    /* The first argument is the period index, which is not used by the ULP-RISC-V timer
-     * The second argument is the period in microseconds, which gives a wakeup time period of: 20ms
-     */
-    ulp_set_wakeup_period(0, 10000);
+    ulp_set_wakeup_period(0, 1000);
 
-    /* Start the program */
     err = ulp_riscv_run();
     ESP_ERROR_CHECK(err);
 }
 
 void app_main(void)
 {
-
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
-    /* not a wakeup from ULP, load the firmware */
+
     if (cause != ESP_SLEEP_WAKEUP_ULP) {
-        printf("Not a ULP-RISC-V wakeup, initializing it! \n");
         init_ulp_program();
+        rtc_gpio_init(16);
+        rtc_gpio_set_direction(16,RTC_GPIO_MODE_OUTPUT_OD);
+        ulp_set_wakeup_period(0, 1000);
     }
 
-    /* ULP Risc-V read and detected a change in GPIO_0, prints */
     if (cause == ESP_SLEEP_WAKEUP_ULP) {
-        printf("ULP-RISC-V woke up the main CPU! \n");
-//        printf("ULP-RISC-V read changes in GPIO_0 current is: %s \n",
-//            (bool)(ulp_gpio_level_previous == 0) ? "Low" : "High" );
-
+        ulp_set_wakeup_period(0, 1000);
+        
     }
+    
+    rtc_gpio_hold_dis(16);
+    rtc_gpio_set_level(16,1);
 
-    /* Go back to sleep, only the ULP Risc-V will run */
-    printf("Entering in deep sleep\n\n");
-
-    /* Small delay to ensure the messages are printed */
+    vTaskDelay(100);
+    printf("HELLO! %d\n",cause);
     vTaskDelay(100);
 
-    ESP_ERROR_CHECK( esp_sleep_enable_ulp_wakeup());
-    esp_deep_sleep_start();
-
-    gpio_reset_pin(3);
-    gpio_set_direction(3, GPIO_MODE_OUTPUT);
-    
-    int level = 0;
     while(1){ 
-        printf("ULP-RISC-V counter %ld\n",ulp_counter);
-        vTaskDelay(100);
-        gpio_set_level(3, level);
-        level = !level;
+        printf("ULP io: %ld[%ld]{%ld} (%ld)\n", ulp_bscan, ulp_bdown, ulp_bup, ulp_turns);
+        vTaskDelay(10);
+        if(ulp_bdown & 4){
+            ulp_set_wakeup_period(0, 100000);
+            rtc_gpio_set_level(16,0);
+            rtc_gpio_hold_en(16);
+            ESP_ERROR_CHECK( esp_sleep_enable_ulp_wakeup());
+            esp_deep_sleep_start();
+        }
     }
 }
 

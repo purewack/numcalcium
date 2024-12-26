@@ -3221,6 +3221,12 @@
 		(uuid "61c8115d-ab61-40df-9635-d965b8bdf81a")
 	)
 	(junction
+		(at 128.27 176.53)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "63ffdd91-e191-4601-b359-6e7d143ab482")
+	)
+	(junction
 		(at 91.44 80.01)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3267,12 +3273,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "9954d7cb-a02a-42fe-8645-fbd02a19eca5")
-	)
-	(junction
-		(at 128.27 176.53)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "9fadb677-9918-4a5c-afd8-2d1d768dfc5c")
 	)
 	(junction
 		(at 91.44 67.31)
@@ -3509,6 +3509,16 @@
 			(type default)
 		)
 		(uuid "13f36aa9-cf02-47e7-879e-098a60abad2c")
+	)
+	(wire
+		(pts
+			(xy 128.27 176.53) (xy 158.75 176.53)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "143abed0-1795-469b-adaa-4c39c5b599e4")
 	)
 	(wire
 		(pts
@@ -3999,16 +4009,6 @@
 			(type default)
 		)
 		(uuid "871b0b97-857e-4492-b4de-66d4000ba1f4")
-	)
-	(wire
-		(pts
-			(xy 135.89 176.53) (xy 158.75 176.53)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "88655658-c28f-4a82-9e4d-e34972350007")
 	)
 	(wire
 		(pts
@@ -5048,7 +5048,7 @@
 				)
 			)
 		)
-		(property "Value" "10k"
+		(property "Value" "1M"
 			(at 125.476 180.848 90)
 			(effects
 				(font
@@ -5541,74 +5541,6 @@
 			(project "numcalcium"
 				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/88d65574-4a55-44b9-b6d2-8e7d5a1c096b"
 					(reference "D27")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R")
-		(at 132.08 176.53 270)
-		(mirror x)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "8dec7026-c688-4034-ab3d-39af6e39a0c7")
-		(property "Reference" "R13"
-			(at 131.572 179.324 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "10k"
-			(at 131.572 173.736 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-			(at 132.08 178.308 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 132.08 176.53 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Resistor"
-			(at 132.08 176.53 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "7e403c75-0a15-49cf-a186-aeaec0a62157")
-		)
-		(pin "2"
-			(uuid "8a00197e-9e0e-45d3-a41e-be12831f0349")
-		)
-		(instances
-			(project "numcalcium"
-				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/88d65574-4a55-44b9-b6d2-8e7d5a1c096b"
-					(reference "R13")
 					(unit 1)
 				)
 			)
