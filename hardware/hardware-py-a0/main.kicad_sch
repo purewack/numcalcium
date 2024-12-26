@@ -4665,6 +4665,18 @@
 		(uuid "5c95c811-2c81-4f9b-ad5b-3bf53517b911")
 	)
 	(junction
+		(at 147.32 105.41)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5ed8aa71-2d22-41ef-94d7-80611f762c50")
+	)
+	(junction
+		(at 139.7 105.41)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "605b9feb-8baf-401d-bbd0-9e02afcce89a")
+	)
+	(junction
 		(at 190.5 50.8)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4759,6 +4771,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "9d37a8d1-76ff-409f-a8af-cb7a51e12892")
+	)
+	(junction
+		(at 160.02 114.3)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a2ff3fa1-ff78-41aa-be72-4f7e5416583b")
 	)
 	(junction
 		(at 210.82 50.8)
@@ -4971,6 +4989,16 @@
 			(type default)
 		)
 		(uuid "05ecb920-4f51-4094-8034-700cd41a3f15")
+	)
+	(wire
+		(pts
+			(xy 160.02 114.3) (xy 147.32 114.3)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "07482945-3692-48ed-acb5-fa72a062e315")
 	)
 	(wire
 		(pts
@@ -5464,7 +5492,7 @@
 	)
 	(wire
 		(pts
-			(xy 139.7 102.87) (xy 139.7 114.3)
+			(xy 139.7 104.14) (xy 139.7 105.41)
 		)
 		(stroke
 			(width 0)
@@ -5714,6 +5742,16 @@
 	)
 	(wire
 		(pts
+			(xy 139.7 105.41) (xy 139.7 114.3)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6893e685-e959-414e-a3ca-09ded0b450ad")
+	)
+	(wire
+		(pts
 			(xy 91.44 54.61) (xy 91.44 50.8)
 		)
 		(stroke
@@ -5944,6 +5982,16 @@
 	)
 	(wire
 		(pts
+			(xy 149.86 105.41) (xy 147.32 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "92034e55-4039-409d-8754-6f8a7139244b")
+	)
+	(wire
+		(pts
 			(xy 124.46 114.3) (xy 127 114.3)
 		)
 		(stroke
@@ -6044,13 +6092,13 @@
 	)
 	(wire
 		(pts
-			(xy 151.13 114.3) (xy 149.86 114.3)
+			(xy 147.32 105.41) (xy 139.7 105.41)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "a449f99a-d035-4da7-af1a-c38bfe4aba4b")
+		(uuid "a6257ee1-3cc7-4bee-8cea-de657f14c26a")
 	)
 	(wire
 		(pts
@@ -6294,6 +6342,16 @@
 	)
 	(wire
 		(pts
+			(xy 160.02 114.3) (xy 160.02 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cfc81292-c4a8-4598-8f0e-bb94a67fb6fc")
+	)
+	(wire
+		(pts
 			(xy 119.38 102.87) (xy 124.46 102.87)
 		)
 		(stroke
@@ -6431,6 +6489,16 @@
 			(type default)
 		)
 		(uuid "e4ba6dc8-fbf0-4730-826a-3518e3dc057b")
+	)
+	(wire
+		(pts
+			(xy 147.32 114.3) (xy 147.32 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e627bf99-7da5-4162-b1be-e44634ed7096")
 	)
 	(wire
 		(pts
@@ -7475,7 +7543,7 @@
 	)
 	(hierarchical_label "RST"
 		(shape input)
-		(at 139.7 102.87 0)
+		(at 139.7 104.14 90)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -8302,7 +8370,7 @@
 	)
 	(symbol
 		(lib_id "Switch:SW_Push")
-		(at 144.78 114.3 0)
+		(at 154.94 105.41 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -8311,7 +8379,7 @@
 		(fields_autoplaced yes)
 		(uuid "1110489f-2071-4f39-827e-0105c7d9083f")
 		(property "Reference" "SW22"
-			(at 144.78 106.68 0)
+			(at 154.94 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8319,7 +8387,7 @@
 			)
 		)
 		(property "Value" "RST"
-			(at 144.78 109.22 0)
+			(at 154.94 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8327,7 +8395,7 @@
 			)
 		)
 		(property "Footprint" "Button_Switch_SMD:SW_SPST_PTS647_Sx38"
-			(at 144.78 109.22 0)
+			(at 154.94 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8336,7 +8404,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 144.78 109.22 0)
+			(at 154.94 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8345,7 +8413,7 @@
 			)
 		)
 		(property "Description" "Push button switch, generic, two pins"
-			(at 144.78 114.3 0)
+			(at 154.94 105.41 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9461,7 +9529,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 151.13 114.3 0)
+		(at 160.02 114.3 0)
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
@@ -9470,7 +9538,7 @@
 		(dnp no)
 		(uuid "2f635f8e-482a-41b7-941f-a08072acd036")
 		(property "Reference" "#PWR06"
-			(at 151.13 120.65 0)
+			(at 160.02 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9479,7 +9547,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 153.67 114.3 0)
+			(at 162.56 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9487,7 +9555,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 151.13 114.3 0)
+			(at 160.02 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9496,7 +9564,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 151.13 114.3 0)
+			(at 160.02 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9505,7 +9573,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 151.13 114.3 0)
+			(at 160.02 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11768,6 +11836,75 @@
 			(project "numcalcium"
 				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34"
 					(reference "D10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 147.32 109.22 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "9bbdaf0d-06a2-4814-9a96-662c4a1d402c")
+		(property "Reference" "C4"
+			(at 146.558 103.632 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1u"
+			(at 148.082 112.268 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
+			(at 148.2852 113.03 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 147.32 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 147.32 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "3b150ac8-e381-4e07-b1c9-84d9a6cbe045")
+		)
+		(pin "1"
+			(uuid "c67977f7-d78e-4fdf-adef-68ed7adaed28")
+		)
+		(instances
+			(project "numcalcium"
+				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34"
+					(reference "C4")
 					(unit 1)
 				)
 			)

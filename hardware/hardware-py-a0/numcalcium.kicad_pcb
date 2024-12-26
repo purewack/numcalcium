@@ -4128,7 +4128,7 @@
 		(descr "SOT, 3 Pin (https://www.jedec.org/sites/default/files/docs/Mo-178D.PDF inferred 3-pin variant), generated with kicad-footprint-generator ipc_gullwing_generator.py")
 		(tags "SOT TO_SOT_SMD")
 		(property "Reference" "U6"
-			(at -0.508 0 360)
+			(at -0.508 0 0)
 			(layer "F.SilkS")
 			(uuid "58b13642-e6b6-4e24-bfe0-564a4b3439c5")
 			(effects
@@ -4190,7 +4190,7 @@
 			)
 		)
 		(property "Value" "XC6206PxxxMR"
-			(at 0 2.4 360)
+			(at 0 2.4 0)
 			(layer "F.Fab")
 			(uuid "1b2286db-4c32-4632-9a97-901367af02d5")
 			(effects
@@ -4387,7 +4387,7 @@
 			(uuid "71a6acdb-8829-4f97-8ab0-2f5cc661af41")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "22954342-c462-4d99-a53e-99a121a55545")
 			(effects
@@ -5049,7 +5049,7 @@
 		(descr "Diode SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator")
 		(tags "diode handsolder")
 		(property "Reference" "D24"
-			(at -0.009 0.0254 360)
+			(at -0.009 0.0254 0)
 			(layer "F.SilkS")
 			(uuid "d04b8947-ec67-4510-b62b-8295a9539bb5")
 			(effects
@@ -7048,7 +7048,7 @@
 		(descr "SOT, 3 Pin (https://www.jedec.org/system/files/docs/to-236h.pdf variant AB), generated with kicad-footprint-generator ipc_gullwing_generator.py")
 		(tags "SOT TO_SOT_SMD")
 		(property "Reference" "Q3"
-			(at -0.6835 0 360)
+			(at -0.6835 0 0)
 			(layer "F.SilkS")
 			(uuid "59728229-d895-47e2-8bd5-28e095cf1260")
 			(effects
@@ -7131,7 +7131,7 @@
 			)
 		)
 		(property "Value" "AO3401A"
-			(at 0 2.4 360)
+			(at 0 2.4 0)
 			(layer "F.Fab")
 			(uuid "6c4e758f-fc8b-4560-8f28-714e425128d6")
 			(effects
@@ -7328,7 +7328,7 @@
 			(uuid "89efde30-7487-4c49-95b6-9e87e2813db2")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "f709063c-c22b-4eb5-8c2a-65d0755daebe")
 			(effects
@@ -25679,7 +25679,7 @@
 			(uuid "a4db8442-ebf4-40f5-9550-b9a30713c08e")
 		)
 		(fp_text user "+"
-			(at -1.326 4.9836 360)
+			(at -1.326 4.9836 0)
 			(layer "B.SilkS")
 			(uuid "ed0ad6fc-b147-4702-9512-e67ac33ca80e")
 			(effects
@@ -25703,7 +25703,7 @@
 			)
 		)
 		(fp_text user "+"
-			(at -2.75 2.75 360)
+			(at -2.75 2.75 0)
 			(layer "B.Fab")
 			(uuid "e28f0fc6-b033-4b9b-be8d-84338370fc87")
 			(effects
@@ -28960,7 +28960,7 @@
 		(descr "Diode SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator")
 		(tags "diode handsolder")
 		(property "Reference" "D27"
-			(at 0 -0.0254 360)
+			(at 0 -0.0254 0)
 			(layer "B.SilkS")
 			(uuid "86ea263e-460a-4017-8a5d-2dfc9f1f5641")
 			(effects
@@ -58869,7 +58869,7 @@
 		)
 		(polygon
 			(pts
-				(xy -1.016 -35.56) (xy 33.528 -35.56) (xy 33.528 -27.432) (xy 57.912 -27.432) (xy 57.912 -3.048)
+				(xy -1.2192 -35.6108) (xy 33.528 -35.56) (xy 33.528 -27.432) (xy 57.912 -27.432) (xy 57.912 -3.048)
 				(xy -1.016 -3.048)
 			)
 		)
@@ -61669,7 +61669,7 @@
 				(xy 61.601288 25.818262) (xy 61.612515 25.834528) (xy 61.612516 25.834529) (xy 61.612517 25.83453)
 				(xy 61.73076 25.939283) (xy 61.870635 26.012696) (xy 62.024015 26.0505) (xy 62.024018 26.0505) (xy 62.181982 26.0505)
 				(xy 62.181985 26.0505) (xy 62.335365 26.012696) (xy 62.47524 25.939283) (xy 62.593483 25.83453)
-				(xy 62.68322 25.704523) (xy 62.739237 25.556818) (xy 62.758278 25.4) (xy 62.753859 25.363609) (xy 62.739237 25.243183)
+				(xy 62.68322 25.704523) (xy 62.739237 25.556818) (xy 62.758278 25.4) (xy 62.756647 25.38657) (xy 62.739237 25.243183)
 				(xy 62.739237 25.243182) (xy 62.68322 25.095477) (xy 62.615675 24.997621) (xy 62.593484 24.965471)
 				(xy 62.571829 24.946286) (xy 62.47524 24.860717) (xy 62.397118 24.819715) (xy 62.335364 24.787303)
 				(xy 62.181987 24.7495) (xy 62.181985 24.7495) (xy 62.024015 24.7495) (xy 62.024012 24.7495) (xy 61.870635 24.787303)
@@ -63964,10 +63964,10 @@
 				(xy 6.684525 26.392562) (xy 6.684524 26.392562) (xy 6.754438 26.462475) (xy 6.840058 26.511908)
 				(xy 6.840056 26.511908) (xy 6.84006 26.511909) (xy 6.840062 26.51191) (xy 6.887261 26.524557) (xy 6.935564 26.5375)
 				(xy 6.935565 26.5375) (xy 8.058455 26.5375) (xy 8.116646 26.556407) (xy 8.128459 26.566496) (xy 8.295493 26.73353)
-				(xy 8.32327 26.788047) (xy 8.324489 26.803534) (xy 8.324489 27.863844) (xy 8.324489 27.863845) (xy 8.324489 27.962715)
-				(xy 8.332812 27.993776) (xy 8.35008 28.058222) (xy 8.379239 28.108725) (xy 8.399514 28.143842) (xy 8.469427 28.213755)
-				(xy 8.469429 28.213756) (xy 8.555047 28.263188) (xy 8.555045 28.263188) (xy 8.555049 28.263189)
-				(xy 8.555051 28.26319) (xy 8.650554 28.28878) (xy 14.739381 28.28878) (xy 14.797572 28.307687) (xy 14.809384 28.317775)
+				(xy 8.32327 26.788047) (xy 8.324489 26.803534) (xy 8.324489 27.962715) (xy 8.332812 27.993776) (xy 8.35008 28.058222)
+				(xy 8.379239 28.108725) (xy 8.399514 28.143842) (xy 8.469427 28.213755) (xy 8.469429 28.213756)
+				(xy 8.555047 28.263188) (xy 8.555045 28.263188) (xy 8.555049 28.263189) (xy 8.555051 28.26319) (xy 8.650554 28.28878)
+				(xy 8.749424 28.28878) (xy 14.739381 28.28878) (xy 14.797572 28.307687) (xy 14.809384 28.317775)
 				(xy 18.200364 31.708756) (xy 18.28599 31.758192) (xy 18.381491 31.783781) (xy 18.381492 31.783781)
 				(xy 30.073513 31.783781) (xy 30.131704 31.802688) (xy 30.167668 31.852188) (xy 30.167668 31.913374)
 				(xy 30.143518 31.952782) (xy 30.108234 31.988067) (xy 30.089074 32.007227) (xy 29.996976 32.156543)
