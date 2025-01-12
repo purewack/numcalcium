@@ -3,4 +3,4 @@ import os
 
 sd = board.SD()
 os.mount(sd,'/sd')
-os.listdir('/sd')
+print(os.listdir('/sd'))

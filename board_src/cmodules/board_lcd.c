@@ -1,6 +1,7 @@
-// Include MicroPython API.
 #include "py/runtime.h"
 #include "py/objstr.h"
+#include "py/obj.h"
+#include "py/stream.h"
 #include "py/builtin.h"
 
 #include "modvt100.h"
@@ -17,10 +18,10 @@ uint8_t lineBuf[1024*2];
 
 bool ansiIsLeft(const unsigned char* text){
 	if(lcd.ignoreEscapes) return false;
-	if(text[0] == '\033' && text[1] == '['){
-		int digits = 0;
+	// if(text[0] == '\033' && text[1] == '['){
+	// 	int digits = 0;
 		
-	}
+	// }
 	return false;
 }
 
@@ -34,29 +35,24 @@ bool ansiIsErase(const unsigned char* text){
 
 // Utility functions
 void driver_send_cmd(uint8_t cmd) {
-    // gpio_set_level(TFT_CS, 0);  // Select the LCD
     gpio_set_level(TFT_DC, 0); // Command mode
     spi_transaction_t t = {
         .length = 8,
         .tx_buffer = &cmd
     };
     spi_device_transmit(lcdspi_handle, &t);
-    // gpio_set_level(TFT_CS, 1);
 }
 
 void driver_send_data(uint8_t data) {
-    // gpio_set_level(TFT_CS, 0);  // Select the LCD
     gpio_set_level(TFT_DC, 1); // Data mode
     spi_transaction_t t = {
         .length = 8,
         .tx_buffer = &data
     };
     spi_device_transmit(lcdspi_handle, &t);
-    // gpio_set_level(TFT_CS, 1);
 }
 
 void driver_start_pixel(){
-	// gpio_set_level(TFT_CS, 0);  // Select the LCD
     gpio_set_level(TFT_DC, 1); // Data mode
 }
 void driver_send_pixel_data(void* pixel, uint32_t bits){
@@ -67,7 +63,6 @@ void driver_send_pixel_data(void* pixel, uint32_t bits){
     spi_device_transmit(lcdspi_handle, &t);
 }
 void driver_end_pixel(){
-    // gpio_set_level(TFT_CS, 1);
 }
 
 void driver_setup(){
@@ -165,19 +160,19 @@ void driver_fill(int16_t x, int16_t y, int16_t w, int16_t h) {
 
     uint32_t xferred = 0;
     uint32_t size = w*h;
+    driver_start_pixel();
     do{
         int count = size - xferred;
-        uint8_t *buf = (uint16_t*)lineBuf;
+        uint8_t *buf = (uint8_t*)lineBuf;
         if(count > 1024) count = 1024;
         for (int i = xferred; i < count*2; i+=2) {
-            buf[i] = lcd.color>>8;
-            buf[i+1] = lcd.color;
+            buf[i] = c1;
+            buf[i+1] = c0;
         }
-        driver_start_pixel();
         driver_send_pixel_data(lineBuf,count*16);
-        driver_end_pixel();
         xferred += count;
     }while(xferred != size);
+    driver_end_pixel();
 
 }
 
@@ -315,7 +310,9 @@ static mp_obj_t buffer(mp_obj_t w, mp_obj_t h, mp_obj_t pixels) {
 	int yy = (lcd.y);
     int xw = xx + ww - 1;
     int yh = yy + hh - 1;
-
+    
+    DEBUG_printf("buffer stats: %d %d %d %d %d\n",xx,yy,xw,yh,bufinfo.len);
+    
     driver_send_cmd(0x2A); 
     driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
     driver_send_data((xw & 0x100) >> 8); driver_send_data(xw & 0xff); 
@@ -327,7 +324,14 @@ static mp_obj_t buffer(mp_obj_t w, mp_obj_t h, mp_obj_t pixels) {
 	driver_send_cmd(0x2C); 
 
 	driver_start_pixel();
-	driver_send_pixel_data(bufinfo.buf,8*bufinfo.len);
+    int size = bufinfo.len;
+    int xferred = 0;
+    do{
+        int count = size - xferred;
+        if(count > 1024) count = 1024;
+        driver_send_pixel_data(bufinfo.buf + xferred,8*count);
+        xferred += count;
+    }while(xferred != size);
 	driver_end_pixel();
 
     return mp_const_none;
@@ -360,8 +364,8 @@ static mp_obj_t clear() {
     return mp_const_none;
 }
 static mp_obj_t fill(mp_obj_t w, mp_obj_t h) {
-    const unsigned char ww = mp_obj_get_int(w);
-    const unsigned char hh = mp_obj_get_int(h);
+    const unsigned int ww = mp_obj_get_int(w);
+    const unsigned int hh = mp_obj_get_int(h);
     driver_fill(lcd.x, lcd.y, ww,hh);
     return mp_const_none;
 }
@@ -369,7 +373,7 @@ static mp_obj_t plot() {
     driver_pixel();
     return mp_const_none;
 }
-// Define a Python reference to the function above.
+
 static MP_DEFINE_CONST_FUN_OBJ_1(send_cmd_obj, send_cmd);
 static MP_DEFINE_CONST_FUN_OBJ_1(send_data_obj, send_data);
 static MP_DEFINE_CONST_FUN_OBJ_0(reset_obj, reset);
@@ -424,6 +428,8 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         { MP_QSTR_largeLF, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_underlineLF, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_escapes, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_rgbSwap, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -434,9 +440,65 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 	if(args[1].u_int >= 0) lcd.largeLF = args[1].u_int;
 	if(args[2].u_int >= 0) lcd.underlineLF = args[2].u_int;
 	if(args[3].u_int >= 0) lcd.ignoreEscapes = !args[3].u_int;
+	if(args[4].u_int >= 0) lcd.rgbSwap = !args[4].u_int;
+	if(args[5].u_int >= 1) lcd.scale = args[5].u_int;
+    
+    
+    driver_send_cmd(0x36);  // Memory data access control (MADCTL)
+    driver_send_data(0x60 | (lcd.rgbSwap ? 0x8 : 0)); // Row/column swap, RGB order
+
+    
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 0, options);
+
+
+
+typedef struct _lcd_stream_obj_t {
+    mp_obj_base_t base;
+} lcd_stream_obj_t;
+
+static mp_obj_t lcd_stream_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    lcd_stream_obj_t *self = mp_obj_malloc(lcd_stream_obj_t, type);
+	
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static const mp_rom_map_elem_t lcd_stream_locals_dict_table[] = {
+};
+static MP_DEFINE_CONST_DICT(lcd_stream_locals_dict, lcd_stream_locals_dict_table);
+
+
+static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
+    lcd_print((const unsigned char *)buf,size);
+    return size; 
+}
+
+static mp_uint_t lcd_stream_read(mp_obj_t self_in, void *buf, mp_uint_t size, int *errcode) {
+    return 0; 
+}
+
+static mp_uint_t lcd_stream_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t arg, int *errcode) {
+    return 0; 
+}
+
+static const mp_stream_p_t lcd_stream_p = {
+    .write = lcd_stream_write,
+    .read = lcd_stream_read,
+	.ioctl = lcd_stream_ioctl,
+    .is_text = false,
+};
+
+static MP_DEFINE_CONST_OBJ_TYPE(
+    lcd_stream_type,
+    MP_QSTR_Stream,
+    MP_TYPE_FLAG_ITER_IS_STREAM,
+	make_new, lcd_stream_make_new,
+	locals_dict, &lcd_stream_locals_dict,
+	protocol, &lcd_stream_p
+);
+
+
 
 static const mp_rom_map_elem_t lcd_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_terminal) },
@@ -446,6 +508,9 @@ static const mp_rom_map_elem_t lcd_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RED), MP_ROM_INT(COL_RED) },
     { MP_ROM_QSTR(MP_QSTR_GREEN), MP_ROM_INT(COL_GREEN) },
     { MP_ROM_QSTR(MP_QSTR_BLUE), MP_ROM_INT(COL_BLUE) },
+    { MP_ROM_QSTR(MP_QSTR_PURPLE), MP_ROM_INT(COL_PURPLE) },
+    { MP_ROM_QSTR(MP_QSTR_YELLOW), MP_ROM_INT(COL_YELLOW) },
+    { MP_ROM_QSTR(MP_QSTR_CYAN), MP_ROM_INT(COL_CYAN) },
     
     { MP_ROM_QSTR(MP_QSTR_cmd), MP_ROM_PTR(&send_cmd_obj) },
     { MP_ROM_QSTR(MP_QSTR_data), MP_ROM_PTR(&send_data_obj) },
@@ -459,7 +524,8 @@ static const mp_rom_map_elem_t lcd_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_print), MP_ROM_PTR(&print_obj) },
     { MP_ROM_QSTR(MP_QSTR_buffer), MP_ROM_PTR(&buffer_obj) },
     { MP_ROM_QSTR(MP_QSTR_console), MP_ROM_PTR(&console_obj) },
-    { MP_ROM_QSTR(MP_QSTR_options), (mp_obj_t)&options_obj  },
+    { MP_ROM_QSTR(MP_QSTR_options), (mp_obj_t)&options_obj  }, 
+	{ MP_ROM_QSTR(MP_QSTR_Stream), MP_ROM_PTR(&lcd_stream_type) },
 };
 static MP_DEFINE_CONST_DICT(lcd_module_globals, lcd_module_globals_table);
 

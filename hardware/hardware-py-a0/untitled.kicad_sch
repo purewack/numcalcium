@@ -3275,12 +3275,6 @@
 		(uuid "6b6cbdb7-ba90-4cff-aa97-0a5bf03ba140")
 	)
 	(junction
-		(at 101.6 110.49)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "733ab0ce-e4da-4489-bbf3-ca93be72b60d")
-	)
-	(junction
 		(at 91.44 64.77)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3359,6 +3353,12 @@
 		(uuid "e0c2d77b-d079-4600-818f-910fadef2254")
 	)
 	(junction
+		(at 101.6 110.49)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "e3718a9d-b336-49ce-ac5b-3dbd39571019")
+	)
+	(junction
 		(at 129.54 139.7)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3415,26 +3415,6 @@
 	(no_connect
 		(at 91.44 87.63)
 		(uuid "cd8e1b96-52a4-49fc-980f-44e473af15ba")
-	)
-	(wire
-		(pts
-			(xy 105.41 110.49) (xy 101.6 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "004dd415-0520-4a53-a4dc-3fe5c91a4711")
-	)
-	(wire
-		(pts
-			(xy 105.41 127) (xy 105.41 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "032714e6-83db-4720-bf0f-4345557b0bb3")
 	)
 	(wire
 		(pts
@@ -3515,16 +3495,6 @@
 			(type default)
 		)
 		(uuid "0d540746-0f1c-479f-b613-9579d7751e05")
-	)
-	(wire
-		(pts
-			(xy 105.41 127) (xy 106.68 127)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0eedb2e6-f6d8-4f5b-9e3b-ce875ceae052")
 	)
 	(wire
 		(pts
@@ -4760,18 +4730,6 @@
 		)
 		(uuid "9a049605-c03e-4b2d-a7bb-4700f9f85e21")
 	)
-	(hierarchical_label "LCD_RST"
-		(shape input)
-		(at 106.68 127 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "b14cb752-5c83-4576-8695-169a8156610d")
-	)
 	(hierarchical_label "VDD"
 		(shape input)
 		(at 120.65 154.94 90)
@@ -5150,6 +5108,74 @@
 	)
 	(symbol
 		(lib_id "Device:R")
+		(at 101.6 106.68 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "261f70fb-eb6c-4525-b9bf-e7e8ed7e0809")
+		(property "Reference" "R15"
+			(at 107.95 106.68 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100k"
+			(at 105.41 106.68 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
+			(at 103.378 106.68 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 101.6 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 101.6 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "50a628fb-c5d3-40b7-a1c3-e0ad59112c34")
+		)
+		(pin "2"
+			(uuid "bd983d42-ac83-4071-aeee-d77e64757eb1")
+		)
+		(instances
+			(project "numcalcium"
+				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/88d65574-4a55-44b9-b6d2-8e7d5a1c096b"
+					(reference "R15")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
 		(at 148.59 139.7 90)
 		(mirror x)
 		(unit 1)
@@ -5166,7 +5192,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "22"
 			(at 148.59 142.24 90)
 			(effects
 				(font
@@ -5730,7 +5756,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "22"
 			(at 148.59 134.62 90)
 			(effects
 				(font
