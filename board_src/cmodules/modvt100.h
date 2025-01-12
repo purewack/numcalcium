@@ -6,6 +6,9 @@
 #define COL_RED    0xf800
 #define COL_GREEN  0x07e0
 #define COL_BLUE   0x001f
+#define COL_PURPLE 0xf81f
+#define COL_YELLOW 0xffe0
+#define COL_CYAN   0x07ff
 #define COL_BLACK  0x0000
 #define COL_WHITE  0xffff
 
@@ -34,6 +37,7 @@ typedef struct settings_type {
     bool LFCR;
     bool std;
     bool ignoreEscapes;
+    bool rgbSwap;
     bool invert;
 } settings_t;
 

@@ -1,8 +1,8 @@
 import network
 import time
 
-ssid = "EE-36qfga"
-psk = "aqua-fix-optic"
+ssid = "ssid"
+psk = "psk"
 
 nic = network.WLAN(network.STA_IF)
 if(not nic.active()):
