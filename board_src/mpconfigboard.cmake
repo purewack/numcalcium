@@ -7,14 +7,13 @@ set(SDKCONFIG_DEFAULTS
     boards/sdkconfig.usb
     boards/sdkconfig.ble
     boards/sdkconfig.spiram_sx
-    boards/ESP32_GENERIC_S3/sdkconfig.board
     boards/sdkconfig.240mhz
     boards/sdkconfig.spiram_oct
 )
 
 set(MICROPY_SOURCE_BOARD
     ${MICROPY_SOURCE_BOARD}
-    ${MICROPY_BOARD_DIR}/board_init.c
+#    ${MICROPY_BOARD_DIR}/board_init.c
     ${MICROPY_BOARD_DIR}/cmodules/modtest.c
     ${MICROPY_BOARD_DIR}/cmodules/modboard.c
     ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c

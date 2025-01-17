@@ -26,6 +26,8 @@ static unsigned int pscan_old;
 unsigned int var_bscan;
 unsigned int var_bdown;
 unsigned int var_bup;
+unsigned int var_bok;
+unsigned int var_wake = 0;
 
 static unsigned int rscan;
 int var_turns;
@@ -111,13 +113,10 @@ int main (void)
     ulp_riscv_gpio_deinit(PIN_LT);
     ulp_riscv_gpio_deinit(PIN_TT);
     
-    ulp_riscv_gpio_init(0);
-    ulp_riscv_gpio_pulldown_disable(0);
-    ulp_riscv_gpio_input_enable(0);
-    if(!ulp_riscv_gpio_get_level(0)){
-        while(!ulp_riscv_gpio_get_level(0))
-            ulp_riscv_delay_cycles(5000);
-        ulp_riscv_wakeup_main_processor();
+    if(var_wake){
+        var_bok = !ulp_riscv_gpio_get_level(0);
+        if(var_bok)
+            ulp_riscv_wakeup_main_processor();
     }
     
     return 0;
