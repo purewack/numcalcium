@@ -46,5 +46,6 @@ static const  spi_device_interface_config_t lcd_dev_defaults = {
 };
 
 extern const mp_obj_type_t board_sdcard_type;
+extern const mp_obj_type_t lcd_type;
 
 #endif

@@ -25,6 +25,11 @@ flash:
 	$(MAKE) -C $(ESP32_PORT_DIR) BOARD_DIR=$(BOARD_DIR) BOARD=$(notdir $(BOARD_DIR)) deploy
 
 # Monitor target
+.PHONY: fresh
+fresh:
+	rm -rf micropython/ports/esp32/build-board_src/frozen_content.c micropython/ports/esp32/build-board_src/genhdr
+
+# Monitor target
 .PHONY: monitor
 monitor:
 	$(MAKE) -C $(ESP32_PORT_DIR) BOARD_DIR=$(BOARD_DIR) BOARD=$(notdir $(BOARD_DIR)) monitor

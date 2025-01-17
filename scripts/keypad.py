@@ -12,7 +12,8 @@ _INTERFACE_PROTOCOL_KEYBOARD = const(0x01)
 u = esp32.ULP()
 u.run_embedded()
 
-_keymap = [
+_page = 0
+_keymap = [[
     0,
     0x27, # 0 
     0,
@@ -37,11 +38,40 @@ _keymap = [
     0,
     0,
     0x2a
+],
+[
+    0,
+    0, # 0 
+    0,
+    0,
+
+    0, # 1
+    0, # 2
+    0, # 3
+    0,
+
+    0x50,
+    0x51,
+    0x4f,
+    0x58,
+
+    0x2a,
+    0x52,
+    0x4c,
+    0,
+
+    0,
+    0,
+    0,
+    0
+]
 ]
 
 terminal.clear()
 terminal.options(scale=3)
 terminal.print("USB: Keypad")
+terminal.caret(0,2)
+terminal.print("Page: " + str(_page))
 
 neo = neopixel.NeoPixel(machine.Pin(47),21)
 neo.fill((0,0,0))
@@ -59,6 +89,13 @@ def keypad_scanner():
         down = u.read(u.VAR_BDOWN)
         up = u.read(u.VAR_BUP)
         if(down):
+	    global _page
+	    if((1<<19) and _page == 1):
+		import sleep
+            if((1<<0) & down):
+                _page = not _page
+                terminal.caret(0,2)
+                terminal.print("Page: " + str(int(_page)))
             for i in range(20):
                 if((1<<i) & down):
                     k.send_key(i)
@@ -98,7 +135,7 @@ class KeypadInterface(HIDInterface):
         if key is None:
             self.send_report(b"\x00")
         else:
-            self.send_report(_keymap[key].to_bytes(1, "big"))
+            self.send_report(_keymap[int(_page)][key].to_bytes(1, "big"))
 
 
 #

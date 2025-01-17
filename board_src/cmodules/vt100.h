@@ -19,37 +19,21 @@
 #define TFT_MOSI   40
 #define TFT_SCLK   39
 
+//lcd config 
 #define Y_OFFSET    35
 #define X_SIZE      320
 #define Y_SIZE      170
 #define X_CHAR      53
 #define Y_CHAR      21
 
-typedef struct settings_type {
-    uint16_t color;
-    int8_t x;
-    int8_t y;
-    int8_t col;
-    int8_t line;
-    uint8_t scale;
-    bool largeLF;
-    bool underlineLF;
-    bool LFCR;
-    bool std;
-    bool ignoreEscapes;
-    bool rgbSwap;
-    bool invert;
-} settings_t;
-
-extern settings_t lcd;
-
-// Utility functions
+// Utility functions for direct use
 void driver_send_cmd(uint8_t cmd);
-
 void driver_send_data(uint8_t data);
-void driver_fill(int16_t c, int16_t y, int16_t w, int16_t h);
-void driver_pixel();
+
+void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
+void driver_pixel(uint16_t x, uint16_t y, uint16_t color);
 
 void lcd_reset();
-void lcd_init();
-void lcd_print(const unsigned char* text, uint32_t len);
+void driver_init();
+
+void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, int16_t *line, const uint16_t color, const uint16_t bg, const uint8_t scale);
