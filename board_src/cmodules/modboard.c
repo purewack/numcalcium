@@ -44,7 +44,6 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&modboard_init_obj) },
     { MP_ROM_QSTR(MP_QSTR_SD), MP_ROM_PTR(&board_sdcard_type) },
     { MP_ROM_QSTR(MP_QSTR_Terminal), MP_ROM_PTR(&lcd_type) },
-    { MP_ROM_QSTR(MP_QSTR_DAC), MP_ROM_PTR(&board_dac_type) },
 };
 static MP_DEFINE_CONST_DICT(board_module_globals, board_module_globals_table);
 
