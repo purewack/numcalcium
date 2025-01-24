@@ -7,6 +7,3 @@
 [submodule "micropython"]
 	path = micropython
 	url = https://github.com/micropython/micropython.git
-[submodule "board_src/lib/lv_binding_micropython"]
-	path = board_src/lib/lv_binding_micropython
-	url = https://github.com/lvgl/lv_binding_micropython.git
