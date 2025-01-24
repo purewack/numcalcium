@@ -3956,6 +3956,12 @@
 		(uuid "1990b6f2-9988-445a-8bd3-d9645a25cd21")
 	)
 	(junction
+		(at 96.52 124.46)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "1aee47cf-79ec-4816-82e2-4e6b161fc816")
+	)
+	(junction
 		(at 52.07 60.96)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3978,6 +3984,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "258ef880-9547-470a-bd6b-11eb44b933cb")
+	)
+	(junction
+		(at 96.52 127)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "306732a5-f4b7-4150-a9a6-db53a094e257")
 	)
 	(junction
 		(at 91.44 64.77)
@@ -4215,13 +4227,13 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 119.38) (xy 106.68 119.38)
+			(xy 93.98 127) (xy 96.52 127)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "00e245ab-626e-40ac-9511-c751af46e0e3")
+		(uuid "0126c06e-fa39-47b3-81f3-8a19384ae3a8")
 	)
 	(wire
 		(pts
@@ -4232,6 +4244,16 @@
 			(type default)
 		)
 		(uuid "01f25df2-0b23-43de-9fb2-6bab544111fd")
+	)
+	(wire
+		(pts
+			(xy 95.25 121.92) (xy 96.52 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "02708123-9433-4622-9a8d-7cf393eba6e8")
 	)
 	(wire
 		(pts
@@ -4735,6 +4757,16 @@
 	)
 	(wire
 		(pts
+			(xy 95.25 129.54) (xy 96.52 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "39fbc1f3-92ee-471c-bf01-31ac158c5f97")
+	)
+	(wire
+		(pts
 			(xy 139.7 144.78) (xy 157.48 144.78)
 		)
 		(stroke
@@ -4845,6 +4877,16 @@
 	)
 	(wire
 		(pts
+			(xy 96.52 127) (xy 109.22 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "52b378f9-8ee0-4dd7-b851-a02be37f8442")
+	)
+	(wire
+		(pts
 			(xy 129.54 60.96) (xy 129.54 71.12)
 		)
 		(stroke
@@ -4862,6 +4904,16 @@
 			(type default)
 		)
 		(uuid "54c6b1ca-f312-47d4-9e4e-3151297f1541")
+	)
+	(wire
+		(pts
+			(xy 96.52 121.92) (xy 96.52 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "573537e4-7e4c-468c-b6f4-8216fa33d359")
 	)
 	(wire
 		(pts
@@ -4935,16 +4987,6 @@
 	)
 	(wire
 		(pts
-			(xy 109.22 121.92) (xy 106.68 121.92)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5e49af90-221f-416a-a6f9-dbd8c48cddee")
-	)
-	(wire
-		(pts
 			(xy 88.9 162.56) (xy 109.22 162.56)
 		)
 		(stroke
@@ -4992,6 +5034,16 @@
 			(type default)
 		)
 		(uuid "6e85419c-805d-4958-b021-403b2d2dfabd")
+	)
+	(wire
+		(pts
+			(xy 93.98 124.46) (xy 96.52 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "719a21a6-3e89-45c0-bff5-ac8ef9e2b262")
 	)
 	(wire
 		(pts
@@ -5385,6 +5437,16 @@
 	)
 	(wire
 		(pts
+			(xy 96.52 129.54) (xy 96.52 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c7f3d68a-a939-4fd9-8d44-f3a5a768677c")
+	)
+	(wire
+		(pts
 			(xy 152.4 54.61) (xy 152.4 50.8)
 		)
 		(stroke
@@ -5575,6 +5637,16 @@
 	)
 	(wire
 		(pts
+			(xy 96.52 124.46) (xy 109.22 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ec007261-ef3a-4d6d-8a44-4792ce8ca2ef")
+	)
+	(wire
+		(pts
 			(xy 124.46 96.52) (xy 147.32 96.52)
 		)
 		(stroke
@@ -5615,7 +5687,7 @@
 	)
 	(wire
 		(pts
-			(xy 106.68 134.62) (xy 109.22 134.62)
+			(xy 104.14 134.62) (xy 109.22 134.62)
 		)
 		(stroke
 			(width 0)
@@ -5997,7 +6069,7 @@
 	)
 	(global_label "TX1"
 		(shape input)
-		(at 109.22 124.46 180)
+		(at 93.98 124.46 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6007,7 +6079,7 @@
 		)
 		(uuid "3b41863b-4cbd-411a-9e00-4dbb3eae51e0")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 102.8482 124.46 0)
+			(at 87.6082 124.46 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6348,7 +6420,7 @@
 	)
 	(global_label "RX1"
 		(shape input)
-		(at 109.22 127 180)
+		(at 93.98 127 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6358,7 +6430,7 @@
 		)
 		(uuid "ab3bac1b-a554-4fec-a8bb-59d96498d12b")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 102.5458 127 0)
+			(at 87.3058 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6480,7 +6552,7 @@
 	)
 	(hierarchical_label "AUD_L"
 		(shape input)
-		(at 106.68 119.38 180)
+		(at 95.25 121.92 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6552,7 +6624,7 @@
 	)
 	(hierarchical_label "AUD_R"
 		(shape input)
-		(at 106.68 121.92 180)
+		(at 95.25 129.54 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6612,7 +6684,7 @@
 	)
 	(hierarchical_label "BUZ_DRIVE"
 		(shape input)
-		(at 106.68 134.62 180)
+		(at 104.14 134.62 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
