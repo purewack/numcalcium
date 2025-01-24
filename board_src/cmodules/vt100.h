@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+
 #define COL_RED    0xf800
 #define COL_GREEN  0x07e0
 #define COL_BLUE   0x001f
@@ -23,8 +24,8 @@
 #define Y_OFFSET    35
 #define X_SIZE      320
 #define Y_SIZE      170
-#define X_CHAR      53
-#define Y_CHAR      21
+#define X_CHAR      (X_SIZE/font_wide)
+#define Y_CHAR      (Y_SIZE/font_tall)
 
 // Utility functions for direct use
 void driver_send_cmd(uint8_t cmd);

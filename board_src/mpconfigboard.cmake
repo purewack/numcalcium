@@ -18,6 +18,8 @@ set(MICROPY_SOURCE_BOARD
     ${MICROPY_BOARD_DIR}/cmodules/modboard.c
     ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c
     ${MICROPY_BOARD_DIR}/cmodules/board_sdcard.c
+    ${MICROPY_BOARD_DIR}/cmodules/board_dac.c
+#    ${MICROPY_BOARD_DIR}/cmodules/modmpy.c
 )
 
 set(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)
