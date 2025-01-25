@@ -52,9 +52,6 @@
 // Hosts are de-inited in __del__. Slots do not need de-initing.
 //
 
-// Forward declaration
-const mp_obj_type_t board_sdcard_type;
-
 typedef struct _sdcard_obj_t {
     mp_obj_base_t base;
     mp_int_t flags;
@@ -65,7 +62,7 @@ typedef struct _sdcard_obj_t {
 } sdcard_card_obj_t;
 
 // singleton object
-static sdcard_card_obj_t *sd_instance = NULL;
+static sdcard_card_obj_t sd_instance = {{&board_sdcard_type},0};
 
 #define SDCARD_CARD_FLAGS_HOST_INIT_DONE 0x01
 #define SDCARD_CARD_FLAGS_CARD_INIT_DONE 0x02
@@ -124,28 +121,26 @@ static mp_obj_t board_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, 
     mp_arg_parse_all(n_args, args, &kw_args,
         MP_ARRAY_SIZE(allowed_args), allowed_args, arg_vals);
 
-    if(sd_instance != NULL) return MP_OBJ_FROM_PTR(sd_instance);
+    if((sd_instance.flags & SDCARD_CARD_FLAGS_HOST_INIT_DONE)) return (mp_obj_t)&sd_instance;
 
     DEBUG_printf("  Setting up host configuration\n");
 
-    sdcard_card_obj_t *self = mp_obj_malloc_with_finaliser(sdcard_card_obj_t, &board_sdcard_type);
-    self->flags = 0;
+    sd_instance.flags = 0;
     // Note that these defaults are macros that expand to structure
     // constants so we can't directly assign them to fields.
     int freq = arg_vals[ARG_freq].u_int;
     sdmmc_host_t _temp_host = SDSPI_HOST_DEFAULT();
     _temp_host.max_freq_khz = freq / 1000;
     _temp_host.slot = BOARD_SPI_SLOT_INTERNAL;
-    self->host = _temp_host;
+    sd_instance.host = _temp_host;
 
     DEBUG_printf("  Calling host.init()\n");
 
-    check_esp_err(self->host.init());
-    self->flags |= SDCARD_CARD_FLAGS_HOST_INIT_DONE;
+    check_esp_err(sd_instance.host.init());
+    sd_instance.flags |= SDCARD_CARD_FLAGS_HOST_INIT_DONE;
 
-    sd_instance = self;
-    DEBUG_printf("  Returning new card object: %p\n", self);
-    return MP_OBJ_FROM_PTR(self);
+    DEBUG_printf("  Returning new card object: %p\n", &sd_instance);
+    return (mp_obj_t)&sd_instance;
 }
 
 static mp_obj_t sd_deinit(mp_obj_t self_in) {
