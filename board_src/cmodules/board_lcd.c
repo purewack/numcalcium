@@ -280,9 +280,7 @@ typedef struct _lcd_obj_t {
     bool invert;
 } lcd_obj_t;
 
-static lcd_obj_t *lcd_instance = NULL;
-
-const mp_obj_type_t lcd_type;
+static lcd_obj_t lcd_instance = {{&lcd_type}};
 
 // singleton object
 
@@ -358,7 +356,7 @@ static mp_obj_t reset(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(reset_obj, reset);
 
 static mp_obj_t clear(mp_obj_t self_in) {
-    lcd_obj_t *self = lcd_instance;
+    lcd_obj_t *self = &lcd_instance;
     driver_fill(0,0,X_SIZE,Y_SIZE, self->bg);
     return mp_const_none;
 }
@@ -380,7 +378,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR(plot_obj, 4, plot);
 
 
 static mp_obj_t cursor(size_t n_args, const mp_obj_t *args) {
-    lcd_obj_t *self = lcd_instance;
+    lcd_obj_t *self = &lcd_instance;
 	if(n_args > 1)
     	self->col = mp_obj_get_int(args[1]);
 	if(n_args > 2)
@@ -397,7 +395,7 @@ static mp_obj_t cursor(size_t n_args, const mp_obj_t *args) {
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(cursor_obj, 1, 3, cursor);
 
 static mp_obj_t print(size_t n_args, const mp_obj_t *args) {
-    lcd_obj_t *self = lcd_instance;
+    lcd_obj_t *self = &lcd_instance;
     DEBUG_printf("LCD %d, %d \n",self->scale,self->color);
 
     mp_check_self(mp_obj_is_str_or_bytes(args[1]));
@@ -422,7 +420,7 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
     
-    lcd_obj_t *self = lcd_instance;
+    lcd_obj_t *self = &lcd_instance;
 	
 	if((int)(args[1].u_int) >= 0) {self->color = args[1].u_int;}
 	if((int)(args[2].u_int) >= 0) {self->bg = args[2].u_int;}
@@ -449,7 +447,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
-    lcd_obj_t *self = lcd_instance;
+    lcd_obj_t *self = &lcd_instance;
 	driver_print((const unsigned char *)buf,size, &self->col, &self->line, self->color, self->bg, self->scale);
     return size; 
 }
@@ -464,16 +462,26 @@ static mp_uint_t lcd_stream_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t
 
 
 static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    if (lcd_instance == NULL) {
+    if (!lcd_instance.new) {
         driver_init();
-        lcd_instance = m_new_obj(lcd_obj_t);
-        lcd_instance->base.type = type;
-        lcd_instance->scale = 1;
-        lcd_instance->color = COL_WHITE;
-        lcd_instance->bg = COL_BLACK;
+        int16_t col;
+        int16_t line;
+
+//        const unsigned char* a = (const unsigned char*)"pre ";
+//        const unsigned char* p = (const unsigned char*)"post";
+//        driver_print(a,sizeof(a),&col,&line,0xffff,0,1);
+
+//        lcd_instance = m_new_obj(lcd_obj_t);
+        lcd_instance.base.type = type;
+        lcd_instance.scale = 1;
+        lcd_instance.color = COL_WHITE;
+        lcd_instance.bg = COL_BLACK;
+        lcd_instance.new = true;
+
         DEBUG_printf("new lcd\n");
+//        driver_print(p,sizeof(p),&col,&line,0xffff,0,1);
     }
-    return MP_OBJ_FROM_PTR(lcd_instance);
+    return (mp_obj_t)&lcd_instance;
 }
 
 
