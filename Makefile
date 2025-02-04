@@ -7,7 +7,7 @@ MPY_DIR := micropython
 ESP32_PORT_DIR := $(MPY_DIR)/ports/esp32
 
 # Path to your custom board definition
-BOARD_DIR := $(CURDIR)/board_src
+BOARD_DIR := $(CURDIR)/pya1
 
 # Default target
 .PHONY: all
