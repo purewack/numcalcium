@@ -1,3 +1,5 @@
+execute_process(COMMAND python3 ${MICROPY_BOARD_DIR}/make_pins.py ${MICROPY_BOARD_DIR}/cmodules/pins.h ${MICROPY_BOARD_DIR}/pins.csv ${MICROPY_BOARD_DIR}/modules/pins.py)
+
 set(IDF_TARGET esp32s3)
 
 set(SDKCONFIG_DEFAULTS
