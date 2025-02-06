@@ -7,7 +7,8 @@ MPY_DIR := micropython
 ESP32_PORT_DIR := $(MPY_DIR)/ports/esp32
 
 # Path to your custom board definition
-BOARD_DIR := $(CURDIR)/pya1
+VARIANT   := pya1
+BOARD_DIR := $(CURDIR)/$(VARIANT)
 
 # Default target
 .PHONY: all
@@ -27,7 +28,7 @@ flash:
 # Monitor target
 .PHONY: fresh
 fresh:
-	rm -rf micropython/ports/esp32/build-board_src/frozen_content.c micropython/ports/esp32/build-board_src/genhdr
+	rm -rf $(ESP32_PORT_DIR)/build-$(VARIANT)/frozen_content.c $(ESP32_PORT_DIR)/build-$(VARIANT)/genhdr $(ESP32_PORT_DIR)/build-$(VARIANT)/frozen-mpy
 
 # Monitor target
 .PHONY: monitor
