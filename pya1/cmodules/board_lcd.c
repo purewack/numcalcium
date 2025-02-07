@@ -12,7 +12,7 @@ uint8_t lineBuf[1024*2];
 
 // Utility functions
 void driver_send_cmd(uint8_t cmd) {
-    gpio_set_level(TFT_DC, 0); // Command mode
+    gpio_set_level(BOARD_PIN_LCD_DC, 0); // Command mode
     spi_transaction_t t = {
         .length = 8,
         .tx_buffer = &cmd
@@ -21,7 +21,7 @@ void driver_send_cmd(uint8_t cmd) {
 }
 
 void driver_send_data(uint8_t data) {
-    gpio_set_level(TFT_DC, 1); // Data mode
+    gpio_set_level(BOARD_PIN_LCD_DC, 1); // Data mode
     spi_transaction_t t = {
         .length = 8,
         .tx_buffer = &data
@@ -30,7 +30,7 @@ void driver_send_data(uint8_t data) {
 }
 
 void driver_start_pixel(){
-    gpio_set_level(TFT_DC, 1); // Data mode
+    gpio_set_level(BOARD_PIN_LCD_DC, 1); // Data mode
 }
 void driver_send_pixel_data(void* pixel, uint32_t bits){
     spi_transaction_t t = {
@@ -61,14 +61,14 @@ void driver_setup(){
 void driver_init() {
     // Configure backlight, CS, DC, and Reset pins
     gpio_config_t io_conf = {
-        .pin_bit_mask =  (1ULL << TFT_DC) | (1ULL << TFT_BL),
+        .pin_bit_mask =  (1ULL << BOARD_PIN_LCD_DC) | (1ULL << BOARD_PIN_LCD_LED),
         .mode = GPIO_MODE_OUTPUT
     };
     gpio_config(&io_conf);
     
     driver_setup();
     driver_fill(0,0,X_SIZE,Y_SIZE, COL_BLACK);
-    gpio_set_level(TFT_BL, 1);  // Turn on backlight
+    gpio_set_level(BOARD_PIN_LCD_LED, 1);  // Turn on backlight
 }
 
 void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color){

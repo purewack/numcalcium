@@ -60,8 +60,16 @@ static mp_obj_t sdm_deinit() {
 static MP_DEFINE_CONST_FUN_OBJ_0(sdm_deinit_obj, sdm_deinit);
 
 // Start playback
-static mp_obj_t sdm_init(mp_obj_t callback, mp_obj_t buffer, mp_obj_t outputs) {
-    if (!mp_obj_is_callable(callback)) {
+static mp_obj_t sdm_init(size_t n_args, const mp_obj_t *args) {
+    mp_obj_t* callback, buffer, outputs;
+    
+    if(n_args == 3){
+        callback = args[0];
+        buffer = args[1];
+        outputs = args[2];
+    }
+
+    if (!mp_obj_is_callable(&callback)) {
         mp_raise_ValueError("callback must be callable");
     }
     if (!mp_obj_is_type(outputs, &mp_type_tuple)) {
@@ -72,12 +80,12 @@ static mp_obj_t sdm_init(mp_obj_t callback, mp_obj_t buffer, mp_obj_t outputs) {
     
     size_t len_outputs;
     mp_obj_t *items_outputs;
-    mp_obj_get_array(outputs, &len_outputs, &items_outputs);
+    mp_obj_get_array(&outputs, &len_outputs, &items_outputs);
 
     mp_buffer_info_t bufinfo;
     
-    mp_get_buffer_raise(buffer, &bufinfo, MP_BUFFER_RW);
-
+    mp_get_buffer_raise(&buffer, &bufinfo, MP_BUFFER_RW);
+    
     if (len_outputs < 1 || len_outputs > 2) {
         mp_raise_ValueError("Output numbers invalid");
     }
@@ -121,7 +129,7 @@ static mp_obj_t sdm_init(mp_obj_t callback, mp_obj_t buffer, mp_obj_t outputs) {
 
     /* Register the alarm callback */
     
-    dac_config.callback = callback;
+    dac_config.callback = &callback;
     dac_config._timer_handle = timer_handle;
 
     gptimer_event_callbacks_t cbs = {
@@ -135,7 +143,7 @@ static mp_obj_t sdm_init(mp_obj_t callback, mp_obj_t buffer, mp_obj_t outputs) {
 
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_3(sdm_init_obj, sdm_init);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(sdm_init_obj, 2,3, sdm_init);
 
 
 static mp_obj_t sdm_pause() {

@@ -6,9 +6,7 @@ from microbmp import MicroBMP
 
 print("starting")
 
-board.init()
-
-terminal = board.Terminal()
+terminal = board.LCD()
 
 print("mounting")
 
@@ -16,8 +14,9 @@ sd = board.SD()
 os.mount(sd,'/sd')
 
 path = "/sd/hellomiki.bmp"
-FRAMEBUF_WIDTH = 64
-FRAMEBUF_HEIGHT = 64
+scale = 3
+FRAMEBUF_WIDTH = 64 * scale
+FRAMEBUF_HEIGHT = 64 * scale
 
 fbuf = framebuf.FrameBuffer(bytearray(FRAMEBUF_WIDTH * FRAMEBUF_HEIGHT * 2), FRAMEBUF_WIDTH, FRAMEBUF_HEIGHT, framebuf.RGB565)
 
@@ -37,7 +36,11 @@ try:
             b = c[2] 
             rgb565 = ((r & 0b11111000) << 8) | ((g & 0b11111100) << 3) | (b >> 3);
             irgb = ((rgb565 & 0xff)<<8) | (rgb565>>8)
-            fbuf.pixel(x,y,irgb)
+            
+            for sy in range(scale):
+                for sx in range(scale):
+                    fbuf.pixel((x*scale)+sx,(y*scale)+sy,irgb)
+
     terminal.buffer(fbuf, 0,0, FRAMEBUF_WIDTH, FRAMEBUF_HEIGHT)
 
 except Exception as e:
