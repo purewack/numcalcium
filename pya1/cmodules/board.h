@@ -3,6 +3,7 @@
 
 #include "py/mphal.h"
 #include "py/obj.h"
+#include "pins.h"
 
 #include "driver/spi_master.h"
 #include "driver/sdspi_host.h"
@@ -15,9 +16,9 @@ extern spi_device_handle_t lcdspi_handle;
 
 static const spi_bus_config_t spi_bus_defaults = {
     // #if CONFIG_IDF_TARGET_ESP32_S3
-    .miso_io_num = GPIO_NUM_41,
-    .mosi_io_num = GPIO_NUM_40,
-    .sclk_io_num = GPIO_NUM_39,
+    .miso_io_num = BOARD_PIN_MISO,
+    .mosi_io_num = BOARD_PIN_MOSI,
+    .sclk_io_num = BOARD_PIN_CK,
     // #endif
     .data2_io_num = GPIO_NUM_NC,
     .data3_io_num = GPIO_NUM_NC,
@@ -32,7 +33,7 @@ static const spi_bus_config_t spi_bus_defaults = {
 
 static const sdspi_device_config_t sd_dev_defaults = {
     .host_id = BOARD_SPI_SLOT_INTERNAL,
-    .gpio_cs = GPIO_NUM_38,
+    .gpio_cs = BOARD_PIN_SD_CS,
     .gpio_cd = SDSPI_SLOT_NO_CD,
     .gpio_wp = SDSPI_SLOT_NO_WP,
     .gpio_int = SDSPI_SLOT_NO_INT,
@@ -41,7 +42,7 @@ static const sdspi_device_config_t sd_dev_defaults = {
 static const  spi_device_interface_config_t lcd_dev_defaults = {
     .clock_speed_hz = 20000000,
     .mode = 0,
-    .spics_io_num = GPIO_NUM_42,
+    .spics_io_num = BOARD_PIN_LCD_CS,
     .queue_size = 7,
 };
 

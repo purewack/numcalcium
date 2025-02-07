@@ -53,4 +53,4 @@ const mp_obj_module_t mp_module_board = {
     .globals = (mp_obj_dict_t *)&board_module_globals,
 };
 
-MP_REGISTER_MODULE(MP_QSTR_board, mp_module_board);
+MP_REGISTER_MODULE(MP_QSTR__board, mp_module_board);
