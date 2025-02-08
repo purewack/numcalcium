@@ -3744,7 +3744,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "22u"
+		(property "Value" "1u"
 			(at 220.218 115.824 0)
 			(effects
 				(font
@@ -3753,7 +3753,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_1210_3225Metric"
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
 			(at 209.8548 118.11 0)
 			(effects
 				(font
@@ -4223,7 +4223,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "100uF"
+		(property "Value" "22u"
 			(at 82.042 117.348 0)
 			(effects
 				(font
@@ -4232,7 +4232,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_1210_3225Metric"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 82.8548 118.11 0)
 			(effects
 				(font
@@ -4379,7 +4379,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "220u"
+		(property "Value" "100u"
 			(at 221.234 123.698 0)
 			(effects
 				(font
@@ -4388,7 +4388,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_2220_5750Metric"
+		(property "Footprint" "Capacitor_Tantalum_SMD:CP_EIA-7343-31_Kemet-D"
 			(at 213.6648 125.73 0)
 			(effects
 				(font
@@ -4449,8 +4449,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "BAT_REV"
-			(at 102.87 102.362 90)
+		(property "Value" "LED"
+			(at 105.918 102.108 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4519,7 +4519,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "470k"
+		(property "Value" "1M"
 			(at 139.446 113.284 0)
 			(effects
 				(font
@@ -5503,7 +5503,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "100u"
+		(property "Value" "22u"
 			(at 161.036 115.57 0)
 			(effects
 				(font
@@ -5512,7 +5512,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_1210_3225Metric_Pad1.33x2.70mm_HandSolder"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 160.9852 116.84 0)
 			(effects
 				(font
@@ -5572,7 +5572,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "D"
+		(property "Value" "1N4148"
 			(at 172.72 121.92 90)
 			(effects
 				(font
@@ -5790,7 +5790,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47u"
+		(property "Value" "100u"
 			(at 138.176 86.36 0)
 			(effects
 				(font
@@ -5799,7 +5799,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_1210_3225Metric_Pad1.33x2.70mm_HandSolder"
+		(property "Footprint" "Capacitor_Tantalum_SMD:CP_EIA-7343-31_Kemet-D"
 			(at 138.1252 87.63 0)
 			(effects
 				(font
@@ -5933,7 +5933,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "1k5"
 			(at 91.44 127 0)
 			(effects
 				(font
