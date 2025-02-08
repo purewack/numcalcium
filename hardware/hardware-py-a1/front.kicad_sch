@@ -6,7 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "Front")
-		(rev "PY/A0 (1.1)")
+		(rev "PY/A1 (1.0)")
 		(company "MOTIV.PW")
 	)
 	(lib_symbols
