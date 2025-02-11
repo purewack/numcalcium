@@ -1,172 +1,171 @@
 from micropython import const
 import time
-import esp32
-import usb.device
-import terminal
+import board
 import neopixel
 import machine
-from usb.device.hid import HIDInterface
+import usb.device
+from usb.device.keyboard import KeyboardInterface as USBHID
+from hid_services import Keyboard as BLEHID
+import keys
 
-_INTERFACE_PROTOCOL_KEYBOARD = const(0x01)
 
-u = esp32.ULP()
-u.run_embedded()
-
-_page = 0
-_keymap = [[
-    0,
-    0x27, # 0 
-    0,
-    0x28,
-
-    0x1e, # 1
-    0x1f, # 2
-    0x20, # 3
-    0,
-
-    0x21,
-    0x22,
-    0x23,
-    0,
-
-    0x24,
-    0x25,
-    0x26,
-    0,
-
-    0,
-    0,
-    0,
-    0x2a
-],
-[
-    0,
-    0, # 0 
-    0,
-    0,
-
-    0, # 1
-    0, # 2
-    0, # 3
-    0,
-
-    0x50,
-    0x51,
-    0x4f,
-    0x58,
-
-    0x2a,
-    0x52,
-    0x4c,
-    0,
-
-    0,
-    0,
-    0,
-    0
-]
-]
-
-terminal.clear()
-terminal.options(scale=3)
-terminal.print("USB: Keypad")
-terminal.caret(0,2)
-terminal.print("Page: " + str(_page))
-
-neo = neopixel.NeoPixel(machine.Pin(47),21)
+neo = neopixel.NeoPixel(machine.Pin(47),1)
 neo.fill((0,0,0))
 neo.write()
 
-def keypad_scanner():
-    k = KeypadInterface()
+class KeypadDriver():
+    _keymap_numpad = [ 
+        0,
+        0x27, # 0 
+        0x63, # .
+        0x58, # enter
 
-    usb.device.get().init(k, builtin_driver=True)
-    
-    while not k.is_open():
-        time.sleep_ms(100)
-    
-    while True:
-        down = u.read(u.VAR_BDOWN)
-        up = u.read(u.VAR_BUP)
-        if(down):
-	    global _page
-	    if((1<<19) and _page == 1):
-		import sleep
-            if((1<<0) & down):
-                _page = not _page
-                terminal.caret(0,2)
-                terminal.print("Page: " + str(int(_page)))
-            for i in range(20):
-                if((1<<i) & down):
-                    k.send_key(i)
-                    neo[i] = (20,20,20)
-                    neo.write()
-            u.write(u.VAR_BDOWN,0)
-        if(up):
-            k.send_key()
-            for i in range(20):
-                if((1<<i) & up):
-                    neo[i] = (0,0,0)
-                    neo.write()
-            u.write(u.VAR_BUP,0)
+        0x1e, # 1
+        0x1f, # 2
+        0x20, # 3
+        0,
 
-        time.sleep_ms(10)
+        0x21, # 4
+        0x22, # 5
+        0x23, # 6
+        0,
 
-class KeypadInterface(HIDInterface):
-    # Very basic synchronous USB keypad HID interface
+        0x24, # 7
+        0x25, # 8
+        0x26, #'9
+        0,
 
-    def __init__(self):
-        super().__init__(
-            _KEYPAD_REPORT_DESC,
-            set_report_buf=bytearray(1),
-            protocol=_INTERFACE_PROTOCOL_KEYBOARD,
-            interface_str="NumCalcium Keypad",
-        )
-        self.numlock = False
+        0,
+        0,
+        0,
+        0x2a  # backspace
+    ]
 
-    def on_set_report(self, report_data, _report_id, _report_type):
-        report = report_data[0]
-        b = bool(report & 1)
-        if b != self.numlock:
-            print("Numlock: ", b)
-            self.numlock = b
+    _keymap_arrows = [
+        0,
+        0, # 0 
+        0,
+        0,
 
-    def send_key(self, key=None):
-        if key is None:
-            self.send_report(b"\x00")
+        0x50,
+        0x51,
+        0x4f,
+        0x58,
+
+        0x2a,
+        0x52,
+        0x4c,
+        0,
+
+        0,
+        0,
+        0,
+        0,
+
+        0,
+        0,
+        0,
+        0
+    ]
+
+    def __init__(self, mode='ble'):
+        self.switchMappings('numpad')
+        self.scanner = keys.Keys()
+        self.usb = USBHID()
+        self.ble = BLEHID('NumCalcium Numpad')
+        self.mode = mode
+
+    def start(self):
+        if(self.mode == 'ble'):
+            self.ble.start()
         else:
-            self.send_report(_keymap[int(_page)][key].to_bytes(1, "big"))
+             usb.device.get().init(self.usb, builtin_driver=True)
+        self.readyCheck()
+
+    def switchMappings(self, to):
+        if to == 'numpad':
+            self._map = self._keymap_numpad
+        elif to == 'arrows':
+            self._map = self._keymap_arrows
+
+    def scan(self):
+        if self.scanner.isAnyDown():
+            i = self.scanner.getFirstDown()
+            if(i == self.scanner.KEY_F1):
+                self.switchMappings('numpad')
+            elif(i == self.scanner.KEY_F2):
+                self.switchMappings('arrows')
+            elif(i == self.scanner.KEY_F3):
+                self.switchMappings('custom')
+            else:
+                self.down_key(i)
+
+        elif self.scanner.isAnyUp():
+            i = self.scanner.getFirstUp()
+            self.up_key(i)
+
+        time.sleep_ms(1)
+
+    def down_key(self,k):
+        key = self._map[k]
+        if not key: 
+            return
+        if(self.mode == 'ble'):
+            self.ble.set_keys(key)
+            self.ble.notify_hid_report()
+        else:
+            self.usb.send_keys([key])
+        neo[0] = (10,10,10)
+        neo.write()
+
+    def up_key(self,k):
+        key = self._map[k]
+        if not key:
+            return
+        if(self.mode == 'ble'):
+            self.ble.set_keys()
+            self.ble.notify_hid_report()
+            neo[0] = (0,0,5)
+        else:
+            self.usb.send_keys([])
+            neo[0] = (0,0,0)
+        neo.write()
 
 
-#
-# HID Report descriptor for a numeric keypad
-#
-fmt: off
-_KEYPAD_REPORT_DESC = (
-    b'\x05\x01'  # Usage Page (Generic Desktop)
-        b'\x09\x07'  # Usage (Keypad)
-    b'\xA1\x01'  # Collection (Application)
-        b'\x05\x07'  # Usage Page (Keypad)
-            b'\x19\x00'  # Usage Minimum (0)
-            b'\x29\xFF'  # Usage Maximum (ff)
-            b'\x15\x00'  # Logical Minimum (0)
-            b'\x25\xFF'  # Logical Maximum (ff)
-            b'\x95\x01'  # Report Count (1),
-            b'\x75\x08'  # Report Size (8),
-            b'\x81\x00'  # Input (Data, Array, Absolute)
-        b'\x05\x08'  # Usage page (LEDs)
-            b'\x19\x01'  # Usage Minimum (1)
-            b'\x29\x01'  # Usage Maximum (1),
-            b'\x95\x01'  # Report Count (1),
-            b'\x75\x01'  # Report Size (1),
-            b'\x91\x02'  # Output (Data, Variable, Absolute)
-            b'\x95\x01'  # Report Count (1),
-            b'\x75\x07'  # Report Size (7),
-            b'\x91\x01'  # Output (Constant) - padding bits
-    b'\xC0'  # End Collection
-)
-fmt: on
+    def readyCheck(self): 
+        if(self.mode == 'usb'):
+            if not self.usb.is_open:
+                usb.device.get().init(self.usb, builtin_driver=True)
+                while not self.is_open:
+                    time.sleep(1)
+                neo[0] = (0,5,0)
+                neo.write()
+            return
 
+        if self.ble.get_state() is BLEHID.DEVICE_CONNECTED:
+            neo[0] = (0,0,5)
+            neo.write()
+            return
 
-keypad_scanner()
+        self.ble.start_advertising()
+        while True:
+            if self.ble.get_state() is BLEHID.DEVICE_CONNECTED:
+                break
+            if(self.ble.get_state() is BLEHID.DEVICE_ADVERTISING):
+                neo[0] = (10,0,10)
+                neo.write()
+                time.sleep(0.25)
+                neo[0] = (10,10,0)
+                neo.write()
+                time.sleep(0.25)
+        if self.ble.get_state() is BLEHID.DEVICE_ADVERTISING:
+            self.ble.stop_advertising()
+        neo[0] = (0,0,5)
+        neo.write()
 
+k = KeypadDriver('usb')
+k.start()
+k.readyCheck()
+while True:
+    k.readyCheck()
+    k.scan()
