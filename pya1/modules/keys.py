@@ -6,7 +6,9 @@ class Keys:
 
     def __init__(self):
         self._u = esp32.ULP()
+        self._u.pause()
         self._u.run_embedded()
+        self._u.resume()
 
     KEY_SHIFT = 0
 
@@ -21,6 +23,10 @@ class Keys:
     KEY_7    = 12
     KEY_8    = 13
     KEY_9    = 14
+
+    KEY_F1    = 16
+    KEY_F2    = 17
+    KEY_F3    = 18
 
     KEY_EQ   = 4
     KEY_PLUS = 7
@@ -54,7 +60,7 @@ class Keys:
         k = self._u.read(self._u.VAR_BUP)
         for i in range(20):
             if((1<<i) & k):
-                resetUp(i)
+                self.resetUp(i)
                 return i
         return None
 
