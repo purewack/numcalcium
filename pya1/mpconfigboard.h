@@ -5,7 +5,7 @@
 //#define MICROPY_BOARD_STARTUP               NUMCALCIUM_board_init
 //void NUMCALCIUM_board_init(void);
 
-#define MICROPY_HW_ENABLE_UART_REPL         (1)
+#define MICROPY_HW_ENABLE_UART_REPL         (0)
 
 #define MICROPY_HW_I2C0_SCL                 (10)
 #define MICROPY_HW_I2C0_SDA                 (9)

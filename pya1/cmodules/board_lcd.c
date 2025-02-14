@@ -151,12 +151,12 @@ bool driver_ansiIsErase(const unsigned char* text){
 void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, int16_t *line, const uint16_t color, const uint16_t bg, const uint8_t scale){
 	
     if(scale > 4) {
-        DEBUG_printf("scale too large %d",scale);
+//        DEBUG_printf("scale too large %d",scale);
         return;
     }
 
     if(scale < 1) {
-        DEBUG_printf("scale too small %d",scale);
+//        DEBUG_printf("scale too small %d",scale);
         return;
     }
 
@@ -306,7 +306,7 @@ static mp_obj_t buffer(size_t n_args, const mp_obj_t *args) {
     int xw = xx + mp_obj_get_int(args[4]) - 1;
     int yh = yy + mp_obj_get_int(args[5]) - 1;
     
-    DEBUG_printf("buffer stats: %d %d %d %d %d\n",xx,yy,xw,yh,bufinfo.len);
+//    DEBUG_printf("buffer stats: %d %d %d %d %d\n",xx,yy,xw,yh,bufinfo.len);
     
     driver_send_cmd(0x2A); 
     driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
@@ -358,6 +358,8 @@ static MP_DEFINE_CONST_FUN_OBJ_1(reset_obj, reset);
 static mp_obj_t clear(mp_obj_t self_in) {
     lcd_obj_t *self = &lcd_instance;
     driver_fill(0,0,X_SIZE,Y_SIZE, self->bg);
+    self->col = 0;
+    self->line = 0;
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(clear_obj, clear);
@@ -396,7 +398,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(cursor_obj, 1, 3, cursor);
 
 static mp_obj_t print(size_t n_args, const mp_obj_t *args) {
     lcd_obj_t *self = &lcd_instance;
-    DEBUG_printf("LCD %d, %d \n",self->scale,self->color);
+//    DEBUG_printf("LCD %d, %d \n",self->scale,self->color);
 
     mp_check_self(mp_obj_is_str_or_bytes(args[1]));
     GET_STR_DATA_LEN(args[1], c_text, c_text_len);
@@ -439,8 +441,14 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 			driver_send_cmd(0x21);
 		}
 	}
-    
-    return mp_const_none;
+
+
+    mp_obj_t current_options = mp_obj_new_dict(0);
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_foreground), mp_obj_new_int(self->color));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_scale), mp_obj_new_int(self->scale));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_invert), mp_obj_new_int(self->invert));
+    return current_options;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
@@ -464,8 +472,8 @@ static mp_uint_t lcd_stream_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t
 static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     if (!lcd_instance.new) {
         driver_init();
-        int16_t col;
-        int16_t line;
+//        int16_t col;
+//        int16_t line;
 
 //        const unsigned char* a = (const unsigned char*)"pre ";
 //        const unsigned char* p = (const unsigned char*)"post";
@@ -478,7 +486,7 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         lcd_instance.bg = COL_BLACK;
         lcd_instance.new = true;
 
-        DEBUG_printf("new lcd\n");
+//        DEBUG_printf("new lcd\n");
 //        driver_print(p,sizeof(p),&col,&line,0xffff,0,1);
     }
     return (mp_obj_t)&lcd_instance;
@@ -497,8 +505,8 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_YELLOW), MP_ROM_INT(COL_YELLOW) },
     { MP_ROM_QSTR(MP_QSTR_CYAN), MP_ROM_INT(COL_CYAN) },
     
-    { MP_ROM_QSTR(MP_QSTR_cmd), MP_ROM_PTR(&send_cmd_obj) },
-    { MP_ROM_QSTR(MP_QSTR_data), MP_ROM_PTR(&send_data_obj) },
+    { MP_ROM_QSTR(MP_QSTR__sendcmd), MP_ROM_PTR(&send_cmd_obj) },
+    { MP_ROM_QSTR(MP_QSTR__senddata), MP_ROM_PTR(&send_data_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&clear_obj) },
     { MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&fill_obj) },

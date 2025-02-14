@@ -17,9 +17,9 @@ def buffer_callback(active_buffer):
     global cur_buf, need_refil
     cur_buf = active_buffer
     need_refil = True
-    print("b",cur_buf)
+    #print("b",cur_buf)
 
-sigma_delta.init(buffer_callback,buffer_a,[40])  # Start playback
+sigma_delta.init(buffer_a, buffer_callback, [4,5])  # Start playback
 nat_sine.buffer(buffer_a)
 print("ready")
 
