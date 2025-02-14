@@ -20,13 +20,17 @@
 #define BOARD_PIN_LCD_DC    45
 
 
-#define BOARD_PIN_LEDS      45
+//#define BOARD_PIN_LEDS      45
+#define BOARD_PIN_LEDS      47
 //#define BOARD_PIN_LCD_LED   9
 #define BOARD_PIN_LCD_LED   46
 
-#define BOARD_PIN_BUZZER    10
-#define BOARD_PIN_A_OUT_L   47
-#define BOARD_PIN_A_OUT_R   48
+//#define BOARD_PIN_BUZZER    10
+#define BOARD_PIN_BUZZER    21
+//#define BOARD_PIN_A_OUT_L   47
+//#define BOARD_PIN_A_OUT_R   48
+#define BOARD_PIN_A_OUT_L   43
+#define BOARD_PIN_A_OUT_R   44
 
 #define BOARD_PIN_SLEEP_REQ 16
 #define BOARD_PIN_VBAT_MON  15

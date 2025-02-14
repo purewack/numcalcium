@@ -84,7 +84,6 @@ static mp_obj_t buffer(mp_obj_t buffer_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(buffer_obj, buffer);
 
-// A function which computes Fibonacci numbers
 static mp_obj_t set_freq(mp_obj_t f) {
     set_osc_freq(mp_obj_get_int(f) * 10, 32000);
     return mp_const_none;
