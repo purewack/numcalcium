@@ -2,37 +2,66 @@ import esp32
 
 class Keys:
     
-    _u = None
+    _u = esp32.ULP()
 
-    def __init__(self):
-        self._u = esp32.ULP()
-        self._u.pause()
-        self._u.run_embedded()
-        self._u.resume()
+    def __init__(self, period = None):
+        if(period):
+            self.mux_period(period)
+#        self._u = esp32.ULP()
+#        self._u.pause()
+#        self._u.run_embedded()
+#        self._u.resume()
 
-    KEY_SHIFT = 0
+    SHIFT = 0
 
-    KEY_DOT  = 2
-    KEY_0    = 1
-    KEY_1    = 4
-    KEY_2    = 5
-    KEY_3    = 6
-    KEY_4    = 8
-    KEY_5    = 9
-    KEY_6    = 10
-    KEY_7    = 12
-    KEY_8    = 13
-    KEY_9    = 14
+    DOT  = 2
+    N0    = 1
+    N1    = 4
+    N2    = 5
+    N3    = 6
+    N4    = 8
+    N5    = 9
+    N6    = 10
+    N7    = 12
+    N8    = 13
+    N9    = 14
 
-    KEY_F1    = 16
-    KEY_F2    = 17
-    KEY_F3    = 18
+    F1    = 16
+    F2    = 17
+    F3    = 18
 
-    KEY_SIDE_A  = 3
-    KEY_SIDE_B  = 7
-    KEY_SIDE_C  = 11
-    KEY_SIDE_D  = 15
-    KEY_SIDE_E  = 19
+    A  = 3
+    B  = 7
+    C  = 11
+    D  = 15
+    E  = 19
+    
+    KEY_SHIFT = SHIFT
+
+    KEY_DOT  = DOT
+    KEY_0    = N0
+    KEY_1    = N1
+    KEY_2    = N2
+    KEY_3    = N3
+    KEY_4    = N4
+    KEY_5    = N5
+    KEY_6    = N6
+    KEY_7    = N7
+    KEY_8    = N8
+    KEY_9    = N8
+
+    KEY_F1    = F1
+    KEY_F2    = F2
+    KEY_F3    = F3
+
+    KEY_SIDE_A  = A
+    KEY_SIDE_B  = B
+    KEY_SIDE_C  = C
+    KEY_SIDE_D  = D
+    KEY_SIDE_E  = E
+
+    def __eq__(self, check):
+        return self.getRaw() & check
 
     def isAnyDown(self):
         return self._u.read(self._u.VAR_BDOWN) > 0
@@ -45,18 +74,18 @@ class Keys:
         keys = []
         for i in range(20):
             if((1<<i) & k):
-                keys.push(i)
+                keys.append(i)
         self.clearAllDown()
-        return None
+        return keys
 
     def getAllUp(self):
         k = self._u.read(self._u.VAR_BUP)
         keys = []
         for i in range(20):
             if((1<<i) & k):
-                keys.push(i)
+                keys.append(i)
         self.clearAllUp()
-        return None
+        return keys
 
     def getNextDown(self):
         k = self._u.read(self._u.VAR_BDOWN)
@@ -108,3 +137,5 @@ class Keys:
     def getRaw(self):
         return self._u.read(self._u.VAR_BSCAN) & 0xfffff
 
+    def mux_period(self,period):
+        self._u.set_wakeup_period(period)

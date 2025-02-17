@@ -21,18 +21,16 @@
 #define PIN_LT 11
 #define PIN_TT 14
 
+int var_turns;
+static unsigned int rscan;
+
 static unsigned int pscan;
 static unsigned int pscan_old;
 unsigned int var_bscan;
 unsigned int var_bdown;
 unsigned int var_bup;
 unsigned int var_bok;
-unsigned int var_wake = 0;
-
-static unsigned int rscan;
-int var_turns;
-
-static int buz = 0;
+unsigned int var_system_sleeping = 0;
 
 void shiftOut(unsigned int v){
 
@@ -65,8 +63,17 @@ unsigned int readPins(){
         | (ulp_riscv_gpio_get_level(PIN_CK) << 0);
 }
 
+
 int main (void)
 {   
+    var_bok |= !ulp_riscv_gpio_get_level(0);
+    if(var_system_sleeping){
+        if(var_bok){
+            while(!ulp_riscv_gpio_get_level(0)) {}
+            ulp_riscv_wakeup_main_processor();
+        }
+        return 0;
+    }
 
     ulp_riscv_gpio_init(PIN_CK);
     ulp_riscv_gpio_init(PIN_DD);
@@ -84,21 +91,21 @@ int main (void)
     for(int jj=0; jj<7; jj++){
         shiftOut(1<<jj);
         pscan |= (readPins() << (jj * 3));
+        
+        shiftOut(1<<7);
+        rscan = ((rscan<<2) | readPins()) & 0xF;
+        if(rscan == 0b1011) {
+            if(var_turns < 0) var_turns = 0;
+            var_turns++;    
+        }
+        if(rscan == 0b0111) {
+            if(var_turns > 0) var_turns = 0;
+            var_turns--;    
+        }
     }
     var_bup |= (pscan_old & (~pscan));
     var_bdown |= (pscan & (~pscan_old));   
     var_bscan = pscan; 
-
-    shiftOut(1<<7);
-    rscan = ((rscan<<2) | readPins()) & 0xF;
-    if(rscan == 0b1011) {
-        if(var_turns < 0) var_turns = 0;
-        var_turns++;    
-    }
-    if(rscan == 0b0111) {
-        if(var_turns > 0) var_turns = 0;
-        var_turns--;    
-    }
 
     ulp_riscv_gpio_input_disable(PIN_CK);
     ulp_riscv_gpio_input_disable(PIN_DD);
@@ -112,12 +119,6 @@ int main (void)
     ulp_riscv_gpio_deinit(PIN_DD);
     ulp_riscv_gpio_deinit(PIN_LT);
     ulp_riscv_gpio_deinit(PIN_TT);
-    
-    if(var_wake){
-        var_bok = !ulp_riscv_gpio_get_level(0);
-        if(var_bok)
-            ulp_riscv_wakeup_main_processor();
-    }
     
     return 0;
 }
