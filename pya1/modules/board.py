@@ -4,8 +4,6 @@ import machine
 import pins
 import neopixel
 
-_board.init()
-
 class LCD(_board.Terminal):
 
     def scale(self, scale):
