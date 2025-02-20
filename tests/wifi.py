@@ -2,8 +2,7 @@ import network
 import time
 import board
 
-board.init()
-t = board.Terminal()
+t = board.LCD()
 
 ssid = "EE-36qfga"
 psk = "aqua-fix-optic"
