@@ -49,7 +49,7 @@
         "silk_text_upright": false,
         "zones": {
           "45_degree_only": false,
-          "min_clearance": 0.0
+          "min_clearance": 0.25
         }
       },
       "diff_pair_dimensions": [
@@ -639,12 +639,12 @@
       "Power"
     ],
     [
-      "b6a1d74e-f5bd-4c1c-9567-b593baf30f34",
-      "Main"
-    ],
-    [
       "88d65574-4a55-44b9-b6d2-8e7d5a1c096b",
       "Front"
+    ],
+    [
+      "b6a1d74e-f5bd-4c1c-9567-b593baf30f34",
+      "Main"
     ],
     [
       "b1227650-20b3-46fc-adc9-fcdb0ca6b4a0",

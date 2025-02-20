@@ -679,7 +679,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x14_Socket")
-		(at 213.36 76.2 0)
+		(at 198.12 69.85 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -687,7 +687,7 @@
 		(dnp no)
 		(uuid "46b45a88-2089-439e-b477-52f071f80b3d")
 		(property "Reference" "J1"
-			(at 211.582 58.166 0)
+			(at 180.086 71.628 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -696,7 +696,7 @@
 			)
 		)
 		(property "Value" "Conn_01x14_Socket"
-			(at 222.25 89.916 90)
+			(at 211.836 60.96 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -706,7 +706,7 @@
 			)
 		)
 		(property "Footprint" "Connector_FFC-FPC:Hirose_FH12-14S-0.5SH_1x14-1MP_P0.50mm_Horizontal"
-			(at 213.36 76.2 0)
+			(at 198.12 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -715,7 +715,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 213.36 76.2 0)
+			(at 198.12 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -724,7 +724,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x14, script generated"
-			(at 213.36 76.2 0)
+			(at 198.12 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -785,8 +785,8 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x14_Socket")
-		(at 220.98 76.2 0)
-		(mirror y)
+		(at 198.12 67.31 90)
+		(mirror x)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -794,7 +794,7 @@
 		(dnp no)
 		(uuid "624704c1-63aa-468c-a43d-0c19faa6b2e5")
 		(property "Reference" "J2"
-			(at 223.012 57.912 0)
+			(at 179.832 65.278 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -803,7 +803,7 @@
 			)
 		)
 		(property "Value" "Conn_01x14_Socket"
-			(at 219.71 78.7399 0)
+			(at 200.6599 68.58 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -813,7 +813,7 @@
 			)
 		)
 		(property "Footprint" "Connector_FFC-FPC:Hirose_FH12-14S-0.5SH_1x14-1MP_P0.50mm_Horizontal"
-			(at 220.98 76.2 0)
+			(at 198.12 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -822,7 +822,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 220.98 76.2 0)
+			(at 198.12 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -831,7 +831,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x14, script generated"
-			(at 220.98 76.2 0)
+			(at 198.12 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -891,9 +891,8 @@
 		)
 	)
 	(sheet
-		(at 226.06 58.42)
-		(size 22.86 38.1)
-		(fields_autoplaced yes)
+		(at 168.91 41.91)
+		(size 62.23 20.32)
 		(stroke
 			(width 0.1524)
 			(type solid)
@@ -903,7 +902,7 @@
 		)
 		(uuid "88d65574-4a55-44b9-b6d2-8e7d5a1c096b")
 		(property "Sheetname" "Front"
-			(at 226.06 57.7084 0)
+			(at 168.656 64.516 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -912,7 +911,7 @@
 			)
 		)
 		(property "Sheetfile" "front.kicad_sch"
-			(at 226.06 97.1046 0)
+			(at 231.7246 62.23 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -921,7 +920,7 @@
 			)
 		)
 		(pin "LCD_DC" input
-			(at 226.06 78.74 180)
+			(at 200.66 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -931,7 +930,7 @@
 			(uuid "3951844e-d1c7-4e14-9099-7a0d21cb8ffe")
 		)
 		(pin "CK" input
-			(at 226.06 73.66 180)
+			(at 195.58 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -941,7 +940,7 @@
 			(uuid "17cc63d3-7075-40e1-a772-14f9c6bc9d41")
 		)
 		(pin "MOSI" input
-			(at 226.06 71.12 180)
+			(at 193.04 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -951,7 +950,7 @@
 			(uuid "da0de644-1389-4d11-bf92-2854c0620a5f")
 		)
 		(pin "SD_CS" input
-			(at 226.06 76.2 180)
+			(at 198.12 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -961,7 +960,7 @@
 			(uuid "513af800-df4d-4260-9c20-3ce76ee9702e")
 		)
 		(pin "LCD_CS" input
-			(at 226.06 66.04 180)
+			(at 187.96 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -971,7 +970,7 @@
 			(uuid "341c3fda-b67f-4148-9980-fee3abc655ec")
 		)
 		(pin "LCD_LED" input
-			(at 226.06 81.28 180)
+			(at 203.2 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -981,7 +980,7 @@
 			(uuid "fa948db4-36cd-4b57-8ec5-e0a397cd2c12")
 		)
 		(pin "VDD" input
-			(at 226.06 60.96 180)
+			(at 182.88 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -991,7 +990,7 @@
 			(uuid "87ecf157-8185-4eaa-9618-5d5523d888c6")
 		)
 		(pin "MISO" input
-			(at 226.06 68.58 180)
+			(at 190.5 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1001,7 +1000,7 @@
 			(uuid "0b80f7ce-e254-4511-82cc-07114e6816f7")
 		)
 		(pin "GND" input
-			(at 226.06 93.98 180)
+			(at 215.9 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1011,7 +1010,7 @@
 			(uuid "2bc32976-0f81-44d8-909f-c5acc62a399d")
 		)
 		(pin "A_R1" input
-			(at 226.06 91.44 180)
+			(at 213.36 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1021,7 +1020,7 @@
 			(uuid "7d046e61-31a4-4738-b1e3-2ce2a19c5a51")
 		)
 		(pin "A_T" input
-			(at 226.06 88.9 180)
+			(at 210.82 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1031,7 +1030,7 @@
 			(uuid "2797d1ff-fc32-42ef-b1a0-ac40fd04e92f")
 		)
 		(pin "BUZZER" input
-			(at 226.06 83.82 180)
+			(at 205.74 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1041,7 +1040,7 @@
 			(uuid "e86e4319-bd9c-4c26-9332-7fa8e1101bc3")
 		)
 		(pin "LED" input
-			(at 226.06 86.36 180)
+			(at 208.28 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1051,7 +1050,7 @@
 			(uuid "fc0a664b-298d-4391-8a2c-fa689051983a")
 		)
 		(pin "LED_RETURN" input
-			(at 226.06 63.5 180)
+			(at 185.42 62.23 270)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1069,9 +1068,8 @@
 		)
 	)
 	(sheet
-		(at 146.05 58.42)
+		(at 168.91 74.93)
 		(size 62.23 96.52)
-		(fields_autoplaced yes)
 		(stroke
 			(width 0.1524)
 			(type solid)
@@ -1081,7 +1079,7 @@
 		)
 		(uuid "b6a1d74e-f5bd-4c1c-9567-b593baf30f34")
 		(property "Sheetname" "Main"
-			(at 146.05 57.7084 0)
+			(at 168.91 74.2184 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1090,7 +1088,7 @@
 			)
 		)
 		(property "Sheetfile" "main.kicad_sch"
-			(at 146.05 155.5246 0)
+			(at 232.156 94.742 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1099,7 +1097,7 @@
 			)
 		)
 		(pin "MOSI" input
-			(at 208.28 71.12 0)
+			(at 193.04 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1109,7 +1107,7 @@
 			(uuid "0b1e3da3-70be-4395-8d2f-d6bf3fa8f88f")
 		)
 		(pin "LCD_CS" input
-			(at 208.28 66.04 0)
+			(at 187.96 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1119,7 +1117,7 @@
 			(uuid "924cb0a5-8acf-42af-8b1a-43006424011c")
 		)
 		(pin "CK" input
-			(at 208.28 73.66 0)
+			(at 195.58 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1129,7 +1127,7 @@
 			(uuid "19db6663-dfc1-4b79-8609-4d98b1d35087")
 		)
 		(pin "MISO" input
-			(at 208.28 68.58 0)
+			(at 190.5 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1139,7 +1137,7 @@
 			(uuid "88c3f9e5-4517-4ffc-a966-d8e412aceb2d")
 		)
 		(pin "SD_CS" input
-			(at 208.28 76.2 0)
+			(at 198.12 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1149,7 +1147,7 @@
 			(uuid "d13e36aa-4a22-44c4-91e8-7dd8d23ecd96")
 		)
 		(pin "LCD_DC" input
-			(at 208.28 78.74 0)
+			(at 200.66 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1159,7 +1157,7 @@
 			(uuid "11ca448f-2c45-40a3-bc1c-e7e629e224b6")
 		)
 		(pin "LCD_LED" input
-			(at 208.28 81.28 0)
+			(at 203.2 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1169,7 +1167,7 @@
 			(uuid "23506807-ffb6-4583-8ee6-fced2d53fa5b")
 		)
 		(pin "STATUS_LED" input
-			(at 208.28 86.36 0)
+			(at 208.28 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1179,7 +1177,7 @@
 			(uuid "96e02089-9b72-44ce-a742-cb794f7e84ed")
 		)
 		(pin "GND" input
-			(at 208.28 93.98 0)
+			(at 215.9 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1189,7 +1187,7 @@
 			(uuid "b695b060-5a88-4c34-8f47-7d5e3d866cb1")
 		)
 		(pin "VDD" input
-			(at 208.28 60.96 0)
+			(at 182.88 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1199,7 +1197,7 @@
 			(uuid "ff588f3b-6b11-4c5f-b074-fcad7fbe581b")
 		)
 		(pin "BUZ_DRIVE" input
-			(at 208.28 83.82 0)
+			(at 205.74 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1209,7 +1207,7 @@
 			(uuid "a0f67439-3808-47eb-82c8-c9d064ae713f")
 		)
 		(pin "AUD_L" input
-			(at 208.28 88.9 0)
+			(at 210.82 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1219,7 +1217,7 @@
 			(uuid "31f0f355-9c3f-450b-8edf-e0b2312dbf47")
 		)
 		(pin "AUD_R" input
-			(at 208.28 91.44 0)
+			(at 213.36 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1229,7 +1227,7 @@
 			(uuid "dba33e33-3d6c-498a-b269-3fb7bc11bbf1")
 		)
 		(pin "LED_RETURN" input
-			(at 208.28 63.5 0)
+			(at 185.42 74.93 90)
 			(effects
 				(font
 					(size 1.27 1.27)
