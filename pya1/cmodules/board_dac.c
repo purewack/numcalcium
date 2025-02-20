@@ -111,6 +111,9 @@ static mp_obj_t sdm_init(size_t n_args, const mp_obj_t *args) {
         for(int i=0; i< len_outputs; i++){
             if(items_outputs[i] == mp_const_none)
                 outputs[i] = -1;
+            else if(!mp_obj_is_int(items_outputs[i])){
+                outputs[i] = mp_hal_get_pin_obj(items_outputs[i]);
+            }
             else
                 outputs[i] = mp_obj_get_int(items_outputs[i]);
         }
