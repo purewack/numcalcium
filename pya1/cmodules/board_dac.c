@@ -13,6 +13,9 @@
 typedef struct _dac_config {
     mp_obj_t callback;
     int8_t *buffer_ptr;
+    int8_t *buffer_ptr_near;
+    int8_t *buffer_ptr_far;
+    uint8_t buf_dual;
     uint16_t buf_size;
     uint16_t buf_counter;
     gptimer_handle_t _timer_handle;
@@ -20,7 +23,7 @@ typedef struct _dac_config {
     uint8_t channel_count;
 } dac_config_t;
 
-static dac_config_t dac_config = {mp_const_none, NULL, 0, 0, NULL, {NULL,NULL}, 0};
+static dac_config_t dac_config = {mp_const_none, NULL,NULL,NULL, 0, 0, 0, NULL, {NULL,NULL}, 0};
 
 static bool IRAM_ATTR buffer_sample_feed_unibuf_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
@@ -36,14 +39,18 @@ static bool IRAM_ATTR buffer_sample_feed_unibuf_cb(gptimer_handle_t timer, const
         if (conf->callback != mp_const_none && mp_obj_is_callable(conf->callback)) {
             mp_sched_schedule(conf->callback, MP_OBJ_NEW_SMALL_INT(1));
         }
-        mp_sched_schedule(conf->callback, MP_OBJ_NEW_SMALL_INT(1));
+        if(conf->buf_dual){
+            conf->buffer_ptr = conf->buffer_ptr_far;
+        }
         //refill request from n/2->n
     }
     else if (conf->buf_counter == conf->buf_size>>1) {        
         if (conf->callback != mp_const_none && mp_obj_is_callable(conf->callback)) {
-            mp_sched_schedule(conf->callback, MP_OBJ_NEW_SMALL_INT(1));
+            mp_sched_schedule(conf->callback, MP_OBJ_NEW_SMALL_INT(0));
         }
-        mp_sched_schedule(conf->callback, MP_OBJ_NEW_SMALL_INT(0));
+        if(conf->buf_dual){
+            conf->buffer_ptr = conf->buffer_ptr_near;
+        }
         //refill request from 0->n/2
     }
 
@@ -84,8 +91,28 @@ static MP_DEFINE_CONST_FUN_OBJ_0(sdm_deinit_obj, sdm_deinit);
 // Start playback
 static mp_obj_t sdm_init(size_t n_args, const mp_obj_t *args) {
 
-    mp_buffer_info_t bufinfo;
-    mp_get_buffer_raise(args[0], &bufinfo, MP_BUFFER_RW);
+    mp_buffer_info_t bufinfo[2];
+    
+    if(mp_obj_is_type(args[0], &mp_type_tuple)){
+        dac_config.buf_dual = 1;
+        size_t n_items;
+        mp_obj_t *items;
+        mp_obj_tuple_get(args[0], &n_items, &items);
+        if(n_items != 2){
+            mp_raise_ValueError("bytearray tuple can only contian 2 entries");
+        }
+        mp_get_buffer_raise(items[0], &bufinfo[0], MP_BUFFER_RW);
+        mp_get_buffer_raise(items[1], &bufinfo[1], MP_BUFFER_RW);
+        if(bufinfo[0].len != bufinfo[1].len){
+            mp_raise_ValueError("buffers must have equal size");
+        }
+        DEBUG_printf("dual buffers\n");
+    }
+    else{
+        dac_config.buf_dual = 0;
+        mp_get_buffer_raise(args[0], &bufinfo[0], MP_BUFFER_RW);
+        DEBUG_printf("single buffer\n");
+    }
 
     mp_obj_t callback = args[1];
     if (!mp_obj_is_callable(callback)) {
@@ -182,9 +209,14 @@ static mp_obj_t sdm_init(size_t n_args, const mp_obj_t *args) {
     check_esp_err(gptimer_register_event_callbacks(timer_handle, &cbs, &dac_config));
     check_esp_err(gptimer_enable(timer_handle));
     check_esp_err(gptimer_start(timer_handle));
-
-    dac_config.buffer_ptr = (int8_t *)bufinfo.buf;
-    dac_config.buf_size = bufinfo.len;
+    
+    if(dac_config.buf_dual)
+        dac_config.buffer_ptr_far = (int8_t *)bufinfo[1].buf;
+    else
+        dac_config.buffer_ptr_far = (int8_t *)bufinfo[0].buf;
+    dac_config.buffer_ptr_near = (int8_t *)bufinfo[0].buf;
+    dac_config.buffer_ptr = dac_config.buffer_ptr_near;
+    dac_config.buf_size = bufinfo[0].len;
     dac_config.channel_count = 0;
     dac_config.callback = callback;
     dac_config._timer_handle = timer_handle;
