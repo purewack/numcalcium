@@ -13,7 +13,7 @@ def wasBackRequested():
         return True
     return False
 
-def turns():
-    t = _u.read(_u.VAR_TURNS)
+def turns(invert=False):
+    t = 0 - _u.read(_u.VAR_TURNS)
     _u.write(_u.VAR_TURNS, 0)
     return t

@@ -48,6 +48,10 @@ MSB = button N-1
 
 import machine
 import time
+import esp32
+
+u = esp32.ULP()
+u.pause()
 
 pCK = machine.Pin(12)
 pD  = machine.Pin(13)
