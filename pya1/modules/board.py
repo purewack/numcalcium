@@ -54,7 +54,17 @@ def tone(note, velocity):
     spk.freq(int(pow(2,(midi-69)/12)*440))
 
 
-__neo = neopixel.NeoPixel(machine.Pin.board.LEDS,1)
+__neo = neopixel.NeoPixel(machine.Pin.board.LEDS,21)
 def statusLight(r,g,b):
     __neo[0] = (r,g,b)
     __neo.write()
+
+def statusLed(r,g,b):
+    statusLight(r,g,b)
+
+def light(keyNumber,r,g,b):
+    __neo[1 + keyNumber] = (r,g,b)
+    __neo.write()
+
+def led(keyNumber,r,g,b):
+    light(keyNumber,r,g,b)
