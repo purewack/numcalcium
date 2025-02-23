@@ -1,10 +1,10 @@
 import math
-import sigma_delta
 import time
 import esp32
 import machine
 import board
 import nat_sine
+import gc
 
 u = esp32.ULP()
 u.pause()
@@ -29,7 +29,9 @@ def buffer_callback(active_buffer):
     need_refil = True
     #print("b",cur_buf)
 
-sigma_delta.init(buffer_a, buffer_callback, [machine.Pin.board.A_OUT_L,machine.Pin.board.A_OUT_R])  # Start playback
+sdm = board.DAC(buffer_a, buffer_callback, [6,7])  # Start playback
+sdm = board.DAC(buffer_a, buffer_callback)  # Start playback
+gc.collect()
 nat_sine.buffer(buffer_a)
 print("ready")
 
@@ -48,6 +50,9 @@ while True:
         
         # if(time.time() - s > 10): break
     
+    if(keys == keys.E):
+        break
+        
     if(keys.isAnyDown()):
         n = keys.getNextDown()
         nat_sine.freq(mToF(scale[n % len(scale)]))
@@ -56,5 +61,5 @@ while True:
 	lcd.print(str(n))
 	lcd.print("\n\r")
 
-sigma_delta.deinit()
+sdm.deinit()
 

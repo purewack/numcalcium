@@ -3,6 +3,7 @@ import time
 import esp32
 import machine
 import board
+import os
 
 u = esp32.ULP()
 u.pause()
@@ -15,7 +16,7 @@ lcd.print("audio stream test")
 
 keys = board.keys()
 
-b_size = 5000
+b_size = 512
 buffer_a = bytearray(b_size)
 cur_buf = 0
 need_refil = False
@@ -31,7 +32,9 @@ sdm = board.DAC(buffer_a, buffer_callback, [machine.Pin.board.A_OUT_L,machine.Pi
 print("ready")
 
 s = time.time()
-with open("stereo.raw","rb") as f:
+sd = board.SD()
+os.mount(sd,'/sd')
+with open("/sd/stereo.raw","rb") as f:
 
     while True:
         if(not need_refil): 

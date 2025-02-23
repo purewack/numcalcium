@@ -1,5 +1,4 @@
 import math
-import sigma_delta
 import time
 import esp32
 import machine
@@ -16,7 +15,7 @@ lcd.print("audio stream test")
 
 keys = board.keys()
 
-b_size = 4096
+b_size = 10000
 buffer_a = bytearray(b_size)
 cur_buf = 0
 need_refil = False
@@ -28,11 +27,11 @@ def buffer_callback(active_buffer):
     need_refil = True
     #print("b",cur_buf)
 
-sigma_delta.init(buffer_a, buffer_callback, [machine.Pin.board.A_OUT_L,machine.Pin.board.A_OUT_R])  # Start playback
+sdm = board.DAC(buffer_a, buffer_callback, [machine.Pin.board.A_OUT_L,None])  # Start playback
 print("ready")
 
 s = time.time()
-with open("sine.raw","rb") as f:
+with open("mono.raw","rb") as f:
 
     while True:
         if(not need_refil): 
@@ -55,5 +54,4 @@ with open("sine.raw","rb") as f:
         dt = time.ticks_us() - t
         print(f"{dt}/{avail}")
     
-sigma_delta.deinit()
-
+sdm.deinit()

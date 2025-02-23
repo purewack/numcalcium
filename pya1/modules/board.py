@@ -33,6 +33,9 @@ class LCD(_board.Terminal):
 class SD(_board.SD):
     pass
 
+class DAC(_board.DAC):
+    pass
+
 __keys = keys.Keys()
 def keys():
     return __keys

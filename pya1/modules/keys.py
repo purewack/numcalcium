@@ -61,7 +61,7 @@ class Keys:
     KEY_SIDE_E  = E
 
     def __eq__(self, check):
-        return self.getRaw() & check
+        return self.getRaw() & (1<<check)
 
     def isAnyDown(self):
         return self._u.read(self._u.VAR_BDOWN) > 0
