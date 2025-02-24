@@ -4978,16 +4978,6 @@
 	)
 	(wire
 		(pts
-			(xy 124.46 180.34) (xy 123.19 180.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "462254e5-cfea-4a67-bfb3-415b320ce638")
-	)
-	(wire
-		(pts
 			(xy 228.6 59.69) (xy 232.41 59.69)
 		)
 		(stroke
@@ -7039,17 +7029,6 @@
 			(justify right)
 		)
 		(uuid "944903eb-afae-4de2-ad2f-fbe2c91ae9f7")
-	)
-	(hierarchical_label "GND"
-		(shape input)
-		(at 123.19 180.34 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "9d7abb02-6c28-4157-abb1-e81b1a25889b")
 	)
 	(hierarchical_label "MOSI"
 		(shape input)
@@ -9826,72 +9805,6 @@
 			(project "numcalcium"
 				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34"
 					(reference "D18")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 124.46 180.34 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "6bcf319c-e6f9-4f13-a4e8-2952b433f325")
-		(property "Reference" "#PWR034"
-			(at 124.46 186.69 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 124.714 184.404 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 124.46 180.34 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 124.46 180.34 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 124.46 180.34 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "db0eea2b-3f69-480a-86a6-9fa22f90c03a")
-		)
-		(instances
-			(project "numcalcium"
-				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34"
-					(reference "#PWR034")
 					(unit 1)
 				)
 			)

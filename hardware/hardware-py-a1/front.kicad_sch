@@ -6154,7 +6154,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "22"
 			(at 111.76 57.15 90)
 			(effects
 				(font
@@ -6506,7 +6506,7 @@
 				)
 			)
 		)
-		(property "Value" "100"
+		(property "Value" "22"
 			(at 72.39 139.7 90)
 			(effects
 				(font
