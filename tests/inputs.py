@@ -28,7 +28,7 @@ while True:
     for row in range(5):
         line = ''
         for key in range(4):
-            _key = 1 << (key + (5-row-1)*4)
+            _key = (key + (5-row-1)*4)
             line += "\033[" + str(31 + key_grp[row][key]) + "m"
             line += '[#]' if k == _key else '[ ]'
         print("\033[K",line)
