@@ -83,7 +83,7 @@ static mp_obj_t sdm_deinit(mp_obj_t self_in) {
             check_esp_err(sdm_del_channel(self->channels[i]));
             self->channels[i] = NULL;
         }
-        if(self->channels[i] != -1)
+        if(self->pins[i] != -1)
             gpio_reset_pin(self->pins[i]);
     }
     self->channel_count = 0;  // Reset count
