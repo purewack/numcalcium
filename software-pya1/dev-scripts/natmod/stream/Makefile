@@ -1,5 +1,5 @@
 # Location of top-level MicroPython directory
-MPY_DIR = ../../micropython
+MPY_DIR = ../../../../micropython
 
 # Name of module
 MOD = stream_nat
@@ -14,4 +14,4 @@ ARCH = xtensawin
 include $(MPY_DIR)/py/dynruntime.mk
 
 test:
-    mpremote mount ./ run test.py
+	mpremote mount ./ run test.py

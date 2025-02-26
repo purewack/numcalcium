@@ -3,6 +3,13 @@ import keys
 import machine
 import pins
 import neopixel
+import esp32
+
+u = esp32.ULP()
+u.pause()
+u.run_embedded()
+u.set_wakeup_period(5000)
+u.resume()
 
 class LCD(_board.Terminal):
 
@@ -58,6 +65,10 @@ def tone(note, velocity):
 
 
 __neo = neopixel.NeoPixel(machine.Pin.board.LEDS,21)
+def clearLights():
+    __neo.fill((0,0,0))
+    __neo.write()
+
 def statusLight(r,g,b):
     __neo[0] = (r,g,b)
     __neo.write()

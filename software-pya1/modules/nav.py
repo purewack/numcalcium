@@ -4,8 +4,11 @@ home = machine.Pin(0, machine.Pin.IN)
 import esp32
 _u = esp32.ULP()
 
-def shouldBack():
-    return not home.value()
+def shouldBack(value = None):
+    if value == None:
+        return not home.value()
+    else:
+        _u.write(_u.VAR_BOK,value)
 
 def wasBackRequested():
     if _u.read(_u.VAR_BOK):
