@@ -57,7 +57,7 @@ static mp_obj_t bmp_load_rgb565(mp_obj_t file_obj, mp_obj_t fb_obj) {
         mp_obj_t palette_data = mp_call_function_n_kw(read_meth, 1, 0, (mp_obj_t[]){ MP_OBJ_NEW_SMALL_INT(1024) });
         mp_buffer_info_t palette_buf;
         mp_get_buffer_raise(palette_data, &palette_buf, MP_BUFFER_READ);
-        uint8_t *palette = (uint8_t *)palette_buf.buf;
+        uint8_t *palette = (uint8_t *)palette_buf.buf + 16*4;
         
         mp_obj_t seek_pixel_args[2] = { MP_OBJ_NEW_SMALL_INT(pixel_offset), MP_OBJ_NEW_SMALL_INT(0) };
         mp_call_function_n_kw(seek_meth, 2, 0, seek_pixel_args);
@@ -113,8 +113,7 @@ static MP_DEFINE_CONST_FUN_OBJ_2(bmp_load_rgb565_obj, bmp_load_rgb565);
 mp_obj_t mpy_init(mp_obj_fun_bc_t *self, size_t n_args, size_t n_kw, mp_obj_t *args) {
     MP_DYNRUNTIME_INIT_ENTRY
 
-    mp_store_global(MP_QSTR_load_rgb565, MP_OBJ_FROM_PTR(&bmp_load_rgb565_obj));
+    mp_store_global(MP_QSTR_parse, MP_OBJ_FROM_PTR(&bmp_load_rgb565_obj));
     // This must be last, it restores the globals dict
     MP_DYNRUNTIME_INIT_EXIT
 }
-

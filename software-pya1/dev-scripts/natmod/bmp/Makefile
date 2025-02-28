@@ -1,5 +1,5 @@
 # Location of top-level MicroPython directory
-MPY_DIR = ../../micropython
+MPY_DIR = ../../../../micropython
 
 # Name of module
 MOD = bmp
@@ -12,3 +12,6 @@ ARCH = xtensawin
 
 # Include to get the rules for compiling and linking the module
 include $(MPY_DIR)/py/dynruntime.mk
+
+test:
+	mpremote mount ./ run test.py
