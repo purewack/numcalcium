@@ -108,7 +108,7 @@ static mp_obj_t board_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, 
     };
     static const mp_arg_t allowed_args[] = {
         // freq is valid for both SPI and SDMMC interfaces
-        { MP_QSTR_freq,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 20000000} },
+        { MP_QSTR_freq,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 40000000} },
     };
     mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
     mp_map_t kw_args;

@@ -4,11 +4,26 @@
 #include "py/stream.h"
 #include "py/builtin.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+
 #include "../font/gohu13.h"
 #include "vt100.h"
 #include "board.h"
 
 uint8_t lineBuf[1024*2];
+static SemaphoreHandle_t spi_semaphore;
+static QueueHandle_t buffer_queue;
+
+typedef struct {
+    const uint8_t *buffer;
+    int size;
+    int x;
+    int y;
+    int width;
+    int height;
+} buffer_data_t;
 
 // Utility functions
 void driver_send_cmd(uint8_t cmd) {
@@ -261,7 +276,41 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
     
 }
 
+static void driver_send_buffer(buffer_data_t buffer_data){
+    driver_send_cmd(0x2A); 
+    driver_send_data((buffer_data.x & 0x100) >> 8); driver_send_data(buffer_data.x & 0xff); 
+    driver_send_data((buffer_data.width & 0x100) >> 8); driver_send_data(buffer_data.width & 0xff); 
 
+    driver_send_cmd(0x2B); 
+    driver_send_data(0x00); driver_send_data(buffer_data.y + Y_OFFSET);
+    driver_send_data(0x00); driver_send_data(buffer_data.height + Y_OFFSET);
+ 
+    driver_send_cmd(0x2C); 
+
+    driver_start_pixel();
+    int size = buffer_data.size;// buffer_data.width * buffer_data.height * 2 * 8;
+    int xferred = 0;
+    int limit = 32000;
+//            DEBUG_printf("buffer stats: %d %d %d %d %p\n",buffer_data.x,buffer_data.y,buffer_data.width,buffer_data.height,buffer_data.buffer);
+    do{
+        int count = size - xferred;
+        if(count > limit) count = limit;
+        driver_send_pixel_data(buffer_data.buffer + xferred,8*count);
+        xferred += count;
+    }while(xferred != size);
+    driver_end_pixel();
+}
+
+static void driver_buffer_task(void *pvParameters){
+    buffer_data_t buffer_data;
+
+    while(1){        
+        if(xQueueReceive(buffer_queue, &buffer_data, portMAX_DELAY)) {
+            driver_send_buffer(buffer_data);
+            xSemaphoreGive(spi_semaphore);
+        }
+    }
+}
 
 
 
@@ -282,56 +331,40 @@ typedef struct _lcd_obj_t {
 
 static lcd_obj_t lcd_instance = {{&lcd_type}};
 
-// singleton object
-
-// lcd_obj.bg = COL_BLACK;
-// lcd_obj.color = COL_WHITE;
-// lcd_obj.line = 0;
-// lcd_obj.col = 0;
-// lcd_obj.scale = 2;
-// lcd_obj.LFCR = 0;
-// lcd_obj.rgbSwap = 0;
-// lcd_obj.invert = 0;
-//static const lcd_obj_t lcd_obj = {{&lcd_type},COL_BLACK,COL_WHITE,0,0,2,0,0,0};
-
 
 static mp_obj_t buffer(size_t n_args, const mp_obj_t *args) {
-	// lcd_obj_t* self_in = MP_OBJ_TO_PTR(args[0]);
 
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(args[1], &bufinfo, MP_BUFFER_READ);
-
-	const int xx = mp_obj_get_int(args[2]);
-	const int yy = mp_obj_get_int(args[3]);
-    int xw = xx + mp_obj_get_int(args[4]) - 1;
-    int yh = yy + mp_obj_get_int(args[5]) - 1;
     
-//    DEBUG_printf("buffer stats: %d %d %d %d %d\n",xx,yy,xw,yh,bufinfo.len);
+    buffer_data_t buffer_data;
+    buffer_data.buffer = bufinfo.buf;
+    buffer_data.size = bufinfo.len;
+    buffer_data.x = mp_obj_get_int(args[2]);
+    buffer_data.y = mp_obj_get_int(args[3]);
+    buffer_data.width = buffer_data.x + mp_obj_get_int(args[4]) - 1;
+    buffer_data.height = buffer_data.y + mp_obj_get_int(args[5]) - 1;
     
-    driver_send_cmd(0x2A); 
-    driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
-    driver_send_data((xw & 0x100) >> 8); driver_send_data(xw & 0xff); 
-
-    driver_send_cmd(0x2B); 
-    driver_send_data(0x00); driver_send_data(yy + Y_OFFSET);
-    driver_send_data(0x00); driver_send_data(yh + Y_OFFSET);
- 
-	driver_send_cmd(0x2C); 
-
-	driver_start_pixel();
-    int size = bufinfo.len;
-    int xferred = 0;
-    do{
-        int count = size - xferred;
-        if(count > 1024) count = 1024;
-        driver_send_pixel_data(bufinfo.buf + xferred,8*count);
-        xferred += count;
-    }while(xferred != size);
-	driver_end_pixel();
+    // Check if the semaphore is available
+    if (xSemaphoreTake(spi_semaphore, 0) == pdTRUE) {
+        xSemaphoreGive(spi_semaphore);
+        
+        if(n_args == 7 && mp_obj_is_true(args[6])){
+            driver_send_buffer(buffer_data);
+            return mp_const_none;
+        }
+        // No transfer is taking place, queue the buffer data
+        xQueueSend(buffer_queue, &buffer_data, portMAX_DELAY);
+    } else {
+        // Transfer is taking place, block until it's done
+        xQueueSend(buffer_queue, &buffer_data, portMAX_DELAY);
+        xSemaphoreTake(spi_semaphore, portMAX_DELAY);
+        xSemaphoreGive(spi_semaphore);
+    }
 
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_VAR(buffer_obj, 4, buffer);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(buffer_obj, 6,7, buffer);
 
 
 
@@ -442,7 +475,6 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 		}
 	}
 
-
     mp_obj_t current_options = mp_obj_new_dict(0);
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_foreground), mp_obj_new_int(self->color));
@@ -471,23 +503,22 @@ static mp_uint_t lcd_stream_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t
 
 static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     if (!lcd_instance.new) {
+        
         driver_init();
-//        int16_t col;
-//        int16_t line;
 
-//        const unsigned char* a = (const unsigned char*)"pre ";
-//        const unsigned char* p = (const unsigned char*)"post";
-//        driver_print(a,sizeof(a),&col,&line,0xffff,0,1);
-
-//        lcd_instance = m_new_obj(lcd_obj_t);
         lcd_instance.base.type = type;
         lcd_instance.scale = 1;
         lcd_instance.color = COL_WHITE;
         lcd_instance.bg = COL_BLACK;
         lcd_instance.new = true;
 
-//        DEBUG_printf("new lcd\n");
-//        driver_print(p,sizeof(p),&col,&line,0xffff,0,1);
+        // Create the semaphore and buffer queue
+        spi_semaphore = xSemaphoreCreateBinary();
+        xSemaphoreGive(spi_semaphore);
+        buffer_queue = xQueueCreate(1, sizeof(buffer_data_t));
+
+        // Create the SPI task
+        xTaskCreatePinnedToCore(driver_buffer_task, "driver_buffer_task", 4096, NULL, 1, NULL, 1);
     }
     return (mp_obj_t)&lcd_instance;
 }

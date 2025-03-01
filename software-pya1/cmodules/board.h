@@ -4,6 +4,7 @@
 #include "py/mphal.h"
 #include "py/obj.h"
 #include "pins.h"
+#include "vt100.h"
 
 #include "driver/spi_master.h"
 #include "driver/sdspi_host.h"
@@ -26,7 +27,7 @@ static const spi_bus_config_t spi_bus_defaults = {
     .data5_io_num = GPIO_NUM_NC,
     .data6_io_num = GPIO_NUM_NC,
     .data7_io_num = GPIO_NUM_NC,
-    .max_transfer_sz = 4000,
+    .max_transfer_sz = 32000,
     .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MISO | SPICOMMON_BUSFLAG_MOSI,
     .intr_flags = 0,
 };
@@ -40,10 +41,10 @@ static const sdspi_device_config_t sd_dev_defaults = {
 };
 
 static const  spi_device_interface_config_t lcd_dev_defaults = {
-    .clock_speed_hz = 20000000,
+    .clock_speed_hz = 40000000,
     .mode = 0,
     .spics_io_num = BOARD_PIN_LCD_CS,
-    .queue_size = 7,
+    .queue_size = 1,
 };
 
 extern const mp_obj_type_t board_sdcard_type;
