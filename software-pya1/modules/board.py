@@ -4,6 +4,7 @@ import machine
 import pins
 import neopixel
 import esp32
+#import bmp
 
 u = esp32.ULP()
 u.pause()
@@ -37,6 +38,12 @@ class LCD(_board.Terminal):
         b = machine.PWM(machine.Pin.board.LCD_LED)
         b.duty(brightness<<3)
 
+    def framebufColor(self, color):
+        return (color&0xff)<<8 | (color>>8)
+
+    def bitmap(self,x,y,image):
+        self.buffer(image['buffer'],x,y,image['width'],image['height'])
+#
 class SD(_board.SD):
     pass
 
