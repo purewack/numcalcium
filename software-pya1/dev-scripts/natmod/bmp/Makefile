@@ -13,5 +13,7 @@ ARCH = xtensawin
 # Include to get the rules for compiling and linking the module
 include $(MPY_DIR)/py/dynruntime.mk
 
+#CFLAGS += -Wno-unused-but-set-variable -Wno-unused-variable
+
 test:
 	mpremote mount ./ run test.py

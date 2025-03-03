@@ -7,6 +7,11 @@ import board
 lcd = board.LCD()
 lcd.clear()
 
+with open("test4.bmp","rb") as f:
+    img = bmp.parse(f,scale=2)
+    print(img,img['width'], img['height'], img['bpp'])
+    
+
 # Open the BMP file
 t = time.ticks_ms()
 print("opening")
@@ -19,7 +24,7 @@ with open("test4.bmp", "rb") as f:
     
     print("converting",t)
     # Load the BMP image into the framebuffer
-    bmp.parse(f, buf, scale)
+    bmp.parse(f, buf, scale=scale)
 
     lcd.buffer(fb,0,0,width*scale,height*scale)
 
@@ -36,10 +41,21 @@ with open("test.bmp", "rb") as f:
     
     print("converting",t)
     # Load the BMP image into the framebuffer
-    bmp.parse(f, buf, scale)
+    bmp.parse(f, buf, scale=scale)
 
     lcd.buffer(fb,128,0,width*scale,height*scale)
 
 print("done, took ms:",(time.ticks_ms()-t))    
 
+t = time.ticks_ms()
+print("opening")
+with open("test4.bmp", "rb") as f:
+   
+    print("converting",t)
+    # Load the BMP image into the framebuffer
+    img = bmp.parse(f,scale=6)
+    fb = framebuf.FrameBuffer(img['buffer'], img['width'], img['height'], framebuf.RGB565)
+    
+    lcd.buffer(fb,0,64,img['width'],img['height'])
 
+print("done, took ms:",(time.ticks_ms()-t))    
