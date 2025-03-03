@@ -32,7 +32,7 @@ while True:
     buf.text('Numcalcium', 0, 16, 0xffff)
     buf.hline(0, 7, 96, 0xffff)
     print("draw try",buf)
-    terminal.buffer(buf,0,0,xx,yy)
+    terminal.buffer(buf.buffer,0,0,xx,yy)
     print("draw end")
     current = 1 if current == 0 else 0
     tick += 1
