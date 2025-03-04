@@ -65,4 +65,4 @@
 #define BOARD_PIN_IO_TT     14
 #define BOARD_PIN_B_OK      0
 
-#endif
+#endif //BOARD_PINS_H

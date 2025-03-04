@@ -16,9 +16,11 @@ set(SDKCONFIG_DEFAULTS
 set(MICROPY_SOURCE_BOARD
     ${MICROPY_SOURCE_BOARD}
     ${MICROPY_BOARD_DIR}/cmodules/modboard.c
-    ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c
     ${MICROPY_BOARD_DIR}/cmodules/board_sdcard.c
     ${MICROPY_BOARD_DIR}/cmodules/board_dac.c
+    ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c
+    ${MICROPY_BOARD_DIR}/cmodules/lcd_bmp.c
+    ${MICROPY_BOARD_DIR}/cmodules/lcd_driver.c
     ${MICROPY_BOARD_DIR}/cmodules/modmpy.c
 )
 
