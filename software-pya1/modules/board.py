@@ -13,6 +13,13 @@ u.set_wakeup_period(5000)
 u.resume()
 
 class LCD(_board.Terminal):
+    def __init__(self):
+        super()
+        self._bl = None
+        self.setBacklight(127)
+
+    def __del__(self):
+        self.setBacklight(0)
 
     def scale(self, scale):
         currentCursor = self.cursor()
@@ -35,8 +42,9 @@ class LCD(_board.Terminal):
     
     # brightness 0-127
     def setBacklight(self, brightness):
-        b = machine.PWM(machine.Pin.board.LCD_LED)
-        b.duty(brightness<<3)
+        if(not self._bl):
+            self._bl = machine.PWM(machine.Pin.board.LCD_LED)
+        self._bl.duty(brightness<<3)
 
     def framebufColor(self, color):
         return (color&0xff)<<8 | (color>>8)

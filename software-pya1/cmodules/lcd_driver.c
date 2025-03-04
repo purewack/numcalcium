@@ -58,14 +58,13 @@ void driver_setup(){
 void driver_init() {
     // Configure backlight, CS, DC, and Reset pins
     gpio_config_t io_conf = {
-        .pin_bit_mask =  (1ULL << BOARD_PIN_LCD_DC) | (1ULL << BOARD_PIN_LCD_LED),
+        .pin_bit_mask =  (1ULL << BOARD_PIN_LCD_DC),
         .mode = GPIO_MODE_OUTPUT
     };
     gpio_config(&io_conf);
     
     driver_setup();
     driver_fill(0,0,X_SIZE,Y_SIZE, COL_BLACK);
-    gpio_set_level(BOARD_PIN_LCD_LED, 1);  // Turn on backlight
 }
 
 void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color){
@@ -171,7 +170,7 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 			}
             // if(LFCR)
             // 	*col = 0;
-			driver_fill(0,*line * ((int)font_tall) * scale,X_SIZE,(int)font_tall * scale, bg);
+			driver_fill(0,*line * ((int)font_tall) * scale,X_SIZE,(int)font_tall * scale, _bg);
             continue;
         }
 
@@ -187,7 +186,7 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 				*line * ((int)font_tall * scale), 
 				X_SIZE,
 				(int)font_tall * scale,
-				bg
+				_bg
 			);
 			continue;
 		}
@@ -253,7 +252,7 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 			if(*line >= Y_CHAR/scale){
 				*line = 0;
 			}			
-			driver_fill(0,*line * ((int)font_tall) * scale,X_SIZE,(int)font_tall * scale, bg);
+			driver_fill(0,*line * ((int)font_tall) * scale,X_SIZE,(int)font_tall * scale, _bg);
 		}
     
     }
@@ -284,16 +283,3 @@ void driver_send_buffer(buffer_data_t buffer_data){
     }while(xferred != size);
     driver_end_pixel();
 }
-
-void driver_buffer_task(void *pvParameters){
-    buffer_data_t buffer_data;
-
-    while(1){        
-        if(xQueueReceive(buffer_queue, &buffer_data, portMAX_DELAY)) {
-            xSemaphoreTake(spi_semaphore, portMAX_DELAY);
-            driver_send_buffer(buffer_data);
-            xSemaphoreGive(spi_semaphore);
-        }
-    }
-}
-

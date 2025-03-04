@@ -42,24 +42,7 @@ static mp_obj_t buffer(size_t n_args, const mp_obj_t *args) {
     buffer_data.width = buffer_data.x + mp_obj_get_int(args[4]) - 1;
     buffer_data.height = buffer_data.y + mp_obj_get_int(args[5]) - 1;
     
-    // Check if the semaphore is available
-    if (xSemaphoreTake(spi_semaphore, 0) == pdTRUE) {
-        xSemaphoreGive(spi_semaphore);
-        
-        if(n_args == 7 && mp_obj_is_true(args[6])){
-            xSemaphoreTake(spi_semaphore, portMAX_DELAY);
-            driver_send_buffer(buffer_data);
-            xSemaphoreGive(spi_semaphore);
-            return mp_const_none;
-        }
-        // No transfer is taking place, queue the buffer data
-        xQueueSend(buffer_queue, &buffer_data, portMAX_DELAY);
-    } else {
-        xSemaphoreTake(spi_semaphore, portMAX_DELAY);
-        // Transfer is taking place, block until it's done
-        xQueueSend(buffer_queue, &buffer_data, portMAX_DELAY);
-        xSemaphoreGive(spi_semaphore);
-    }
+    driver_send_buffer(buffer_data);
 
     return mp_const_none;
 }
@@ -68,54 +51,46 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(buffer_obj, 6,7, buffer);
 
 
 static mp_obj_t send_cmd(mp_obj_t self_in, mp_obj_t v) {
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
     const char c = mp_obj_get_int(v);
     driver_send_cmd(c);
-    xSemaphoreGive(spi_semaphore);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(send_cmd_obj, send_cmd);
 
 static mp_obj_t send_data(mp_obj_t self_in, mp_obj_t v) {
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
     const char c = mp_obj_get_int(v);
     driver_send_data(c);
-    xSemaphoreGive(spi_semaphore);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(send_data_obj, send_data);
 
 static mp_obj_t reset(mp_obj_t self_in) {
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
 	driver_setup();
-    xSemaphoreGive(spi_semaphore);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(reset_obj, reset);
 
 static mp_obj_t clear(mp_obj_t self_in) {
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
     lcd_obj_t *self = &lcd_instance;
     driver_fill(0,0,X_SIZE,Y_SIZE, self->bg);
     self->col = 0;
     self->line = 0;
-    xSemaphoreGive(spi_semaphore);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(clear_obj, clear);
 
 static mp_obj_t fill(size_t n_args, const mp_obj_t *args) {
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
+
     driver_fill(mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]),mp_obj_get_int(args[4]),mp_obj_get_int(args[5]));
-    xSemaphoreGive(spi_semaphore);
+
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(fill_obj, 6, fill);
 
 static mp_obj_t plot(size_t n_args, const mp_obj_t *args) {
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
+
     driver_pixel(mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
-    xSemaphoreGive(spi_semaphore);
+
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(plot_obj, 4, plot);
@@ -142,11 +117,10 @@ static mp_obj_t print(size_t n_args, const mp_obj_t *args) {
     lcd_obj_t *self = &lcd_instance;
 //    DEBUG_printf("LCD %d, %d \n",self->scale,self->color);
 
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
     mp_check_self(mp_obj_is_str_or_bytes(args[1]));
     GET_STR_DATA_LEN(args[1], c_text, c_text_len);
     driver_print(c_text,c_text_len, &self->col, &self->line, self->color, self->bg, self->scale);
-    xSemaphoreGive(spi_semaphore);
+
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(print_text_obj, 2, print);
@@ -167,7 +141,6 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
     
     lcd_obj_t *self = &lcd_instance;
 	
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
 	if((int)(args[1].u_int) >= 0) {self->color = args[1].u_int;}
 	if((int)(args[2].u_int) >= 0) {self->bg = args[2].u_int;}
 	if((int)(args[3].u_int) >= 0) {
@@ -185,7 +158,6 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 			driver_send_cmd(0x21);
 		}
 	}
-    xSemaphoreGive(spi_semaphore);
 
     mp_obj_t current_options = mp_obj_new_dict(0);
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
@@ -200,9 +172,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
     lcd_obj_t *self = &lcd_instance;
-    xSemaphoreTake(spi_semaphore, portMAX_DELAY);
     driver_print((const unsigned char *)buf,size, &self->col, &self->line, self->color, self->bg, self->scale);
-    xSemaphoreGive(spi_semaphore);
     return size; 
 }
 
@@ -218,14 +188,7 @@ static mp_uint_t lcd_stream_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t
 static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     if (!lcd_instance.new) {
         
-        // Create the semaphore and buffer queue
-        spi_semaphore = xSemaphoreCreateBinary();
-        xSemaphoreGive(spi_semaphore);
-        buffer_queue = xQueueCreate(1, sizeof(buffer_data_t));
-
-        xSemaphoreTake(spi_semaphore, portMAX_DELAY);
         driver_init();
-        xSemaphoreGive(spi_semaphore);
 
         lcd_instance.base.type = type;
         lcd_instance.scale = 1;
@@ -233,11 +196,14 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         lcd_instance.bg = COL_BLACK;
         lcd_instance.new = true;
 
-        // Create the SPI task
-        xTaskCreatePinnedToCore(driver_buffer_task, "driver_buffer_task", 4096, NULL, 1, NULL, 1);
     }
     return (mp_obj_t)&lcd_instance;
 }
+
+// static mp_obj_t lcd_deinit(const mp_obj_t self_in){
+    
+//     return mp_const_none;
+// }
 
 
 static MP_DEFINE_CONST_FUN_OBJ_KW(parse_bmp_obj, 2, parse_bmp);

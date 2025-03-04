@@ -40,8 +40,6 @@ typedef struct {
 } buffer_data_t;
 
 extern uint8_t lineBuf[1024*2];
-extern SemaphoreHandle_t spi_semaphore;
-extern QueueHandle_t buffer_queue;
 
 // Utility functions for direct use
 void driver_send_cmd(uint8_t cmd);
