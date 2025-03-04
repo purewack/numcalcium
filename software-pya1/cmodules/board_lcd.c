@@ -3,6 +3,7 @@
 #include "py/obj.h"
 #include "py/stream.h"
 #include "py/builtin.h"
+#include "py/objstr.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -22,7 +23,7 @@ typedef struct _lcd_obj_t {
     int16_t line;
     uint8_t scale;
     bool LFCR;
-    
+    bool printLFCR;
 	bool rgbSwap;
     bool invert;
 } lcd_obj_t;
@@ -113,17 +114,58 @@ static mp_obj_t cursor(size_t n_args, const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(cursor_obj, 1, 3, cursor);
 
-static mp_obj_t print(size_t n_args, const mp_obj_t *args) {
-    lcd_obj_t *self = &lcd_instance;
-//    DEBUG_printf("LCD %d, %d \n",self->scale,self->color);
 
-    mp_check_self(mp_obj_is_str_or_bytes(args[1]));
-    GET_STR_DATA_LEN(args[1], c_text, c_text_len);
-    driver_print(c_text,c_text_len, &self->col, &self->line, self->color, self->bg, self->scale);
+
+// Custom print handler for LCD like the built-in print()
+static void lcd_print_strn(void *data, const char *str, size_t len) {
+    (void)data;  
+    lcd_obj_t *self = &lcd_instance;
+    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale);
+}
+
+static const mp_print_t lcd_printer = {NULL, lcd_print_strn};
+
+static void my_obj_print_helper(const mp_print_t *print, mp_obj_t o_in, mp_print_kind_t kind) {
+    mp_cstack_check();
+
+    #ifndef NDEBUG
+    if (o_in == MP_OBJ_NULL) {
+        mp_print_str(print, "(nil)");
+        return;
+    }
+    #endif
+
+    const mp_obj_type_t *type = mp_obj_get_type(o_in);
+
+    // Check if the object is a string
+    if (mp_obj_is_str(o_in)) {
+        kind = PRINT_STR;  // Ensure it prints as a plain string
+    }
+
+    if (MP_OBJ_TYPE_HAS_SLOT(type, print)) {
+        MP_OBJ_TYPE_GET_SLOT(type, print)(print, o_in, kind);
+    } else {
+        mp_printf(print, "<%q>", type->name);
+    }
+}
+static mp_obj_t lcd_print(size_t n_args, const mp_obj_t *args) {
+    lcd_obj_t *self = &lcd_instance;
+   
+    for (size_t i = 1; i < n_args; i++) {
+        my_obj_print_helper(&lcd_printer, args[i], PRINT_REPR);
+        // Add space between arguments (except the last one)
+        if (i < n_args - 1) {
+            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale);
+        }
+    }
+
+    // Print newline at the end (if required)
+    if(n_args > 2 && self->printLFCR)
+        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale);
 
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_VAR(print_text_obj, 2, print);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lcd_print_obj, 1, MP_OBJ_FUN_ARGS_MAX, lcd_print);
 
 
 static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -134,6 +176,7 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         { MP_QSTR_rgbSwap, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1 } },
         { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_invert, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_printLFCR, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -158,12 +201,15 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 			driver_send_cmd(0x21);
 		}
 	}
+    if((int)(args[6].u_int) >= 0) {self->printLFCR = args[6].u_int;}
 
     mp_obj_t current_options = mp_obj_new_dict(0);
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_foreground), mp_obj_new_int(self->color));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_scale), mp_obj_new_int(self->scale));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_invert), mp_obj_new_int(self->invert));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_printLFCR), mp_obj_new_int(self->printLFCR));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_rgbSwap), mp_obj_new_int(self->rgbSwap));
     return current_options;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
@@ -172,7 +218,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char *)buf,size, &self->col, &self->line, self->color, self->bg, self->scale);
+    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale);
     return size; 
 }
 
@@ -194,6 +240,7 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         lcd_instance.scale = 1;
         lcd_instance.color = COL_WHITE;
         lcd_instance.bg = COL_BLACK;
+        lcd_instance.printLFCR = true;
         lcd_instance.new = true;
 
     }
@@ -227,7 +274,7 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&fill_obj) },
     { MP_ROM_QSTR(MP_QSTR_plot), MP_ROM_PTR(&plot_obj) },
     { MP_ROM_QSTR(MP_QSTR_cursor), MP_ROM_PTR(&cursor_obj) },
-    { MP_ROM_QSTR(MP_QSTR_print), MP_ROM_PTR(&print_text_obj) },
+    { MP_ROM_QSTR(MP_QSTR_print), MP_ROM_PTR(&lcd_print_obj) },
     { MP_ROM_QSTR(MP_QSTR_buffer), MP_ROM_PTR(&buffer_obj) },
     { MP_ROM_QSTR(MP_QSTR_options), MP_ROM_PTR(&options_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_parseBMP), MP_ROM_PTR(&parse_bmp_obj)  }, 
