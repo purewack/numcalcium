@@ -14,7 +14,7 @@ void driver_send_cmd(uint8_t cmd) {
         .length = 8,
         .tx_buffer = &cmd
     };
-    spi_device_transmit(lcdspi_handle, &t);
+    spi_device_polling_transmit(lcdspi_handle, &t);
 }
 
 void driver_send_data(uint8_t data) {
@@ -23,7 +23,7 @@ void driver_send_data(uint8_t data) {
         .length = 8,
         .tx_buffer = &data
     };
-    spi_device_transmit(lcdspi_handle, &t);
+    spi_device_polling_transmit(lcdspi_handle, &t);
 }
 
 void driver_start_pixel(){
@@ -34,7 +34,7 @@ void driver_send_pixel_data(const void* pixel, uint32_t bits){
         .length = bits,
         .tx_buffer = pixel
     };
-    spi_device_transmit(lcdspi_handle, &t);
+    spi_device_polling_transmit(lcdspi_handle, &t);
 }
 void driver_end_pixel(){
 }
@@ -144,7 +144,7 @@ bool driver_ansiIsErase(const unsigned char* text){
 }
 
 
-void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, int16_t *line, const uint16_t color, const uint16_t bg, const uint8_t scale){
+void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, int16_t *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale){
 	
     if(scale > 4) {
 //        DEBUG_printf("scale too large %d",scale);
@@ -155,6 +155,9 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 //        DEBUG_printf("scale too small %d",scale);
         return;
     }
+
+    uint16_t bg = (_bg>>8) | (_bg&0xff)<<8;
+    uint16_t color = (_color>>8) | (_color&0xff)<<8;
 
     int i=0;
     for(i=0; i<len; i++){

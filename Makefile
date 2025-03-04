@@ -40,3 +40,25 @@ fresh:
 monitor:
 	$(MAKE) -C $(ESP32_PORT_DIR) BOARD_DIR=$(BOARD_DIR) BOARD=$(notdir $(BOARD_DIR)) monitor
 
+
+
+test-display:
+	mpremote mount tests run tests/display.py
+
+test-display-double:
+	mpremote run tests/display_doublebuf.py
+
+test-io:
+	mpremote run tests/inputs.py
+
+test-lights:
+	mpremote run tests/lights.py
+
+test-sd:
+	mpremote run tests/sd_display.py
+
+test-audio:
+	mpremote mount tests/headphones run tests/headphones/stream.py
+
+test-shorts:
+	mpremote run tests/shorts.py
