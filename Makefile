@@ -40,6 +40,8 @@ fresh:
 monitor:
 	$(MAKE) -C $(ESP32_PORT_DIR) BOARD_DIR=$(BOARD_DIR) BOARD=$(notdir $(BOARD_DIR)) monitor
 
+dev:
+	mpremote mount ../numcalcium-software run ./main.py
 
 
 test-display:
