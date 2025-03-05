@@ -10,21 +10,25 @@ import board
 import nav
 
 keys = board.keys()
-lcd = board.LCD()
 
-def reset():
+def reset(lcd):
+    lcd.color(lcd.WHITE)
+    lcd.background(lcd.BLACK)
     lcd.clear()
     board.clearLights()
     nav.shouldBack(0)
 
 
 def main():
-    reset()
+    board.clearLights()
+    nav.shouldBack(0)
     if(keys == (keys.SHIFT | keys.A | keys.E | keys.F1)):
         os.dupterm(lcd)
         print("Non-standard Boot")
         return
 
+    lcd = board.LCD()
+    nav.shouldBack(0)
     print("Standard Boot")
     programs = collect_manifest_paths()
     program_keys = list(programs.keys())
@@ -34,20 +38,32 @@ def main():
         return
 
     index = 0
-    def selectProgram(index):
+    def listPrograms(offset=0):
         nonlocal programs, program_keys
         lcd.clear()
         lcd.scale(2)
-        lcd.print("Programs: \n\r")
+        lcd.fill(0,0,320,13*2,'#4a00c2')
+        lcd.color(lcd.WHITE)
+        lcd.background('#4a00c2')
+        lcd.print("P R O G R A M S")
+        lcd.background(lcd.BLACK)
         for i in range(len(program_keys)):
+            lcd.cursor(2,i+1)
             lcd.print(str(i + 1))
             lcd.print(".")
             lcd.print(program_keys[i])
+    
+    def selectProgram(index):
+        lcd.scale(2)
+        lcd.fill(0, 13*2, 8*2, 170-(13*2), lcd.BLACK)
+        for i in range(len(program_keys)):
             if i == index:
-                lcd.print(" <")
-            lcd.print("\n\r")
+                lcd.cursor(0,i+1)
+                lcd.print(">")
 
-    selectProgram(index)
+    listPrograms()
+    selectProgram(0)
+
     while True:
         turns = nav.turns()
         if nav.wasBackRequested():  # Select and run program
@@ -69,15 +85,31 @@ def main():
                     del sys.modules[mod]
 
             os.chdir(path)
-            reset()
-
-            print(f"Launching {name} from {path}")
+            reset(lcd)
+            title = f"Launching {name} from {path}"
+            lcd.scale(1)
+            lcd.print(title)
+            print(title)
             print("----------------")
             try:
                 __import__("_program", None, None, [])
             except Exception as e:
+                lcd.background('#e69600')
+                lcd.color(lcd.WHITE)
+                lcd.clear()
+                lcd.print(name," @",path)
+                os.dupterm(lcd)
                 print(f"Failed in program [{name}]")
                 sys.print_exception(e)
+                os.dupterm(None)
+                lcd.print("\n\r Press any button to reset")
+                while not (nav.shouldBack() or keys.isAnyDown()):
+                    time.sleep(0.1)
+                    board.statusLed(10,0,0)
+                    time.sleep(0.1)
+                    board.statusLed(0,0,0)
+                while nav.shouldBack(): pass
+                lcd.background(lcd.BLACK)
 
             finally:
                 print("----------------")
@@ -87,8 +119,10 @@ def main():
                 os.chdir(pre_path)
                 gc.collect()
                 print("Post program - MEM (free,alloc):",gc.mem_free(), gc.mem_alloc())
-
-            reset()
+                
+                
+            reset(lcd)
+            listPrograms()
             selectProgram(index)
             while nav.shouldBack(): pass
 
@@ -143,7 +177,10 @@ def resetWatchdog():
         if nav.shouldBack():
             ticks += 1
             if ticks == 7:
-                reset()
+                lcd = board.LCD()
+                lcd.clear()
+                lcd.__del__()
+                board.clearLights()
                 machine.reset()
         else:
             ticks = 0;

@@ -14,7 +14,7 @@ u.resume()
 
 class LCD(_board.Terminal):
     def __init__(self):
-        super()
+        super().__init__()
         self._bl = None
         self.setBacklight(127)
 
@@ -24,13 +24,39 @@ class LCD(_board.Terminal):
     def scale(self, scale):
         currentCursor = self.cursor()
         self.options(scale=scale)
+    
+    def plot(self, x,y,color):
+        if isinstance(color, str):
+            super().fill(x,y,w,h,self.htmlTo565(color))
+        elif isinstance(color, tuple):
+            super().fill(x,y,w,h,self.rgbTo565(*color))
+        else:
+            super().fill(x,y,w,h,color)
+
+    def fill(self, x,y,w,h,color):
+        if isinstance(color, str):
+            super().fill(x,y,w,h,self.htmlTo565(color))
+        elif isinstance(color, tuple):
+            super().fill(x,y,w,h,self.rgbTo565(*color))
+        else:
+            super().fill(x,y,w,h,color)
 
     def background(self, color):
-        self.options(background=color)
+        if isinstance(color, str):
+            self.options(background=self.htmlTo565(color))
+        elif isinstance(color, tuple):
+            self.options(background=self.rgbTo565(*color))
+        else:
+            self.options(background=color)
 
     def foreground(self, color):
-        self.options(foreground=color)
-
+        if isinstance(color, str):
+            self.options(foreground=self.htmlTo565(color))
+        elif isinstance(color, tuple):
+            self.options(foreground=self.rgbTo565(*color))
+        else:
+            self.options(foreground=color)
+    
     def color(self, color):
         self.foreground(color)
 
@@ -51,7 +77,22 @@ class LCD(_board.Terminal):
 
     def bitmap(self,x,y,image):
         self.buffer(image['buffer'],x,y,image['width'],image['height'])
-#
+    
+    def rgbTo565(self, r, g, b):
+        """Convert RGB values to RGB565."""
+        r5 = (r >> 3) & 0x1F
+        g6 = (g >> 2) & 0x3F
+        b5 = (b >> 3) & 0x1F
+        return (r5 << 11) | (g6 << 5) | b5
+
+    def htmlTo565(self, html_color):
+        """Convert HTML color string to RGB565."""
+        html_color = html_color.lstrip('#')
+        r = int(html_color[0:2], 16)
+        g = int(html_color[2:4], 16)
+        b = int(html_color[4:6], 16)
+        return self.rgbTo565(r, g, b)
+
 class SD(_board.SD):
     pass
 
