@@ -143,7 +143,7 @@ bool driver_ansiIsErase(const unsigned char* text){
 }
 
 
-void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, int16_t *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale){
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale){
 	
     if(scale > 4) {
 //        DEBUG_printf("scale too large %d",scale);
@@ -164,13 +164,18 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
         char c = text[i];
 
         if(c == '\n'){
-            *line += 1;
-			if(*line >= Y_CHAR/scale){
+            *line += 1.f;
+			if(*line >= (float)(Y_CHAR/scale)){
 				*line = 0;
 			}
             // if(LFCR)
             // 	*col = 0;
-			driver_fill(0,*line * ((int)font_tall) * scale,X_SIZE,(int)font_tall * scale, _bg);
+			driver_fill(
+                0,
+                (uint16_t)(*line * (float)(font_tall * scale)),
+                X_SIZE,
+                (uint16_t)font_tall * scale, 
+                _bg);
             continue;
         }
 
@@ -182,8 +187,8 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 		if(driver_ansiIsErase(&text[i])) {
 			i+=2;
 			driver_fill(
-				*col * ((int)font_wide * scale),
-				*line * ((int)font_tall * scale), 
+				(uint16_t)(*col * ((float)font_wide * scale)),
+				(uint16_t)(*line * ((float)font_tall * scale)), 
 				X_SIZE,
 				(int)font_tall * scale,
 				_bg
@@ -192,19 +197,19 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 		}
 
         if(c == '\b'){
-            *col -= 1;
+            *col -= 1.f;
 			if(*col < 0){
-				*col = X_CHAR/scale;
-				*line -= 1;
+				*col = (float)(X_CHAR/scale);
+				*line -= 1.f;
 				if(*line < 0){
-					*line = Y_CHAR/scale;
+					*line = (float)(Y_CHAR/scale);
 				}
 			}
 			continue;
         }
 		
-		int xx = (*col  * font_wide * scale);
-		int yy = (*line * font_tall * scale);
+		int xx = (int)(*col  * (float)(font_wide * scale));
+		int yy = (int)(*line * (float)(font_tall * scale));
         int xw = xx + (font_wide * scale) - 1;
         int yh = yy + (font_tall * scale) - 1;
 
@@ -248,11 +253,16 @@ void driver_print(const unsigned char* text, const uint32_t len, int16_t *col, i
 		*col += 1;
 		if(*col >= X_CHAR/scale){
 			*col = 0;
-			*line += 1;
-			if(*line >= Y_CHAR/scale){
+			*line += 1.f;
+			if(*line >= (float)(Y_CHAR/scale)){
 				*line = 0;
 			}			
-			driver_fill(0,*line * ((int)font_tall) * scale,X_SIZE,(int)font_tall * scale, _bg);
+			driver_fill(
+                0,
+                (uint16_t)(*line * ((float)font_tall * scale))
+                ,X_SIZE,
+                (int)font_tall * scale,
+                _bg);
 		}
     
     }

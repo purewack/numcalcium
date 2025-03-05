@@ -19,8 +19,8 @@ typedef struct _lcd_obj_t {
 	uint16_t bg;
 	uint16_t color;
 
-    int16_t col;
-    int16_t line;
+    float col;
+    float line;
     uint8_t scale;
     bool LFCR;
     bool printLFCR;
@@ -100,19 +100,67 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR(plot_obj, 4, plot);
 static mp_obj_t cursor(size_t n_args, const mp_obj_t *args) {
     lcd_obj_t *self = &lcd_instance;
 	if(n_args > 1)
-    	self->col = mp_obj_get_int(args[1]);
+    	self->col = mp_obj_is_int(args[1]) ? (float)mp_obj_get_int(args[1]) : mp_obj_get_float(args[1]);
 	if(n_args > 2)
-    	self->line = mp_obj_get_int(args[2]);
+    	self->line = mp_obj_is_int(args[2]) ? (float)mp_obj_get_int(args[2]) : mp_obj_get_float(args[2]);
 
-	mp_obj_t tuple[2];
-	tuple[0] = mp_obj_new_int(self->col);
-	tuple[1] = mp_obj_new_int(self->line);
-	if(n_args == 1)
-    return mp_obj_new_tuple(2, tuple);
+    if(n_args == 1){
+    	mp_obj_t tuple[2];
+    	tuple[0] = mp_obj_new_float(self->col);
+    	tuple[1] = mp_obj_new_float(self->line);
+        return mp_obj_new_tuple(2, tuple);
+    }
 	else
-	return mp_const_none;
+	   return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(cursor_obj, 1, 3, cursor);
+
+
+static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+	static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_self,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_foreground, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_background, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_rgbSwap, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1 } },
+        { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_invert, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_printLFCR, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    
+    lcd_obj_t *self = &lcd_instance;
+	
+	if((int)(args[1].u_int) >= 0) {self->color = args[1].u_int;}
+	if((int)(args[2].u_int) >= 0) {self->bg = args[2].u_int;}
+	if((int)(args[3].u_int) >= 0) {
+		self->rgbSwap = args[3].u_int;
+		driver_send_cmd(0x36);  // Memory data access control (MADCTL)
+		driver_send_data(0x60 | (self->rgbSwap ? 0x8 : 0)); // Row/column swap, RGB order
+	}
+	if((int)(args[4].u_int) >= 1) {self->scale = args[4].u_int;}
+	if((int)(args[5].u_int) >= 0) {
+		self->invert = args[5].u_int;
+		if(self->invert){
+			driver_send_cmd(0x20);  // Inversion on (for proper colors)
+		}
+		else{    
+			driver_send_cmd(0x21);
+		}
+	}
+    if((int)(args[6].u_int) >= 0) {self->printLFCR = args[6].u_int;}
+
+    mp_obj_t current_options = mp_obj_new_dict(0);
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_foreground), mp_obj_new_int(self->color));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_scale), mp_obj_new_int(self->scale));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_invert), mp_obj_new_int(self->invert));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_printLFCR), mp_obj_new_int(self->printLFCR));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_rgbSwap), mp_obj_new_int(self->rgbSwap));
+    return current_options;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
 
 
@@ -166,53 +214,6 @@ static mp_obj_t lcd_print(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lcd_print_obj, 1, MP_OBJ_FUN_ARGS_MAX, lcd_print);
-
-
-static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-	static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_self,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
-        { MP_QSTR_foreground, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_background, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_rgbSwap, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1 } },
-        { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_invert, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_printLFCR, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-    };
-
-    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
-    
-    lcd_obj_t *self = &lcd_instance;
-	
-	if((int)(args[1].u_int) >= 0) {self->color = args[1].u_int;}
-	if((int)(args[2].u_int) >= 0) {self->bg = args[2].u_int;}
-	if((int)(args[3].u_int) >= 0) {
-		self->rgbSwap = args[3].u_int;
-		driver_send_cmd(0x36);  // Memory data access control (MADCTL)
-		driver_send_data(0x60 | (self->rgbSwap ? 0x8 : 0)); // Row/column swap, RGB order
-	}
-	if((int)(args[4].u_int) >= 1) {self->scale = args[4].u_int;}
-	if((int)(args[5].u_int) >= 0) {
-		self->invert = args[5].u_int;
-		if(self->invert){
-			driver_send_cmd(0x20);  // Inversion on (for proper colors)
-		}
-		else{    
-			driver_send_cmd(0x21);
-		}
-	}
-    if((int)(args[6].u_int) >= 0) {self->printLFCR = args[6].u_int;}
-
-    mp_obj_t current_options = mp_obj_new_dict(0);
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_foreground), mp_obj_new_int(self->color));
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_scale), mp_obj_new_int(self->scale));
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_invert), mp_obj_new_int(self->invert));
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_printLFCR), mp_obj_new_int(self->printLFCR));
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_rgbSwap), mp_obj_new_int(self->rgbSwap));
-    return current_options;
-}
-static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
 
 

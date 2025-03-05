@@ -20,6 +20,7 @@ def reset(lcd):
 
 
 def main():
+    os.chdir('/')
     board.clearLights()
     nav.shouldBack(0)
     if(keys == (keys.SHIFT | keys.A | keys.E | keys.F1)):
