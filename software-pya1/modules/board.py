@@ -1,16 +1,19 @@
 import _board
-import keys
+import keys as _keys
 import machine
 import pins
 import neopixel
 import esp32
-#import bmp
+import os
+import sys
 
 u = esp32.ULP()
 u.pause()
 u.run_embedded()
 u.set_wakeup_period(5000)
 u.resume()
+
+keys = _keys.Keys()
 
 class LCD(_board.Terminal):
     def __init__(self):
@@ -93,15 +96,19 @@ class LCD(_board.Terminal):
         b = int(html_color[4:6], 16)
         return self.rgbTo565(r, g, b)
 
+    def printException(self,e):
+        self.scale(1)
+        self.cursor(0,0)
+        os.dupterm(self)
+        sys.print_exception(e)
+        os.dupterm(None)
+
 class SD(_board.SD):
     pass
 
 class DAC(_board.DAC):
     pass
 
-__keys = keys.Keys()
-def keys():
-    return __keys
 
 def tone(note, velocity):
     midi = note
