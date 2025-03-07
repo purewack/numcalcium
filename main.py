@@ -9,7 +9,6 @@ import _thread
 import board
 import nav
 
-keys = board.keys
 
 def reset(lcd):
     lcd.color(lcd.WHITE)
@@ -20,6 +19,10 @@ def reset(lcd):
 
 
 def main():
+    keys = board.keys
+    lcd = board.LCD()   
+    lcd.options(scale=1,background=0,foreground=0xffff)
+    lcd.clear()
     board.clearLights()
     nav.shouldBack(0)
     if(keys == (keys.SHIFT | keys.A | keys.E | keys.F1)):
@@ -27,7 +30,6 @@ def main():
         print("Non-standard Boot")
         return
 
-    lcd = board.LCD()
     nav.shouldBack(0)
     print("Standard Boot")
 
