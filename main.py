@@ -9,7 +9,7 @@ import _thread
 import board
 import nav
 
-keys = board.keys()
+keys = board.keys
 
 def reset(lcd):
     lcd.color(lcd.WHITE)
@@ -187,17 +187,26 @@ def collect_manifest_paths(base_path):
         try:
             stat = os.stat(item_path)
             if stat[0] & 0x4000:  # Directory check
-                program_path = item_path + "/_program.py"
+                found = False
                 try:
-                    with open(program_path, "r") as file:
+                    with open(item_path + "/_program.py", "r") as file:
                         pass
+                    found = True
+                except OSError:
+                    pass
+                try:
+                    with open(item_path + "/_program.mpy", "r") as file:
+                        pass
+                    found = True
+                except OSError:
+                    pass
+
+                if(found):
                     manifest_dict.append({
                         'path':item_path,
                         'name':item,
                         'remote':item_path.startswith('/remote')
                     })
-                except OSError:
-                    pass
         except OSError:
             pass  # Ignore if directory or manifest doesn't exist
     return manifest_dict
