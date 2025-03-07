@@ -127,7 +127,7 @@ void driver_pixel(uint16_t x, uint16_t y, uint16_t color) {
 }
 
 
-bool driver_ansiIsLeft(const unsigned char* text){
+bool driver_ansiIsLeft(const unsigned char* text, int *ii){
 	// if(text[0] == '\033' && text[1] == '['){
 	// 	int digits = 0;
 		
@@ -135,13 +135,66 @@ bool driver_ansiIsLeft(const unsigned char* text){
 	return false;
 }
 
-bool driver_ansiIsErase(const unsigned char* text){
+bool driver_ansiIsErase(const unsigned char* text, int *ii){
 	if(text[0] == '\033'){
-		return text[1] == '[' && text[2] == 'K';
+		bool erase = text[1] == '[' && text[2] == 'K';
+        if(erase)
+            *ii += 2;
+        return erase;
 	}
 	return false;
 }
 
+
+void driver_print_font_value(char ch, uint16_t *buf, uint8_t scale, uint16_t bg, uint16_t color){
+    uint32_t charStart = ch * font_wide;
+            
+    for(int xx=0; xx<font_wide; xx++){
+        for(int yy=0; yy<font_tall; yy++){
+            uint16_t cc = bg;
+            if(font_data[xx + charStart] & (1<<yy))
+                cc = color;
+            
+            int ws = font_wide * scale;
+            int sx = (xx * scale);
+            int sy = (yy * ws * scale);
+            for(int iy=0; iy<scale; iy++){
+                for(int ix=0; ix<scale; ix++){
+                    buf[sx+ix + sy+(iy*ws)] = cc;
+                }
+            }
+        }
+    }
+}
+
+void driver_print_escape_value(char ch, uint16_t *buf, uint8_t scale){
+    for(int nibble=0; nibble<2; nibble++){
+        char value = nibble == 0 ? (ch&0xf0)>>4 : (ch&0xf);
+        int xoff = (font_count-8)*font_wide + (value*font_wide)%(8*8);
+        
+        uint8_t ysize = font_tall>>1;
+        uint8_t yoff = (value>8)*ysize;
+        uint8_t ytarget = nibble ? ysize : 0;
+        printf("nibble:%d, ys:%d, yoff:%d, xoff:%d v:%d\n\r",nibble,ysize,yoff,xoff,value);
+
+        for(int xx=0; xx<font_wide; xx++){
+            for(int yy=0; yy<ysize+1; yy++){
+                uint16_t cc = 0;
+                if(font_data[xx + xoff] & (1<<(yy + yoff)))
+                    cc = 0xf83f;
+
+                int ws = font_wide * scale;
+                int sx = (xx * scale);
+                int sy = ((ytarget+yy) * ws * scale);
+                for(int iy=0; iy<scale; iy++){
+                    for(int ix=0; ix<scale; ix++){
+                        buf[sx+ix + sy+(iy*ws)] = cc;
+                    }
+                }
+            }
+        }
+    }
+}
 
 void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale){
 	
@@ -184,8 +237,7 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
             continue;
         }
 
-		if(driver_ansiIsErase(&text[i])) {
-			i+=2;
+		if(driver_ansiIsErase(&text[i],&i)) {
 			driver_fill(
 				(uint16_t)(*col * ((float)font_wide * scale)),
 				(uint16_t)(*line * ((float)font_tall * scale)), 
@@ -195,6 +247,17 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			);
 			continue;
 		}
+
+        // if(driver_ansiIsLeft(&text[i],&i)) {
+        //     driver_fill(
+        //         (uint16_t)(*col * ((float)font_wide * scale)),
+        //         (uint16_t)(*line * ((float)font_tall * scale)), 
+        //         X_SIZE,
+        //         (int)font_tall * scale,
+        //         _bg
+        //     );
+        //     continue;
+        // }
 
         if(c == '\b'){
             *col -= 1.f;
@@ -223,28 +286,21 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
         driver_send_cmd(0x2C);
         
+       
+
 //        if(c >= 'a' && c <= 'z') c -= 32; //no caps allowed
         char ch = (c < ' ' || c > 126) ? 0 : (c-' '+1);
-
-        uint32_t charStart = ch * font_wide;
+        
         uint16_t *buf = (uint16_t*)lineBuf;
 
-		for(int xx=0; xx<font_wide; xx++){
-			for(int yy=0; yy<font_tall; yy++){
-				uint16_t cc = bg;
-				if(font_data[xx + charStart] & (1<<yy))
-					cc = color;
-				
-				int ws = font_wide * scale;
-				int sx = (xx * scale);
-				int sy = (yy * ws * scale);
-				for(int iy=0; iy<scale; iy++){
-					for(int ix=0; ix<scale; ix++){
-						buf[sx+ix + sy+(iy*ws)] = cc;
-					}
-				}
-			}
-		}
+        //print escape character code
+        if(!ch){
+            driver_print_escape_value(c,buf,scale);
+        }
+        //print character from font map
+        else{
+            driver_print_font_value(ch,buf,scale, bg,color);
+        }
 
         driver_start_pixel();
         driver_send_pixel_data(buf,16 * font_wide * font_tall * scale * scale);
