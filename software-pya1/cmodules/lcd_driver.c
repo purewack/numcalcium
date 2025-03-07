@@ -127,13 +127,33 @@ void driver_pixel(uint16_t x, uint16_t y, uint16_t color) {
 }
 
 
-bool driver_ansiIsLeft(const unsigned char* text, int *ii){
-	// if(text[0] == '\033' && text[1] == '['){
-	// 	int digits = 0;
-		
-	// }
-	return false;
+bool driver_ansiIsLeft(const unsigned char* text, int *ii, int *count) {
+    if (text[0] == '\033') { 
+        int index = 1; 
+        int chars = 0;
+
+        if (text[index] == '[') { 
+            index++;
+
+            if (!(text[index] >= '0' && text[index] <= '9')) {
+                return false;
+            }
+
+            while (text[index] >= '0' && text[index] <= '9') {
+                chars = chars * 10 + (text[index] - '0');
+                index++;
+            }
+
+            if (text[index] == 'D') {
+                *ii = index + 1;  
+                *count = chars;   
+                return true;
+            }
+        }
+    }
+    return false;
 }
+
 
 bool driver_ansiIsErase(const unsigned char* text, int *ii){
 	if(text[0] == '\033'){
@@ -248,19 +268,9 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			continue;
 		}
 
-        // if(driver_ansiIsLeft(&text[i],&i)) {
-        //     driver_fill(
-        //         (uint16_t)(*col * ((float)font_wide * scale)),
-        //         (uint16_t)(*line * ((float)font_tall * scale)), 
-        //         X_SIZE,
-        //         (int)font_tall * scale,
-        //         _bg
-        //     );
-        //     continue;
-        // }
-
-        if(c == '\b'){
-            *col -= 1.f;
+        int back = 0;
+        if(c == '\b' || driver_ansiIsLeft(&text[i],&i,&back)){
+            *col -= back ? (float)back : 1.f;
 			if(*col < 0){
 				*col = (float)(X_CHAR/scale);
 				*line -= 1.f;
