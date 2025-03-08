@@ -1,4 +1,4 @@
-#include "../font/gohu13.h"
+#include "../font/font.h"
 #include "vt100.h"
 #include "board.h"
 
@@ -167,15 +167,15 @@ bool driver_ansiIsErase(const unsigned char* text, int *ii){
 
 
 void driver_print_font_value(char ch, uint16_t *buf, uint8_t scale, uint16_t bg, uint16_t color){
-    uint32_t charStart = ch * font_wide;
+    uint32_t charStart = ch * FONT_WIDE;
             
-    for(int xx=0; xx<font_wide; xx++){
-        for(int yy=0; yy<font_tall; yy++){
+    for(int xx=0; xx<FONT_WIDE; xx++){
+        for(int yy=0; yy<FONT_TALL; yy++){
             uint16_t cc = bg;
             if(font_data[xx + charStart] & (1<<yy))
                 cc = color;
             
-            int ws = font_wide * scale;
+            int ws = FONT_WIDE * scale;
             int sx = (xx * scale);
             int sy = (yy * ws * scale);
             for(int iy=0; iy<scale; iy++){
@@ -190,20 +190,20 @@ void driver_print_font_value(char ch, uint16_t *buf, uint8_t scale, uint16_t bg,
 void driver_print_escape_value(char ch, uint16_t *buf, uint8_t scale){
     for(int nibble=0; nibble<2; nibble++){
         char value = nibble == 0 ? (ch&0xf0)>>4 : (ch&0xf);
-        int xoff = (font_count-8)*font_wide + (value*font_wide)%(8*8);
+        int xoff = (FONT_COUNT-8)*FONT_WIDE + (value*FONT_WIDE)%(8*8);
         
-        uint8_t ysize = font_tall>>1;
+        uint8_t ysize = FONT_TALL>>1;
         uint8_t yoff = (value>8)*ysize;
         uint8_t ytarget = nibble ? ysize : 0;
         printf("nibble:%d, ys:%d, yoff:%d, xoff:%d v:%d\n\r",nibble,ysize,yoff,xoff,value);
 
-        for(int xx=0; xx<font_wide; xx++){
+        for(int xx=0; xx<FONT_WIDE; xx++){
             for(int yy=0; yy<ysize+1; yy++){
                 uint16_t cc = 0;
                 if(font_data[xx + xoff] & (1<<(yy + yoff)))
                     cc = 0xf83f;
 
-                int ws = font_wide * scale;
+                int ws = FONT_WIDE * scale;
                 int sx = (xx * scale);
                 int sy = ((ytarget+yy) * ws * scale);
                 for(int iy=0; iy<scale; iy++){
@@ -245,9 +245,9 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
             // 	*col = 0;
 			driver_fill(
                 0,
-                (uint16_t)(*line * (float)(font_tall * scale)),
+                (uint16_t)(*line * (float)(FONT_TALL * scale)),
                 X_SIZE,
-                (uint16_t)font_tall * scale, 
+                (uint16_t)FONT_TALL * scale, 
                 _bg);
             continue;
         }
@@ -259,10 +259,10 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
 		if(driver_ansiIsErase(&text[i],&i)) {
 			driver_fill(
-				(uint16_t)(*col * ((float)font_wide * scale)),
-				(uint16_t)(*line * ((float)font_tall * scale)), 
+				(uint16_t)(*col * ((float)FONT_WIDE * scale)),
+				(uint16_t)(*line * ((float)FONT_TALL * scale)), 
 				X_SIZE,
-				(int)font_tall * scale,
+				(int)FONT_TALL * scale,
 				_bg
 			);
 			continue;
@@ -281,10 +281,10 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			continue;
         }
 		
-		int xx = (int)(*col  * (float)(font_wide * scale));
-		int yy = (int)(*line * (float)(font_tall * scale));
-        int xw = xx + (font_wide * scale) - 1;
-        int yh = yy + (font_tall * scale) - 1;
+		int xx = (int)(*col  * (float)(FONT_WIDE * scale));
+		int yy = (int)(*line * (float)(FONT_TALL * scale));
+        int xw = xx + (FONT_WIDE * scale) - 1;
+        int yh = yy + (FONT_TALL * scale) - 1;
 
         driver_send_cmd(0x2A); 
         driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
@@ -313,7 +313,7 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
         }
 
         driver_start_pixel();
-        driver_send_pixel_data(buf,16 * font_wide * font_tall * scale * scale);
+        driver_send_pixel_data(buf,16 * FONT_WIDE * FONT_TALL * scale * scale);
         driver_end_pixel();
 
 		*col += 1;
@@ -325,9 +325,9 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			}			
 			driver_fill(
                 0,
-                (uint16_t)(*line * ((float)font_tall * scale))
+                (uint16_t)(*line * ((float)FONT_TALL * scale))
                 ,X_SIZE,
-                (int)font_tall * scale,
+                (int)FONT_TALL * scale,
                 _bg);
 		}
     

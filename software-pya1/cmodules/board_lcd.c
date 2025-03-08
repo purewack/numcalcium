@@ -12,6 +12,7 @@
 #include "vt100.h"
 #include "lcd_bmp.h"
 #include "board.h"
+#include "../font/font.h"
 
 typedef struct _lcd_obj_t {
     mp_obj_base_t base;
@@ -74,8 +75,6 @@ static MP_DEFINE_CONST_FUN_OBJ_1(reset_obj, reset);
 static mp_obj_t clear(mp_obj_t self_in) {
     lcd_obj_t *self = &lcd_instance;
     driver_fill(0,0,X_SIZE,Y_SIZE, self->bg);
-    self->col = 0;
-    self->line = 0;
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(clear_obj, clear);
@@ -267,6 +266,12 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_PURPLE), MP_ROM_INT(COL_PURPLE) },
     { MP_ROM_QSTR(MP_QSTR_YELLOW), MP_ROM_INT(COL_YELLOW) },
     { MP_ROM_QSTR(MP_QSTR_CYAN), MP_ROM_INT(COL_CYAN) },
+    { MP_ROM_QSTR(MP_QSTR_FONT_H), MP_ROM_INT(FONT_TALL) },
+    { MP_ROM_QSTR(MP_QSTR_FONT_W), MP_ROM_INT(FONT_WIDE) },
+    { MP_ROM_QSTR(MP_QSTR_CHARS_Y), MP_ROM_INT(Y_CHAR) },
+    { MP_ROM_QSTR(MP_QSTR_CHARS_X), MP_ROM_INT(X_CHAR) },
+    { MP_ROM_QSTR(MP_QSTR_WIDTH), MP_ROM_INT(X_SIZE) },
+    { MP_ROM_QSTR(MP_QSTR_HEIGHT), MP_ROM_INT(Y_SIZE) },
     
     { MP_ROM_QSTR(MP_QSTR__sendcmd), MP_ROM_PTR(&send_cmd_obj) },
     { MP_ROM_QSTR(MP_QSTR__senddata), MP_ROM_PTR(&send_data_obj) },

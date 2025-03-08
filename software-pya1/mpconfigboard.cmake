@@ -1,7 +1,3 @@
-execute_process(COMMAND python3 ${MICROPY_BOARD_DIR}/make_pins.py ${MICROPY_BOARD_DIR}/cmodules/pins.h ${MICROPY_BOARD_DIR}/pins.csv ${MICROPY_BOARD_DIR}/modules/pins.py)
-
-set(IDF_TARGET esp32s3)
-
 set(SDKCONFIG_DEFAULTS
     boards/sdkconfig.base
     ${SDKCONFIG_IDF_VERSION_SPECIFIC}
@@ -15,13 +11,14 @@ set(SDKCONFIG_DEFAULTS
 
 set(MICROPY_SOURCE_BOARD
     ${MICROPY_SOURCE_BOARD}
+    ${MICROPY_BOARD_DIR}/cmodules/modmpy.c
     ${MICROPY_BOARD_DIR}/cmodules/modboard.c
     ${MICROPY_BOARD_DIR}/cmodules/board_sdcard.c
     ${MICROPY_BOARD_DIR}/cmodules/board_dac.c
     ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c
     ${MICROPY_BOARD_DIR}/cmodules/lcd_bmp.c
     ${MICROPY_BOARD_DIR}/cmodules/lcd_driver.c
-    ${MICROPY_BOARD_DIR}/cmodules/modmpy.c
+    ${MICROPY_BOARD_DIR}/font/font.c
 )
 
 set(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)

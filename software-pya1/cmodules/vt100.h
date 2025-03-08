@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "../font/font.h"
 
 
 #define COL_RED    0xf800
@@ -27,8 +28,8 @@
 #define Y_OFFSET    35
 #define X_SIZE      320
 #define Y_SIZE      170
-#define X_CHAR      (X_SIZE/font_wide)
-#define Y_CHAR      (Y_SIZE/font_tall)
+#define X_CHAR      (X_SIZE/FONT_WIDE)
+#define Y_CHAR      (Y_SIZE/FONT_TALL)
 
 typedef struct {
     const uint8_t *buffer;

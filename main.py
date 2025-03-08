@@ -3,6 +3,7 @@ import sys
 import time
 import esp32
 import machine
+import math
 import gc
 import _thread
 
@@ -14,6 +15,7 @@ def reset(lcd):
     lcd.color(lcd.WHITE)
     lcd.background(lcd.BLACK)
     lcd.clear()
+    lcd.setBacklight(127)
     board.clearLights()
     nav.shouldBack(0)
 
@@ -22,7 +24,7 @@ def main():
     keys = board.keys
     lcd = board.LCD()   
     lcd.options(scale=1,background=0,foreground=0xffff)
-    lcd.clear()
+    lcd.reset()
     board.clearLights()
     nav.shouldBack(0)
     if(keys == (keys.SHIFT | keys.A | keys.E | keys.F1)):
@@ -42,37 +44,84 @@ def main():
     index = 0
     offset = 0
 
-    def listPrograms(programs, offset=0):
-        lcd.clear()
-        lcd.scale(2)
-        lcd.fill(0,0,320,13*2,'#291475')
-        lcd.color(lcd.WHITE)
-        lcd.background('#291475')
-        lcd.print("Apps - NumCalcium")
-        lcd.background(lcd.BLACK)
-        for i in range(offset, min(offset + 5, len(programs))):
-            lcd.cursor(1.5,i+1.25-offset)
-            
-            rmt = programs[i]['remote']
-            lcd.background('#8aebb9' if rmt else lcd.BLACK)
-            lcd.color('#076334' if rmt else lcd.WHITE)
-            lcd.print(f"{'@' if rmt else ''}{programs[i]['name']}"[:18])
-            lcd.color(lcd.WHITE)
-            lcd.background(lcd.BLACK)
-        # if(len(programs) > 5 and offset < len(programs)-5):
-        #     lcd.scale(1)
-        #     lcd.cursor(8,12)
-        #     lcd.print("...")
-    
-    def selectProgram(programs, index):
-        lcd.scale(2)
-        lcd.fill(0, 13*2, 8*2, 170-(13*2), lcd.BLACK)
-        for i in range(offset, min(offset + 5, len(programs))):
-            if i == index:
-                lcd.cursor(0,i+1.25-offset)
-                lcd.print(">")
+    previous_index = None  # Tracks last selected index
+    previous_offset = None  # Tracks last offset to detect page scrolls
 
-    listPrograms(programs)
+    def listPrograms(programs, offset=0, selected_index=None, previous_index=None, force_redraw=False):
+        nonlocal previous_offset
+        lcd.scale(2)
+
+        total_items = len(programs)
+        visible_items = 5  # Number of items visible at a time
+        pages = math.ceil(total_items / visible_items) 
+
+        # Determine if we need a scroll bar
+        scrollbar_needed = total_items > visible_items
+        scrollbar_x = 320 - 4  # 4px wide scrollbar at x = 4
+        scrollbar_y = 13*2
+        scrollbar_h = 170-scrollbar_y 
+
+        # Calculate scrollbar position
+        if scrollbar_needed:
+            bar_h = scrollbar_h / pages # Ensure a minimum size
+            bar_y = scrollbar_y + (scrollbar_h/pages) * (offset/visible_items)
+        else:
+            bar_h = 0
+
+        # Full redraw if offset changed or explicitly forced
+        if force_redraw or offset != previous_offset:
+            lcd.clear()
+            lcd.fill(0, 0, 320, 13 * 2, '#291475')
+            lcd.color(lcd.WHITE)
+            lcd.background('#291475')
+            lcd.print("Apps - NumCalcium")
+            lcd.background(lcd.BLACK)
+
+            # Draw all visible entries
+            for i in range(offset, min(offset + visible_items, total_items)):
+                lcd.cursor(1.5, i + 1.25 - offset)
+                rmt = programs[i]['remote']
+                is_selected = (i == selected_index)
+                lcd.background('#FFD700' if is_selected else ('#8aebb9' if rmt else lcd.BLACK))
+                lcd.color(lcd.BLACK if is_selected else ('#076334' if rmt else lcd.WHITE))
+                lcd.print(f"{'@' if rmt else ''}{programs[i]['name']} "[:18])
+
+            # Draw scroll bar
+            lcd.fill(scrollbar_x, scrollbar_y, 4, scrollbar_h, '#333333')  # Clear previous bar area
+            if scrollbar_needed:
+                lcd.fill(scrollbar_x, int(bar_y), 4, int(bar_h), lcd.WHITE)  # Draw scroll bar
+
+            lcd.background(lcd.BLACK)  # Reset
+            previous_offset = offset  # Update offset tracking
+            return  # Done, no need for partial update
+
+        # If offset is the same, update only changed lines
+        for i in [previous_index, selected_index]:
+            if i is None or i < offset or i >= min(offset + visible_items, total_items):
+                continue  # Skip out-of-bounds updates
+
+            lcd.cursor(1.5, i + 1.25 - offset)
+            rmt = programs[i]['remote']
+            is_selected = (i == selected_index)
+            lcd.background('#FFD700' if is_selected else ('#8aebb9' if rmt else lcd.BLACK))
+            lcd.color(lcd.BLACK if is_selected else ('#076334' if rmt else lcd.WHITE))
+            lcd.print(f"{'@' if rmt else ''}{programs[i]['name']} "[:18])
+
+        # Update scroll bar position only if scrolling within the same page
+        if scrollbar_needed:
+            lcd.fill(scrollbar_x, scrollbar_y, 4, scrollbar_h, '#333333')  # Clear old bar
+            lcd.fill(scrollbar_x, int(bar_y), 4, int(bar_h), lcd.WHITE)  # Draw new bar
+
+        lcd.background(lcd.BLACK)  # Reset after rendering
+
+
+    def selectProgram(programs, index, offset=0):
+        nonlocal previous_index
+        listPrograms(programs, offset, selected_index=index, previous_index=previous_index, force_redraw=(offset != previous_offset))
+        previous_index = index  # Update tracking
+
+
+    listPrograms(programs,0,0,0,True)
     selectProgram(programs,0)
     if not len(programs):
         return
@@ -143,10 +192,10 @@ def main():
                 print("Post program - MEM (free,alloc):",gc.mem_free(), gc.mem_alloc())
                 
             reset(lcd)
-            listPrograms(programs,offset)
-            selectProgram(programs, index)
+            listPrograms(programs,offset,index, previous_index,True)
+            selectProgram(programs, index, offset)
 
-        elif turns or keys.isDown(keys.N5) or keys.isDown(keys.N2):
+        elif len(programs) >1 and turns or keys.isDown(keys.N5) or keys.isDown(keys.N2):
             prev_offset = offset
             _index = -1 if turns < 0 else 1
             if keys == keys.N2:
@@ -160,7 +209,7 @@ def main():
                 offset = max(0, offset - 5)
             if prev_offset != offset:
                 listPrograms(programs,offset)
-            selectProgram(programs, index)
+            selectProgram(programs, index,offset)
             print(index,offset)
             keys.clearAll()
         

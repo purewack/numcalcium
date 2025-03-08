@@ -10,16 +10,22 @@ MPY_DIR := micropython
 # Path to the ESP32 port
 ESP32_PORT_DIR := $(MPY_DIR)/ports/esp32
 
+FONT := gohu13
+FONT_W := 8
+FONT_H := 13
 
 # Default target
 .PHONY: all
-all:
+all: pins font
 	$(MAKE) -C $(ESP32_PORT_DIR) BOARD_DIR=$(BOARD_DIR) BOARD=$(notdir $(VARIANT))
 	tput bel
 
-# Update / customize pin definitions for the board
-pins:
+pins: 
 	python3 $(BOARD_DIR)/make_pins.py $(BOARD_DIR)/cmodules/pins.h  $(BOARD_DIR)/pins.csv $(BOARD_DIR)/modules/pins.py
+    
+font:
+	python3 $(BOARD_DIR)/make_font.py $(BOARD_DIR)/font/$(FONT) $(FONT_W) $(FONT_H)
+
 
 # Clean target
 .PHONY: clean

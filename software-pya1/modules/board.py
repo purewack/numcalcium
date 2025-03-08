@@ -6,6 +6,7 @@ import neopixel
 import esp32
 import os
 import sys
+import _thread
 
 u = esp32.ULP()
 u.pause()
@@ -15,28 +16,43 @@ u.resume()
 
 keys = _keys.Keys()
 
+class SD(_board.SD):
+    pass
+
+class DAC(_board.DAC):
+    pass
+
 class LCD(_board.Terminal):
     def __init__(self):
         super().__init__()
+        if not hasattr(self,'__lock'):
+            self.__lock = _thread.allocate_lock()
         self._bl = None
         self.setBacklight(127)
+        self.reset()
 
     def __del__(self):
-        self.setBacklight(0)
+        super().setBacklight(0)
 
-    def scale(self, scale):
-        currentCursor = self.cursor()
-        self.options(scale=scale)
-    
-    def plot(self, x,y,color):
-        if isinstance(color, str):
-            super().fill(x,y,w,h,self.htmlTo565(color))
-        elif isinstance(color, tuple):
-            super().fill(x,y,w,h,self.rgbTo565(*color))
-        else:
-            super().fill(x,y,w,h,color)
+    def _sendcmd(self):
+        pass
+
+    def _senddata(self):
+        pass
+
+    def reset(self):
+        self.clear()
+        self.options(background=self.BLACK,foreground=self.WHITE,scale=1)
+
+    def clear(self):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        super().clear()
+        self.cursor(0,0)
 
     def fill(self, x,y,w,h,color):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
         if isinstance(color, str):
             super().fill(x,y,w,h,self.htmlTo565(color))
         elif isinstance(color, tuple):
@@ -44,21 +60,78 @@ class LCD(_board.Terminal):
         else:
             super().fill(x,y,w,h,color)
 
-    def background(self, color):
+    def plot(self, x,y,color):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
         if isinstance(color, str):
-            self.options(background=self.htmlTo565(color))
+            super().fill(x,y,w,h,self.htmlTo565(color))
         elif isinstance(color, tuple):
-            self.options(background=self.rgbTo565(*color))
+            super().fill(x,y,w,h,self.rgbTo565(*color))
         else:
-            self.options(background=color)
+            super().fill(x,y,w,h,color)
+
+    def buffer(self,buf,x,y,width,height):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        super().buffer(buf,x,y,width,height)
+
+    def bitmap(self,x,y,image):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        super().buffer(image['buffer'],x,y,image['width'],image['height'])
+    
+    def print(self, *args):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        super().print(*args)
+
+    def cursor(self, *args, **kwargs):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        if(not len(args)):
+            return super().cursor()
+        if(not len(args) == 2):
+            raise ValueError("Need both x and y positions")
+        x = args[0]
+        y = args[1]
+        if(kwargs.get('pixels',False)):
+            s = super().options()['scale']
+            ww = self.WIDTH
+            hh = self.HEIGHT
+            fh = self.FONT_H
+            fw = self.FONT_W
+            xx = (x/ww)*((ww/fw)/s)
+            yy = (y/hh)*((hh/fh)/s)
+            print("FOnt",s,ww,hh,fh,fw,xx,yy)
+            super().cursor(xx,yy)
+        else:
+            super().cursor(x,y)
+
+    def scale(self, scale):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        currentCursor = self.cursor()
+        super().options(scale=scale)
+    
+    def background(self, color):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        if isinstance(color, str):
+            super().options(background=self.htmlTo565(color))
+        elif isinstance(color, tuple):
+            super().options(background=self.rgbTo565(*color))
+        else:
+            super().options(background=color)
 
     def foreground(self, color):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
         if isinstance(color, str):
-            self.options(foreground=self.htmlTo565(color))
+            super().options(foreground=self.htmlTo565(color))
         elif isinstance(color, tuple):
-            self.options(foreground=self.rgbTo565(*color))
+            super().options(foreground=self.rgbTo565(*color))
         else:
-            self.options(foreground=color)
+            super().options(foreground=color)
     
     def color(self, color):
         self.foreground(color)
@@ -67,10 +140,19 @@ class LCD(_board.Terminal):
         self.background(color)
 
     def invert(self, state):
-        self.options(invert=state)
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        super().options(invert=state)
     
+    def options(self, **kwargs):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
+        super().options(**kwargs)
+
     # brightness 0-127
     def setBacklight(self, brightness):
+        if not self.__lock.acquire(False): return
+        self.__lock.release()
         if(not self._bl):
             self._bl = machine.PWM(machine.Pin.board.LCD_LED)
         self._bl.duty(brightness<<3)
@@ -78,9 +160,6 @@ class LCD(_board.Terminal):
     def framebufColor(self, color):
         return (color&0xff)<<8 | (color>>8)
 
-    def bitmap(self,x,y,image):
-        self.buffer(image['buffer'],x,y,image['width'],image['height'])
-    
     def rgbTo565(self, r, g, b):
         """Convert RGB values to RGB565."""
         r5 = (r >> 3) & 0x1F
@@ -99,15 +178,11 @@ class LCD(_board.Terminal):
     def printException(self,e):
         self.scale(1)
         self.cursor(0,0)
+        self.__lock.acquire()
         os.dupterm(self)
         sys.print_exception(e)
         os.dupterm(None)
-
-class SD(_board.SD):
-    pass
-
-class DAC(_board.DAC):
-    pass
+        self.__lock.release()
 
 
 def tone(note, velocity):
@@ -137,6 +212,9 @@ def statusLight(r,g,b):
     __neo.write()
 
 def statusLed(r,g,b):
+    statusLight(r,g,b)
+
+def frontLed(r,g,b):
     statusLight(r,g,b)
 
 def light(keyNumber,r,g,b):
