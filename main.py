@@ -4,6 +4,7 @@ import time
 import esp32
 import machine
 import math
+import json
 import gc
 import _thread
 
@@ -35,8 +36,8 @@ def main():
     nav.shouldBack(0)
     print("Standard Boot")
 
-    programs = findPrograms()
-    print(len(programs),[a['name'] for a in programs])  
+    programs = findPrograms(lcd)
+    print("found:",len(programs),[a['name'] for a in programs])
     if not len(programs):
         lcd.print("No Programs")
         return
@@ -80,11 +81,13 @@ def main():
             # Draw all visible entries
             for i in range(offset, min(offset + visible_items, total_items)):
                 lcd.cursor(1.5, i + 1.25 - offset)
+                if(programs[i].get('icon',None)):
+                    lcd.bitmap(0, int((i + 1.25 - offset)*lcd.FONT_H*2),programs[i]['icon'])
                 rmt = programs[i]['remote']
                 is_selected = (i == selected_index)
                 lcd.background('#FFD700' if is_selected else ('#8aebb9' if rmt else lcd.BLACK))
                 lcd.color(lcd.BLACK if is_selected else ('#076334' if rmt else lcd.WHITE))
-                lcd.print(f"{'@' if rmt else ''}{programs[i]['name']} "[:18])
+                lcd.print(f"{programs[i]['name']} {'@' if rmt else ''}"[:18])
 
             # Draw scroll bar
             lcd.fill(scrollbar_x, scrollbar_y, 4, scrollbar_h, '#333333')  # Clear previous bar area
@@ -105,7 +108,7 @@ def main():
             is_selected = (i == selected_index)
             lcd.background('#FFD700' if is_selected else ('#8aebb9' if rmt else lcd.BLACK))
             lcd.color(lcd.BLACK if is_selected else ('#076334' if rmt else lcd.WHITE))
-            lcd.print(f"{'@' if rmt else ''}{programs[i]['name']} "[:18])
+            lcd.print(f"{programs[i]['name']} {'@' if rmt else ''}"[:18])
 
         # Update scroll bar position only if scrolling within the same page
         if scrollbar_needed:
@@ -153,7 +156,7 @@ def main():
             lcd.scale(1)
             lcd.print(title)
             print(title)
-            print("----------------")
+            print("-----begin-----")
             try:
                 __import__("_program", None, None, [])
             except Exception as e:
@@ -183,7 +186,7 @@ def main():
             finally:
                 keys.clearAll()
                 while nav.shouldBack(): pass
-                print("----------------")
+                print("------end------")
                 sys.path.pop(0)
                 sys.modules.clear()
                 sys.modules.update(old_modules)
@@ -210,7 +213,6 @@ def main():
             if prev_offset != offset:
                 listPrograms(programs,offset)
             selectProgram(programs, index,offset)
-            print(index,offset)
             keys.clearAll()
         
         elif keys.isDown(keys.E):
@@ -226,7 +228,7 @@ def main():
 
         time.sleep(0.01)
 
-def collect_manifest_paths(base_path):
+def collect_manifest_paths(base_path,lcd):
     manifest_dict = []
     try:
         items = os.listdir(base_path)
@@ -253,21 +255,40 @@ def collect_manifest_paths(base_path):
                     pass
 
                 if(found):
-                    manifest_dict.append({
+                    entry = {
                         'path':item_path,
                         'name':item,
-                        'remote':item_path.startswith('/remote')
-                    })
+                        'remote':item_path.startswith('/remote'),
+                    }
+                    manifestData = None
+                    try:
+                        with open(item_path + "/_manifest.json", "r") as file:
+                            manifestData = json.load(file)
+
+                    except Exception as e:
+                        pass
+
+                    if manifestData:
+                        if manifestData.get('path',None):
+                            raise OSError('Cannot redefine path of program in manifest.json')
+                        if manifestData.get('icon',None):
+                            imgpath = item_path + "/" + manifestData['icon']
+                            with open(imgpath,"rb") as f:
+                                manifestData['icon'] = lcd.parseBMP(f)
+                        entry.update(manifestData)  
+
+                    manifest_dict.append(entry)
+                    
         except OSError:
             pass  # Ignore if directory or manifest doesn't exist
     return manifest_dict
 
-def findPrograms():
-    programs = collect_manifest_paths("/programs")
-    programs.extend(collect_manifest_paths("/remote"))
+def findPrograms(lcd):
+    programs = collect_manifest_paths("/programs",lcd)
+    programs.extend(collect_manifest_paths("/remote",lcd))
     return programs
 
-def resetWatchdog():
+def hudThread():
     ticks = 0
     while True:
         time.sleep(1)
@@ -277,11 +298,12 @@ def resetWatchdog():
                 lcd = board.LCD()
                 lcd.clear()
                 lcd.__del__()
+                board.tone(100,0)
                 board.clearLights()
                 machine.reset()
         else:
             ticks = 0;
 
-_thread.start_new_thread(resetWatchdog, ())
+_thread.start_new_thread(hudThread, ())
 
 main()
