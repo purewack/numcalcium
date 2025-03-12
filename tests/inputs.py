@@ -24,7 +24,7 @@ print("\033[H\033[2J Inputs test")
 while True:
     print("\033[H")
     print("\033[K","systick - ",time.ticks_us())
-    print("\033[K","Keys:",k.getRaw(),"\033[0m")
+    print("\033[K","Keys:",k.getRaw(), k.getAllDown(),"\033[0m")
     for row in range(5):
         line = ''
         for key in range(4):

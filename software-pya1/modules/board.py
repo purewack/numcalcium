@@ -32,7 +32,7 @@ class LCD(_board.Terminal):
         self.reset()
 
     def __del__(self):
-        super().setBacklight(0)
+        self.setBacklight(0)
 
     def _sendcmd(self):
         pass
@@ -147,6 +147,19 @@ class LCD(_board.Terminal):
     def options(self, **kwargs):
         if not self.__lock.acquire(False): return
         self.__lock.release()
+
+        if(kwargs.get('foreground',False)):
+            if isinstance(kwargs['foreground'], str):
+                kwargs['foreground'] = self.htmlTo565(kwargs['foreground'])
+            elif isinstance(kwargs['foreground'], tuple):
+                kwargs['foreground'] = self.rgbTo565(*kwargs['foreground'])
+
+        if(kwargs.get('background',False)):
+            if isinstance(kwargs['background'], str):
+                kwargs['background'] = self.htmlTo565(kwargs['background'])
+            elif isinstance(kwargs['background'], tuple):
+                kwargs['background'] = self.rgbTo565(*kwargs['background'])
+
         super().options(**kwargs)
 
     # brightness 0-127
