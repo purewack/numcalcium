@@ -1,6 +1,6 @@
 import board
 import framebuf
-import bmp
+# import bmp
 
 terminal = board.LCD()
 terminal.background(terminal.BLACK)
@@ -37,7 +37,7 @@ fbuf.text('Yellow', 0, 16, 0)
 
 terminal.buffer(fbuf,320//2,0,64,32)
 
-with open("test.bmp","rb") as _f:
-#    img = bmp.parse(_f)
-    img = terminal.parseBMP(_f)
-    terminal.bitmap(320//2,64,img)
+# with open("test.bmp","rb") as _f:
+# #    img = bmp.parse(_f)
+#     img = terminal.parseBMP(_f)
+#     terminal.bitmap(320//2,64,img)

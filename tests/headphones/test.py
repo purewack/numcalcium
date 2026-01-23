@@ -4,16 +4,11 @@ import esp32
 import machine
 import board
 
-u = esp32.ULP()
-u.pause()
-u.run_embedded()
-u.resume()
-
 lcd = board.LCD()
 lcd.clear()
 lcd.print("audio stream test")
 
-keys = board.keys()
+keys = board.Keys()
 
 b_size = 10000
 buffer_a = bytearray(b_size)

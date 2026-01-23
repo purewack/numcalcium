@@ -6,6 +6,7 @@ vbat = machine.ADC(machine.Pin.board.VBAT_MON)
 chrg = machine.Pin.board.CHR_STATE
 chrg.init(machine.Pin.IN,pull=machine.Pin.PULL_UP)
 lcd = board.LCD()
+k = board.Keys()
 
 def dischargeCycle():
     for i in range(20):
@@ -18,8 +19,8 @@ def dischargeCycle():
 discharing = False
 
 while True:
-    if(board.keys.isAnyDown()):
-        board.keys.clearAll()
+    if(k.isAnyDown()):
+        k.clearAll()
         discharing = not discharing
 
     if discharing:

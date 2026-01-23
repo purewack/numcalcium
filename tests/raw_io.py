@@ -50,7 +50,8 @@ import machine
 import time
 import esp32
 
-u = esp32.ULP()
+# stop running ULP io driver
+u = esp32.ULP_RV()
 u.pause()
 
 pCK = machine.Pin(12)
@@ -98,10 +99,10 @@ while True:
 
     if(scan_val == 7):
         scan_val = 0
-        print("scan",p_scan,bin(p_scan))
+        print("scan","{:010}".format(p_scan),'{:024b}'.format(p_scan))
         p_scan = 0
     else:
         scan_val = (scan_val+1)%8
 
-    time.sleep(0.01)
+    time.sleep(0.002)
     

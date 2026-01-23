@@ -4,17 +4,22 @@ import requests
 import time
 
 def cb(b):
-    pass
+    print(b)
 
 buf = bytearray(4000)
 dac = board.DAC(buf,cb)
 
 n = network.WLAN()
 n.active(True)
+
+ssid = ''
+psk = ''
+
 with open("local.psk.txt","r") as f:
     ssid = f.readline().rstrip('\n')
     psk = f.readline().rstrip('\n')
     print("using wifi",ssid,psk)
+
 n.connect(ssid,psk)
 while not n.isconnected():
     board.statusLed(10,10,10)

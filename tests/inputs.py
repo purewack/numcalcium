@@ -1,17 +1,11 @@
-import keys
-import nav
+import __keys
 import time
 import esp32
 
-k = keys.Keys()
+k = __keys.Keys()
 k.clearAll()
 
-u = esp32.ULP()
-u.pause()
-u.run_embedded()
-u.write(u.VAR_SYSTEM_SLEEPING,0)
-u.set_wakeup_period(1000)
-u.resume()
+kPrev = 0
 
 key_grp = [
     [5,5,6,6],
@@ -24,7 +18,7 @@ print("\033[H\033[2J Inputs test")
 while True:
     print("\033[H")
     print("\033[K","systick - ",time.ticks_us())
-    print("\033[K","Keys:",k.getRaw(), k.getAllDown(),"\033[0m")
+    print("\033[K","Keys:",k.raw(), k.getAllDown(),"\033[0m")
     for row in range(5):
         line = ''
         for key in range(4):
@@ -33,6 +27,12 @@ while True:
             line += '[#]' if k == _key else '[ ]'
         print("\033[K",line)
     print("\033[0m")
-    print("\033[K","Turns",nav.turns())
-    print("\033[K","Home",nav.shouldBack())
-    time.sleep(0.1)
+    print("\033[K","Turns",k.raw_turns())
+    print("\033[K","Home",k.raw_home())
+
+    while True:
+        if(not (k.raw() + k.raw_home() + k.raw_turns()) == kPrev):
+            kPrev = k.raw() + k.raw_home() + k.raw_turns()
+            break
+        time.sleep(0.1)
+    
