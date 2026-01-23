@@ -1,20 +1,16 @@
 import _board
-import keys as _keys
+import __keys 
 import machine
-import pins
 import neopixel
 import esp32
 import os
 import sys
 import _thread
 
-u = esp32.ULP()
-u.pause()
-u.run_embedded()
-u.set_wakeup_period(5000)
-u.resume()
+_board.init()
 
-keys = _keys.Keys()
+class Keys(__keys.Keys):
+    pass
 
 class SD(_board.SD):
     pass
@@ -64,11 +60,11 @@ class LCD(_board.Terminal):
         if not self.__lock.acquire(False): return
         self.__lock.release()
         if isinstance(color, str):
-            super().fill(x,y,w,h,self.htmlTo565(color))
+            super().fill(x,y,1,1,self.htmlTo565(color))
         elif isinstance(color, tuple):
-            super().fill(x,y,w,h,self.rgbTo565(*color))
+            super().fill(x,y,1,1,self.rgbTo565(*color))
         else:
-            super().fill(x,y,w,h,color)
+            super().fill(x,y,1,1,color)
 
     def buffer(self,buf,x,y,width,height):
         if not self.__lock.acquire(False): return
@@ -102,7 +98,7 @@ class LCD(_board.Terminal):
             fw = self.FONT_W
             xx = (x/ww)*((ww/fw)/s)
             yy = (y/hh)*((hh/fh)/s)
-            print("FOnt",s,ww,hh,fh,fw,xx,yy)
+            print("Font",s,ww,hh,fh,fw,xx,yy)
             super().cursor(xx,yy)
         else:
             super().cursor(x,y)
@@ -216,23 +212,15 @@ def tone(note, velocity):
 
 
 __neo = neopixel.NeoPixel(machine.Pin.board.LEDS,21)
-def clearLights():
+
+def clearLeds():
     __neo.fill((0,0,0))
     __neo.write()
 
-def statusLight(r,g,b):
+def statusLed(r,g,b):
     __neo[0] = (r,g,b)
     __neo.write()
 
-def statusLed(r,g,b):
-    statusLight(r,g,b)
-
-def frontLed(r,g,b):
-    statusLight(r,g,b)
-
-def light(keyNumber,r,g,b):
+def led(keyNumber,r,g,b):
     __neo[1 + keyNumber] = (r,g,b)
     __neo.write()
-
-def led(keyNumber,r,g,b):
-    light(keyNumber,r,g,b)
