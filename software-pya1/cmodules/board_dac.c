@@ -134,12 +134,12 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         mp_obj_t *items;
         mp_obj_tuple_get(args[0], &n_items, &items);
         if(n_items != 2){
-            mp_raise_ValueError("bytearray tuple can only contian 2 entries");
+            mp_raise_ValueError(MP_ERROR_TEXT("bytearray tuple can only contian 2 entries"));
         }
         mp_get_buffer_raise(items[0], &bufinfo[0], MP_BUFFER_RW);
         mp_get_buffer_raise(items[1], &bufinfo[1], MP_BUFFER_RW);
         if(bufinfo[0].len != bufinfo[1].len){
-            mp_raise_ValueError("buffers must have equal size");
+            mp_raise_ValueError(MP_ERROR_TEXT("buffers must have equal size"));
         }
         DEBUG_printf("dual buffers\n");
     }
@@ -151,7 +151,7 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
 
     mp_obj_t callback = args[1];
     if (!mp_obj_is_callable(callback)) {
-        mp_raise_ValueError("callback must be callable");
+        mp_raise_ValueError(MP_ERROR_TEXT("callback must be callable"));
     }
 
     int srate = 32000;
@@ -165,10 +165,10 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         mp_obj_t *items_outputs;
         mp_obj_get_array(args[2], &len_outputs, &items_outputs);
         if(len_outputs > 2){
-            mp_raise_ValueError("Too many outputs defined");
+            mp_raise_ValueError(MP_ERROR_TEXT("Too many outputs defined"));
         }
         if(len_outputs < 1){
-            mp_raise_ValueError("Not enough outputs defined");
+            mp_raise_ValueError(MP_ERROR_TEXT("Not enough outputs defined"));
         }
         for(int i=0; i< len_outputs; i++){
             if(items_outputs[i] == mp_const_none)
@@ -180,7 +180,7 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
                 outputs[i] = mp_obj_get_int(items_outputs[i]);
         }
         if(outputs[0] == outputs[1]){
-            mp_raise_ValueError("Pins cannot refer to the same pin");
+            mp_raise_ValueError(MP_ERROR_TEXT("Pins cannot refer to the same pin"));
         }
     }
     if(n_args >= 4){

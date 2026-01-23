@@ -1,4 +1,4 @@
-#include "../font/font.h"
+#include "../generated/font.h"
 #include "vt100.h"
 #include "board.h"
 

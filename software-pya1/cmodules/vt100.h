@@ -5,7 +5,7 @@
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "../font/font.h"
+#include "../generated/font.h"
 
 
 #define COL_RED    0xf800

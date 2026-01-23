@@ -4,11 +4,11 @@ set(SDKCONFIG_DEFAULTS
     boards/sdkconfig.base
     ${SDKCONFIG_IDF_VERSION_SPECIFIC}
     ${MICROPY_BOARD_DIR}/sdkconfig.board
-    boards/sdkconfig.usb
     boards/sdkconfig.ble
     boards/sdkconfig.spiram_sx
     boards/sdkconfig.240mhz
     boards/sdkconfig.spiram_oct
+    boards/sdkconfig.riscv_ulp
 )
 
 set(MICROPY_SOURCE_BOARD
@@ -20,9 +20,7 @@ set(MICROPY_SOURCE_BOARD
     ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c
     ${MICROPY_BOARD_DIR}/cmodules/lcd_bmp.c
     ${MICROPY_BOARD_DIR}/cmodules/lcd_driver.c
-    ${MICROPY_BOARD_DIR}/font/font.c
+    ${MICROPY_BOARD_DIR}/generated/font.c
 )
 
-set(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)
-
-set(ulp_embedded_sources ${MICROPY_BOARD_DIR}/ulp/io.c)
+ set(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)

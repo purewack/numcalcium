@@ -1,2 +1,5 @@
-pins.csv
-pins.py
+generaged
+generated/*
+modules/__ulpio.py
+ulp-compiler/build
+ulp-compiler/build/__pycache__

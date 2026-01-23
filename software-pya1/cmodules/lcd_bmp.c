@@ -38,7 +38,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     int scale = arg_vals[ARG_scale].u_int;
 
     if (scale < 1) {
-        mp_raise_ValueError("Scale must be >= 1");
+        mp_raise_ValueError(MP_ERROR_TEXT("Scale must be >= 1"));
     }
 
     mp_buffer_info_t fb_buf;
@@ -46,7 +46,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     if (fb_obj != MP_OBJ_NULL) {
         mp_get_buffer_raise(fb_obj, &fb_buf, MP_BUFFER_WRITE);
         if (fb_buf.len < 2) {
-            mp_raise_ValueError("Framebuffer too small");
+            mp_raise_ValueError(MP_ERROR_TEXT("Framebuffer too small"));
         }
         fb_pixels = (uint16_t *)fb_buf.buf;
     }
@@ -64,7 +64,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     uint8_t *file_header_data = (uint8_t *)file_header_buf.buf;
     
     if (file_header_buf.len < BMP_FILE_HEADER_SIZE || file_header_data[0] != 'B' || file_header_data[1] != 'M') {
-        mp_raise_ValueError("Invalid BMP file");
+        mp_raise_ValueError(MP_ERROR_TEXT("Invalid BMP file"));
     }
     
     uint32_t dib_header_size = 0;
@@ -85,7 +85,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     uint16_t bpp = *(uint16_t*)(dib_header_data + 14 - 1);
     
     if (bpp != 1 && bpp != 4 && bpp != 8 && bpp != 16 && bpp != 24) {
-        mp_raise_ValueError("Only 1-bit, 4-bit, 8-bit, 16-bit, and 24-bit BMP supported");
+        mp_raise_ValueError(MP_ERROR_TEXT("Only 1-bit, 4-bit, 8-bit, 16-bit, and 24-bit BMP supported"));
     }
     
     int row_size = ((width * bpp + 31) / 32) * 4;
@@ -131,11 +131,11 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             
             if (row_info.len == 0) {
                 DEBUG_printf("Failed to read row data\n");
-                mp_raise_ValueError("Failed to read row data");
+                mp_raise_ValueError(MP_ERROR_TEXT("Failed to read row data"));
             }
             
             if (row_info.len < row_size) {
-                mp_raise_ValueError("Unexpected end of file");
+                mp_raise_ValueError(MP_ERROR_TEXT("Unexpected end of file"));
             }
             
             int dst_y = flipped ? (abs_height - 1 - y) : y;
@@ -153,7 +153,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             } else if (bpp == 4) {
                 for (int x = 0; x < width; x += 2) {
                     if (x / 2 >= row_info.len) {
-                        mp_raise_ValueError("Unexpected end of row data");
+                        mp_raise_ValueError(MP_ERROR_TEXT("Unexpected end of row data"));
                     }
                     uint8_t byte = row_buf[x / 2];
                     uint8_t index1 = byte >> 4;
@@ -192,11 +192,11 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             DEBUG_printf("ROW %d %p\n", row_info.len, row_info.buf);
             if (row_info.len == 0) {
                 DEBUG_printf("Failed to read row data\n");
-                mp_raise_ValueError("Failed to read row data");
+                mp_raise_ValueError(MP_ERROR_TEXT("Failed to read row data"));
             }
             
             if (row_info.len < row_size) {
-                mp_raise_ValueError("Unexpected end of file");
+                mp_raise_ValueError(MP_ERROR_TEXT("Unexpected end of file"));
             }
             
             int dst_y = flipped ? (abs_height - 1 - y) : y;
@@ -218,11 +218,11 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             DEBUG_printf("ROW %d %p\n", row_info.len, row_info.buf);
             if (row_info.len == 0) {
                 DEBUG_printf("Failed to read row data\n");
-                mp_raise_ValueError("Failed to read row data");
+                mp_raise_ValueError(MP_ERROR_TEXT("Failed to read row data"));
             }
             
             if (row_info.len < row_size) {
-                mp_raise_ValueError("Unexpected end of file");
+                mp_raise_ValueError(MP_ERROR_TEXT("Unexpected end of file"));
             }
             
             int dst_y = flipped ? (abs_height - 1 - y) : y;
@@ -243,7 +243,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
         
         if (fb_buf.len < fb_size) {
             DEBUG_printf("%d %d\n",fb_buf.len , fb_size);
-            mp_raise_ValueError("Framebuffer too small for scaled image");
+            mp_raise_ValueError(MP_ERROR_TEXT("Framebuffer too small for scaled image"));
         }
         
         scale_bmp_in_place(fb_pixels, width, abs_height, scale);

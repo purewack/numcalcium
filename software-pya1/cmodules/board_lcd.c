@@ -12,7 +12,7 @@
 #include "vt100.h"
 #include "lcd_bmp.h"
 #include "board.h"
-#include "../font/font.h"
+#include "../generated/font.h"
 
 typedef struct _lcd_obj_t {
     mp_obj_base_t base;
