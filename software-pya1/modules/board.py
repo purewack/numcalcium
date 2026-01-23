@@ -5,9 +5,19 @@ import neopixel
 import esp32
 import os
 import sys
+import time
 import _thread
+import __ulpio
 
 _board.init()
+
+machine.mem32[__ulpio.data['symbols']['system_sleeping']] = 0
+
+def enterLowPowerSleep():
+    machine.mem32[__ulpio.data['symbols']['system_sleeping']] = 1
+    s = machine.Pin.board.SLEEP_REQ
+    s.init(machine.Pin.OPEN_DRAIN)
+    machine.deepsleep()
 
 class Keys(__keys.Keys):
     pass
@@ -24,8 +34,8 @@ class LCD(_board.Terminal):
         if not hasattr(self,'__lock'):
             self.__lock = _thread.allocate_lock()
         self._bl = None
-        self.setBacklight(127)
         self.reset()
+        self.setBacklight(127)
 
     def __del__(self):
         self.setBacklight(0)
@@ -37,8 +47,8 @@ class LCD(_board.Terminal):
         pass
 
     def reset(self):
-        self.clear()
         self.options(background=self.BLACK,foreground=self.WHITE,scale=1)
+        self.clear()
 
     def clear(self):
         if not self.__lock.acquire(False): return
@@ -60,11 +70,11 @@ class LCD(_board.Terminal):
         if not self.__lock.acquire(False): return
         self.__lock.release()
         if isinstance(color, str):
-            super().fill(x,y,1,1,self.htmlTo565(color))
+            super().plot(x,y,self.htmlTo565(color))
         elif isinstance(color, tuple):
-            super().fill(x,y,1,1,self.rgbTo565(*color))
+            super().plot(x,y,self.rgbTo565(*color))
         else:
-            super().fill(x,y,1,1,color)
+            super().plot(x,y,color)
 
     def buffer(self,buf,x,y,width,height):
         if not self.__lock.acquire(False): return
@@ -98,18 +108,23 @@ class LCD(_board.Terminal):
             fw = self.FONT_W
             xx = (x/ww)*((ww/fw)/s)
             yy = (y/hh)*((hh/fh)/s)
-            print("Font",s,ww,hh,fh,fw,xx,yy)
-            super().cursor(xx,yy)
+            return super().cursor(xx,yy)
         else:
-            super().cursor(x,y)
+            return super().cursor(x,y)
 
-    def scale(self, scale):
+    def scale(self, scale=None):
+        if scale == None:
+            return super().options()['scale']
+
         if not self.__lock.acquire(False): return
         self.__lock.release()
         currentCursor = self.cursor()
         super().options(scale=scale)
     
-    def background(self, color):
+    def background(self, color=None):
+        if color == None:
+            return super().options()['background']
+
         if not self.__lock.acquire(False): return
         self.__lock.release()
         if isinstance(color, str):
@@ -119,7 +134,10 @@ class LCD(_board.Terminal):
         else:
             super().options(background=color)
 
-    def foreground(self, color):
+    def foreground(self, color=None):
+        if color == None:
+            return super().options()['foreground']
+
         if not self.__lock.acquire(False): return
         self.__lock.release()
         if isinstance(color, str):
@@ -129,11 +147,11 @@ class LCD(_board.Terminal):
         else:
             super().options(foreground=color)
     
-    def color(self, color):
-        self.foreground(color)
+    def color(self, color=None):
+        return self.foreground(color)
 
-    def bg(self, color):
-        self.background(color)
+    def bg(self, color=None):
+        return self.background(color)
 
     def invert(self, state):
         if not self.__lock.acquire(False): return
@@ -156,7 +174,7 @@ class LCD(_board.Terminal):
             elif isinstance(kwargs['background'], tuple):
                 kwargs['background'] = self.rgbTo565(*kwargs['background'])
 
-        super().options(**kwargs)
+        return super().options(**kwargs)
 
     # brightness 0-127
     def setBacklight(self, brightness):
@@ -224,3 +242,40 @@ def statusLed(r,g,b):
 def led(keyNumber,r,g,b):
     __neo[1 + keyNumber] = (r,g,b)
     __neo.write()
+
+
+
+class Battery:
+    def __init__(self):
+        self.vbat = machine.ADC(machine.Pin.board.VBAT_MON)
+        self.vbus = machine.Pin.board.CHR_STATE
+        self.vbus.init(machine.Pin.IN,pull=machine.Pin.PULL_UP)
+        self.DIFF_THRESH = 0.05
+
+    def present(self):
+        return True if self.voltage() else False
+
+    def isAC(self):
+        r = [0,0,0,0]
+        for i in range(4):
+            r[i] = not self.vbus.value()
+            time.sleep(0.005)
+        return bool((r[0]+r[1]+r[2]+r[3])/4)
+
+    def voltage(self):
+        r = [0,0,0,0]
+        for i in range(4):
+            r[i] = self.vbat.read_uv()*2/1000/1000
+            time.sleep(0.005)
+
+        self.isAC()
+        avr = (r[0]+r[1]+r[2]+r[3])/4
+        diff = max(*r) - min(*r);
+        return 0 if diff > self.DIFF_THRESH else avr
+
+    def level(self):
+        v = self.voltage()
+        low = 3
+        high = 4.2
+        return max(0,(v-low)/(high-low))
+

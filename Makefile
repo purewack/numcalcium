@@ -56,6 +56,7 @@ erase:
 
 clean:
 	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT) 
+	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT)-no_freeze
 	rm -rf ${CURDIR}/software-$(VARIANT)/ulp-compiler/build
 
 fullclean: clean

@@ -1,9 +1,12 @@
 import board
 import time
 import os
+import machine
 
+vbat = machine.ADC(machine.Pin.board.VBAT_MON)
+chrg = machine.Pin.board.CHR_STATE
+chrg.init(machine.Pin.IN,pull=machine.Pin.PULL_UP)
 lcd = board.LCD()
-os.dupterm(lcd)
 k = board.Keys()
 
 def dischargeCycle():
@@ -16,8 +19,6 @@ def dischargeCycle():
 
 discharing = False
 
-bat = board.Battery()
-
 while True:
     if(k.isAnyDown()):
         k.clearAll()
@@ -27,7 +28,8 @@ while True:
         dischargeCycle()
 
     lcd.clear() 
-    print(bat.isAC(),bat.present())
-    print(bat.voltage())
+    lcd.print("VBAT",vbat.read_uv()*2/1000/1000)
+    lcd.print("Charging",not chrg.value())
+    print(vbat.read_uv(), chrg.value())
     print("-----")
     time.sleep(0.1)
