@@ -1,32 +1,37 @@
 # Root Makefile for building MicroPython with a custom board definition
 
-# Path to your custom board definition
 VARIANT   := pya1
-BOARD_DIR := $(CURDIR)/software-$(VARIANT)
-
 FONT := gohu13
 FONT_W := 8
 FONT_H := 13
-
-IDF_VERSION := espressif/idf:v5.5.1
 
 
 # runtime ids
 CURRENT_UID := $(shell id -u)
 CURRENT_GID := $(shell id -g)
-CURRENT_PWD := $(shell pwd)
 
 export CURRENT_UID
 export CURRENT_GID
+
+
+BOARD_DIR := $(CURDIR)/software-$(VARIANT)
+DOCKER_BOARD_DIR := /project/software-$(VARIANT)
+DOCKER_MPY_DIR := /project/micropython/ports/esp32
+
+IDF_VERSION := espressif/idf:v5.5.1
+DOCKER_CMD := docker run --rm --privileged -v $(CURDIR):/project -w /project -u $(CURRENT_UID) -e HOME=/tmp $(IDF_VERSION)
 
 # main target
 .PHONY: all ulp pins font flash clean fullclean
 
 all: 
-	docker run --rm -v $(BOARD_DIR)/..:/project -w /project -u $(CURRENT_UID) -e HOME=/tmp $(IDF_VERSION) make -C /project/micropython/ports/esp32 BOARD_DIR=/project/software-$(VARIANT) BOARD=$(VARIANT)
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR)  BOARD=$(VARIANT)
+
+firmware-no-freeze: 
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR)  BOARD=$(VARIANT) BOARD_VARIANT=no_freeze
 
 gen-ulp: gen-dir
-	docker run --rm -v $(BOARD_DIR)/..:/project -w /project -u $(CURRENT_UID) -e HOME=/tmp $(IDF_VERSION) bash -c "cd /project/software-$(VARIANT)/ulp-compiler && idf.py build"
+	$(DOCKER_CMD) bash -c "cd $(DOCKER_BOARD_DIR)/ulp-compiler && idf.py build"
 	python3 $(BOARD_DIR)/generators/generate_ulp.py $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.bin  $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.ld $(BOARD_DIR)/modules/__ulpio.py 
 	cp $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.bin  $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.ld $(BOARD_DIR)/generated
  
@@ -41,17 +46,21 @@ gen-dir:
 	mkdir -p $(BOARD_DIR)/generated
 
 deploy:
-	docker run --rm --privileged -v $(BOARD_DIR)/..:/project -w /project -u $(CURRENT_UID) -e HOME=/tmp $(IDF_VERSION) make -C /project/micropython/ports/esp32 BOARD_DIR=/project/software-$(VARIANT) BOARD=$(VARIANT) deploy
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) BOARD=$(VARIANT) deploy
 
-clean:
-	rm -rf ${CURRENT_PWD}/micropython/ports/esp32/build-$(VARIANT) 
-	rm -rf ${CURRENT_PWD}/software-$(VARIANT)/ulp-compiler/build
-
-fullclean: clean
-	rm -rf ${CURRENT_PWD}/software-$(VARIANT)/generated
+deploy-no-freeze:
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) BOARD=$(VARIANT)-no_freeze deploy
 
 erase: 
-	esptool.py erase_flash
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) BOARD=$(VARIANT) erase
+
+clean:
+	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT) 
+	rm -rf ${CURDIR}/software-$(VARIANT)/ulp-compiler/build
+
+fullclean: clean
+	rm -rf ${CURDIR}/software-$(VARIANT)/generated
+
 
 # mount local dirs for dev mode for py files
 dev:
