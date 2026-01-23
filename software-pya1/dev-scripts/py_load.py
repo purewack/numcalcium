@@ -10,7 +10,7 @@ class EEPROMStreamer(uio.IOBase):
         self.size = self._read_file_size()
 
     def burn(self, path):
-        
+        pass
 
     def _read_file_size(self):
         # Read the first 2 bytes of EEPROM to determine the file size

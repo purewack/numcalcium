@@ -6,7 +6,7 @@ import time
 import board
 import neopixel
 import machine
-import keys
+import __keys
 import _thread
 import usb.device
 from usb.device.keyboard import KeyboardInterface as USBHID
@@ -77,7 +77,7 @@ class KeypadDriver():
 
     def __init__(self, mode='ble'):
         self.switchMappings('numpad')
-        self.scanner = keys.Keys()
+        self.scanner = board.Keys()
         self.usb = USBHID()
         self.ble = BLEHID('NumCalcium Numpad')
         self.mode = mode

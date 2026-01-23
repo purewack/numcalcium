@@ -15,7 +15,7 @@ lcd = board.LCD()
 lcd.clear()
 lcd.print("audio test")
 
-keys = board.keys()
+keys = board.Keys()
 
 b_size = 1024
 buffer_a = bytearray(b_size)
