@@ -9,14 +9,17 @@ def parseLD(content):
 	matches = re.findall(regex_pattern, content)
 
 	for m in matches:
-	    variable = m[0]
-	    address = m[2]
+		variable = m[0]
+		address = m[2]
 	    # Check if the key starts with "ulp_"
-	    if variable.startswith("ulp_var_"):
+		if variable.startswith("ulp_var_"):
 	        # Remove "ulp_var" from the beginning of the key
-	        variable = variable[8:].lower()
+			variable = variable[8:].lower()
+			address = address.strip()
+			if address.endswith(';'):
+				address = address[0:-1]
 
-	        shared_variables[variable.strip()] = int(address.strip(),16)
+			shared_variables[variable.strip()] = int(address,16)
 
 	return shared_variables
 

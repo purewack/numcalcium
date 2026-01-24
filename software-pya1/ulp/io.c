@@ -83,20 +83,22 @@ int main (void)
         shiftOut(1<<jj);
         pscan |= (readPins() << (jj * 3));
         
-        shiftOut(1<<7);
-        rscan = ((rscan<<2) | readPins()) & 0xF;
-        if(rscan == 0b1011) {
-            if(var_turns > 0) var_turns = 0;
-            var_turns--;    
-        }
-        if(rscan == 0b0111) {
-            if(var_turns < 0) var_turns = 0;
-            var_turns++;    
-        }
     }
-    var_bup |= (pscan_old & (~pscan));
-    var_bdown |= (pscan & (~pscan_old));   
+    var_bup |= (pscan_old & (~pscan)) & 0xFFFFF;
+    var_bdown |= (pscan & (~pscan_old)) & 0xFFFFF;   
     var_bscan = pscan; 
+
+
+    shiftOut(1<<7);
+    rscan = ((rscan<<2) | readPins()) & 0xF;
+    if(rscan == 0b1011) {
+        if(var_turns > 0) var_turns = 0;
+        var_turns--;    
+    }
+    if(rscan == 0b0111) {
+        if(var_turns < 0) var_turns = 0;
+        var_turns++;    
+    }
 
     ulp_riscv_gpio_input_disable(PIN_CK);
     ulp_riscv_gpio_input_disable(PIN_DD);
