@@ -29,6 +29,7 @@ typedef struct _lcd_obj_t {
     bool invert;
 } lcd_obj_t;
 
+const mp_obj_type_t lcd_type;
 static lcd_obj_t lcd_instance = {{&lcd_type}};
 
 static mp_obj_t buffer(size_t n_args, const mp_obj_t *args) {
@@ -232,6 +233,8 @@ static mp_uint_t lcd_stream_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t
 
 
 static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    mp_arg_check_num(n_args, n_kw, 0, 0, false);
+
     if (!lcd_instance.new) {
         
         driver_init();

@@ -29,6 +29,8 @@ typedef struct _sdm_obj_t {
     uint8_t channel_count;
 } sdm_obj_t;
 
+const mp_obj_type_t sdm_type;
+
 static bool IRAM_ATTR buffer_sample_feed_unibuf_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
     sdm_obj_t *self = (sdm_obj_t*)user_ctx;

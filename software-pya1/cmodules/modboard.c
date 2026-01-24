@@ -11,13 +11,6 @@
 sdspi_dev_handle_t sdspi_handle;
 spi_device_handle_t lcdspi_handle;
 
-// // A simple example module
-// static mp_obj_t modboard_sd_info(const mp_obj_t in) {
-//     machine_hw_spi_obj_t *spi = MP_OBJ_TO_PTR(in);
-//     DEBUG_printf("SPI %d %d %d\n",spi->mosi,spi->miso,spi->sck);
-//     return mp_const_none;
-// }
-// static MP_DEFINE_CONST_FUN_OBJ_1(modboard_sd_info_obj, modboard_sd_info);
 
 static mp_obj_t modboard_init(){
 

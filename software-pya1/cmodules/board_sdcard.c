@@ -61,6 +61,7 @@ typedef struct _sdcard_obj_t {
     sdmmc_card_t card;
 } sdcard_card_obj_t;
 
+const mp_obj_type_t board_sdcard_type;
 // singleton object
 static sdcard_card_obj_t sd_instance = {{&board_sdcard_type},0};
 
