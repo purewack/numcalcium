@@ -20,7 +20,6 @@ unsigned int var_bdown;
 unsigned int var_bup;
 unsigned int var_bok;
 unsigned int var_bhome;
-unsigned int var_system_sleeping = 0;
 int var_ulp_tick = 0;
 
 void shiftOut(unsigned int v){
@@ -57,18 +56,6 @@ unsigned int readPins(){
 
 int main (void)
 {    
-
-    // if(var_system_sleeping){
-    //     ulp_riscv_gpio_init(0);
-    //     ulp_riscv_gpio_input_enable(0);
-    //     if(!ulp_riscv_gpio_get_level(0)){
-    //         return 0;
-    //     }
-    //     ulp_riscv_wakeup_main_processor();
-    //     var_system_sleeping = 0;
-    //     return 0;
-    // }
-
     var_bok = !ulp_riscv_gpio_get_level(0);
     var_bhome |= var_bok;
 
@@ -93,12 +80,6 @@ int main (void)
     var_bup |= (pscan_old & (~pscan)) & 0xFFFFF;
     var_bdown |= (pscan & (~pscan_old)) & 0xFFFFF;   
     var_bscan = pscan; 
-
-    if(var_system_sleeping && var_bscan){
-        var_system_sleeping = 0;
-        ulp_riscv_wakeup_main_processor();
-    }
-
 
     shiftOut(1<<7);
     rscan = ((rscan<<2) | readPins()) & 0xF;
