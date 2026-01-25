@@ -5,6 +5,7 @@ FONT := gohu13
 FONT_W := 8
 FONT_H := 13
 
+PORT ?=
 
 # runtime ids
 CURRENT_UID := $(shell id -u)
@@ -25,10 +26,10 @@ DOCKER_CMD := docker run --rm --privileged -v $(CURDIR):/project -w /project -u 
 .PHONY: all ulp pins font flash clean fullclean
 
 all: 
-	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR)  BOARD=$(VARIANT)
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT)
 
 firmware-no-freeze: 
-	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR)  BOARD=$(VARIANT) BOARD_VARIANT=no_freeze
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) BOARD_VARIANT=no_freeze
 
 gen-ulp: gen-dir
 	$(DOCKER_CMD) bash -c "cd $(DOCKER_BOARD_DIR)/ulp-compiler && idf.py build"
@@ -46,13 +47,13 @@ gen-dir:
 	mkdir -p $(BOARD_DIR)/generated
 
 deploy:
-	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) BOARD=$(VARIANT) deploy
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) deploy
 
 deploy-no-freeze:
-	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) BOARD=$(VARIANT)-no_freeze deploy
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT)-no_freeze deploy
 
 erase: 
-	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) BOARD=$(VARIANT) erase
+	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) erase
 
 clean:
 	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT) 

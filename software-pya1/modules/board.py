@@ -1,23 +1,19 @@
 import _board
 import __keys 
+import __sleep
 import machine
 import neopixel
-import esp32
 import os
 import sys
 import time
 import _thread
-import __ulpio
 
 _board.init()
+__sleep.exitLowPowerSleep()
 
-machine.mem32[__ulpio.data['symbols']['system_sleeping']] = 0
-
-def enterLowPowerSleep():
-    machine.mem32[__ulpio.data['symbols']['system_sleeping']] = 1
-    s = machine.Pin.board.SLEEP_REQ
-    s.init(machine.Pin.OPEN_DRAIN)
-    machine.deepsleep()
+def shutdown():
+    # clearLeds()
+    __sleep.enterLowPowerSleep()
 
 class Keys(__keys.Keys):
     pass
@@ -212,8 +208,8 @@ class LCD(_board.Terminal):
         self.__lock.release()
 
 
-def tone(note, velocity):
-    midi = note
+def tone(note=None, velocity=None):
+    midi = note if note else 'c4'
     if(isinstance(note,str)):
         note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
         octave = int(note[-1])
@@ -225,6 +221,10 @@ def tone(note, velocity):
             raise("Invalid note name")
 
     spk = machine.PWM(machine.Pin.board.BUZZER)
+    if note == None:
+        spk.freq(100)
+        spk.duty(0)
+        return
     spk.duty(velocity>>1)
     spk.freq(int(pow(2,(midi-69)/12)*440))
 
