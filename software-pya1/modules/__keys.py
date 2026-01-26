@@ -165,7 +165,6 @@ class Keys:
         return self.__rw('turns')
 
 
-    _u = esp32.ULP_RV()
 
     def __rw(self,key,val=None):
         if(not val == None):
@@ -180,6 +179,8 @@ class Keys:
         return self.__rw('bdown',val)
         
         
+    _u = esp32.ULP_RV()
+        
     def __driver_load(self):
         self._u.load_binary(__ulpio.data['binary'])
         self._u.run()
@@ -188,6 +189,6 @@ class Keys:
         self._u.set_wakeup_period(0,period)
 
     def __init__(self, period = None):
+        self.__driver_load()
         if(period):
             self.__driver_mux_period(period)
-        self.__driver_load()

@@ -1,6 +1,5 @@
 import machine
 import esp32
-import time
 
 def enterLowPowerSleep():
     u = esp32.ULP_RV()
