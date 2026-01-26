@@ -581,6 +581,10 @@
 		(color 0 0 0 0)
 		(uuid "fd9fa2d9-a4b1-4211-965c-dbed5511d8bb")
 	)
+	(no_connect
+		(at 175.26 49.53)
+		(uuid "2e718799-163a-4458-8806-40acdabee94d")
+	)
 	(wire
 		(pts
 			(xy 135.89 128.27) (xy 151.13 128.27)
@@ -1183,16 +1187,6 @@
 	)
 	(wire
 		(pts
-			(xy 185.42 49.53) (xy 175.26 49.53)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e8ccb9a1-4fec-4662-9193-4ba567985393")
-	)
-	(wire
-		(pts
 			(xy 175.26 120.65) (xy 182.88 120.65)
 		)
 		(stroke
@@ -1284,17 +1278,6 @@
 			(justify right)
 		)
 		(uuid "3b099b7e-bf93-489f-8e65-940d40be1213")
-	)
-	(hierarchical_label "DOUT"
-		(shape input)
-		(at 185.42 49.53 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "60ec1e83-e349-43b4-8faa-62cd82b0d8ed")
 	)
 	(hierarchical_label "VDD"
 		(shape input)

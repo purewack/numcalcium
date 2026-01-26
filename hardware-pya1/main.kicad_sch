@@ -4488,6 +4488,16 @@
 	)
 	(wire
 		(pts
+			(xy 55.88 157.48) (xy 109.22 157.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "094f347e-c07b-4dca-8e14-c66cc3d8d371")
+	)
+	(wire
+		(pts
 			(xy 57.15 63.5) (xy 77.47 63.5)
 		)
 		(stroke
@@ -5168,16 +5178,6 @@
 	)
 	(wire
 		(pts
-			(xy 52.07 161.29) (xy 52.07 170.18)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "62416ab5-983b-48e6-8689-d652bb9dd722")
-	)
-	(wire
-		(pts
 			(xy 66.04 109.22) (xy 66.04 111.76)
 		)
 		(stroke
@@ -5275,16 +5275,6 @@
 			(type default)
 		)
 		(uuid "72a99ad0-660f-4889-b61b-cd5b48f06a6e")
-	)
-	(wire
-		(pts
-			(xy 50.8 170.18) (xy 52.07 170.18)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "731edb63-aef0-4ce3-8e5e-2f39667217bf")
 	)
 	(wire
 		(pts
@@ -5758,16 +5748,6 @@
 	)
 	(wire
 		(pts
-			(xy 66.04 157.48) (xy 109.22 157.48)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c6a92382-64ab-464e-8330-53e56be32e3c")
-	)
-	(wire
-		(pts
 			(xy 161.29 54.61) (xy 161.29 50.8)
 		)
 		(stroke
@@ -6148,7 +6128,7 @@
 	)
 	(text "SCL"
 		(exclude_from_sim no)
-		(at 182.626 132.334 0)
+		(at 182.88 137.414 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6168,7 +6148,7 @@
 	)
 	(text "SDA"
 		(exclude_from_sim no)
-		(at 182.626 134.874 0)
+		(at 182.88 139.954 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6966,14 +6946,14 @@
 	)
 	(hierarchical_label "STATUS_LED"
 		(shape input)
-		(at 66.04 157.48 180)
+		(at 55.88 157.48 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "55c41993-5bcf-4ae8-a496-fa5c049696fc")
+		(uuid "4df1e8a6-cdc4-40ae-b2ad-d2ab6cc73823")
 	)
 	(hierarchical_label "LCD_LED"
 		(shape input)
@@ -6985,17 +6965,6 @@
 			(justify left)
 		)
 		(uuid "56987c05-bb75-4ede-858d-90815daaaec6")
-	)
-	(hierarchical_label "LED_RETURN"
-		(shape input)
-		(at 52.07 161.29 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "6a1e8e49-2494-46a7-a2e1-a3ac68a8aab2")
 	)
 	(hierarchical_label "VDD"
 		(shape input)
@@ -7040,6 +7009,17 @@
 			(justify right)
 		)
 		(uuid "c5243f3f-b470-49f1-ad81-59e3e4bbd541")
+	)
+	(hierarchical_label "LED_RETURN"
+		(shape input)
+		(at 50.8 170.18 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "cbe718e4-1c4d-4f29-8480-4662084abb07")
 	)
 	(hierarchical_label "BUZ_DRIVE"
 		(shape input)
@@ -13350,16 +13330,6 @@
 				(justify right)
 			)
 			(uuid "75561227-6cb8-430e-9e2b-72da41ac31b2")
-		)
-		(pin "DOUT" input
-			(at 33.02 170.18 180)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-			(uuid "b2eeaace-444d-4919-b38f-5eb121c09068")
 		)
 		(pin "DIN" input
 			(at 50.8 170.18 0)

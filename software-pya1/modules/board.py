@@ -240,7 +240,7 @@ def statusLed(r,g,b):
     __neo.write()
 
 def led(keyNumber,r,g,b):
-    __neo[1 + keyNumber] = (r,g,b)
+    __neo[keyNumber + 1] = (r,g,b)
     __neo.write()
 
 

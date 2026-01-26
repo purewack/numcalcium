@@ -4563,17 +4563,6 @@
 		)
 		(uuid "872288f3-a7a7-4c9f-afee-946e67450439")
 	)
-	(hierarchical_label "LED_RETURN"
-		(shape input)
-		(at 184.15 34.29 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "8eb9e9cc-0eea-4525-b550-26e5579c66ac")
-	)
 	(hierarchical_label "LCD_CS"
 		(shape input)
 		(at 193.04 123.19 0)
@@ -4617,6 +4606,17 @@
 			(justify right)
 		)
 		(uuid "c36b47bd-0b09-474d-947f-51e169a6f1f7")
+	)
+	(hierarchical_label "LED_RETURN"
+		(shape input)
+		(at 184.15 34.29 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "c6d971fb-0579-4768-993f-7a3c72d8b8cc")
 	)
 	(hierarchical_label "VDD"
 		(shape input)
