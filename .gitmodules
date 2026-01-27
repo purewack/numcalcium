@@ -1,3 +1,6 @@
 [submodule "micropython"]
 	path = micropython
 	url = https://github.com/purewack/micropython.git
+[submodule "micropython-ulp-compiler"]
+	path = micropython-ulp-compiler
+	url = https://github.com/purewack/micropython-ulp-compiler

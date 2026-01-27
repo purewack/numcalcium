@@ -1,2 +1,3 @@
 ulp-compiler/build
 ulp-compiler/build/__pycache__
+generated/*

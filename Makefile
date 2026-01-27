@@ -12,9 +12,9 @@ CURRENT_GID := $(shell id -g)
 export CURRENT_UID
 export CURRENT_GID
 
-
-BOARD_DIR := $(CURDIR)/software-$(VARIANT)
-DOCKER_BOARD_DIR := /project/software-$(VARIANT)
+BOARD_DIR_REL := software-$(VARIANT)
+BOARD_DIR := $(CURDIR)/$(BOARD_DIR_REL)
+DOCKER_BOARD_DIR := /project/$(BOARD_DIR_REL)
 DOCKER_MPY_DIR := /project/micropython/ports/esp32
 
 IDF_VERSION := espressif/idf:v5.5.1
@@ -30,10 +30,11 @@ firmware-no-freeze:
 	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) BOARD_VARIANT=no_freeze
 
 gen-ulp: gen-dir
-	$(DOCKER_CMD) bash -c "cd $(DOCKER_BOARD_DIR)/ulp-compiler && idf.py build"
-	python3 $(BOARD_DIR)/generators/generate_ulp.py $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.bin  $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.ld $(BOARD_DIR)/modules/__ulpio.py 
-	cp $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.bin  $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.ld $(BOARD_DIR)/generated
- 
+	cd micropython-ulp-compiler && make SOURCES="../software-pya1/ulp/io.c" PRE_CMD="cd micropython-ulp-compiler" IDF_VERSION="$(IDF_VERSION)" DOCKER_CMD="$(DOCKER_CMD)" \
+OUTPUT_DIR="${DOCKER_BOARD_DIR}/generated" \
+NAME="__ulpio"
+	cp $(BOARD_DIR)/generated/__ulpio.py $(BOARD_DIR)/modules/__ulpio.py
+
 gen-pins: gen-dir
 	python3 $(BOARD_DIR)/generators/generate_pins.py $(BOARD_DIR)/cmodules/pins.h  $(BOARD_DIR)/pins.csv $(BOARD_DIR)/generated/pins.py
     
@@ -56,7 +57,9 @@ erase:
 clean:
 	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT) 
 	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT)-no_freeze
-	rm -rf ${CURDIR}/software-$(VARIANT)/ulp-compiler/build
+	rm -rf ${CURDIR}/micropython-ulp-compiler/build
+	rm -rf ${CURDIR}/micropython-ulp-compiler/.cache
+	rm -rf ${CURDIR}/micropython-ulp-compiler/ulp-compiler/build
 
 fullclean: clean
 	rm -rf ${CURDIR}/software-$(VARIANT)/generated
