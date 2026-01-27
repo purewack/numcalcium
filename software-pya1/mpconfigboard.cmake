@@ -20,7 +20,7 @@ set(MICROPY_SOURCE_BOARD
     ${MICROPY_BOARD_DIR}/cmodules/board_lcd.c
     ${MICROPY_BOARD_DIR}/cmodules/lcd_bmp.c
     ${MICROPY_BOARD_DIR}/cmodules/lcd_driver.c
-    ${MICROPY_BOARD_DIR}/generated/font.c
+    ${MICROPY_BOARD_DIR}/cmodules/font.c
 )
 
 set(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)

@@ -2,8 +2,6 @@
 
 VARIANT   := pya1
 FONT := gohu13
-FONT_W := 8
-FONT_H := 13
 
 PORT ?=
 
@@ -37,11 +35,11 @@ gen-ulp: gen-dir
 	cp $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.bin  $(BOARD_DIR)/ulp-compiler/build/esp-idf/main/ulp_main/ulp_main.ld $(BOARD_DIR)/generated
  
 gen-pins: gen-dir
-	python3 $(BOARD_DIR)/make_pins.py $(BOARD_DIR)/cmodules/pins.h  $(BOARD_DIR)/generated/pins.csv $(BOARD_DIR)/generated/pins.py
-	cp $(BOARD_DIR)/generated/pins.csv $(BOARD_DIR)/pins.csv
+	python3 $(BOARD_DIR)/generators/generate_pins.py $(BOARD_DIR)/cmodules/pins.h  $(BOARD_DIR)/pins.csv $(BOARD_DIR)/generated/pins.py
     
 gen-font: gen-dir
-	python3 $(BOARD_DIR)/make_font.py $(BOARD_DIR)/font/$(FONT) $(FONT_W) $(FONT_H)
+	mkdir -p $(BOARD_DIR)/fonts
+	python3 $(BOARD_DIR)/generators/generate_font.py  $(BOARD_DIR)/fonts/$(FONT) $(BOARD_DIR)/fonts
 
 gen-dir:
 	mkdir -p $(BOARD_DIR)/generated

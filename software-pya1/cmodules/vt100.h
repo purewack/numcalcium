@@ -5,7 +5,7 @@
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "../generated/font.h"
+#include "font.h"
 
 
 #define COL_RED    0xf800
@@ -31,6 +31,15 @@
 #define X_CHAR      (X_SIZE/FONT_WIDE)
 #define Y_CHAR      (Y_SIZE/FONT_TALL)
 
+#define CHARSET_COUNT_LIMIT 104
+
+typedef struct {
+    char xfName[64];
+    uint8_t xfWide;
+    uint8_t xfTall;
+    uint16_t *xfData; 
+} font_t;
+
 typedef struct {
     const uint8_t *buffer;
     int size;
@@ -53,7 +62,7 @@ void lcd_reset();
 void driver_init();
 void driver_setup();
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t color, const uint16_t bg, const uint8_t scale);
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t color, const uint16_t bg, const uint8_t scale, font_t *font);
 
 void driver_send_buffer(buffer_data_t buffer_data);
 void driver_buffer_task(void *pvParameters);

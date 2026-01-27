@@ -1,4 +1,4 @@
-#include "../generated/font.h"
+#include "font.h"
 #include "vt100.h"
 #include "board.h"
 
@@ -166,16 +166,16 @@ bool driver_ansiIsErase(const unsigned char* text, int *ii){
 }
 
 
-void driver_print_font_value(char ch, uint16_t *buf, uint8_t scale, uint16_t bg, uint16_t color){
-    uint32_t charStart = ch * FONT_WIDE;
+void driver_print_font_value(char ch, uint16_t *buf, uint8_t scale, uint16_t bg, uint16_t color, int font_wide, int font_tall, uint16_t *font_buf){
+    uint32_t charStart = ch * font_wide;
             
-    for(int xx=0; xx<FONT_WIDE; xx++){
-        for(int yy=0; yy<FONT_TALL; yy++){
+    for(int xx=0; xx<font_wide; xx++){
+        for(int yy=0; yy<font_tall; yy++){
             uint16_t cc = bg;
-            if(font_data[xx + charStart] & (1<<yy))
+            if(font_buf[xx + charStart] & (1<<yy))
                 cc = color;
             
-            int ws = FONT_WIDE * scale;
+            int ws = font_wide * scale;
             int sx = (xx * scale);
             int sy = (yy * ws * scale);
             for(int iy=0; iy<scale; iy++){
@@ -187,23 +187,27 @@ void driver_print_font_value(char ch, uint16_t *buf, uint8_t scale, uint16_t bg,
     }
 }
 
-void driver_print_escape_value(char ch, uint16_t *buf, uint8_t scale){
+
+// for printing hex numbers
+void driver_print_escape_value(char ch, uint16_t *buf, uint8_t scale, int font_wide, int font_tall, uint16_t *font_buf){
+    
+
     for(int nibble=0; nibble<2; nibble++){
         char value = nibble == 0 ? (ch&0xf0)>>4 : (ch&0xf);
-        int xoff = (FONT_COUNT-8)*FONT_WIDE + (value*FONT_WIDE)%(8*8);
+        int xoff = (CHARSET_COUNT_LIMIT-8)*font_wide + (value*font_wide)%(8*8);
         
-        uint8_t ysize = FONT_TALL>>1;
+        uint8_t ysize = font_tall>>1;
         uint8_t yoff = (value>8)*ysize;
         uint8_t ytarget = nibble ? ysize : 0;
         printf("nibble:%d, ys:%d, yoff:%d, xoff:%d v:%d\n\r",nibble,ysize,yoff,xoff,value);
 
-        for(int xx=0; xx<FONT_WIDE; xx++){
+        for(int xx=0; xx<font_wide; xx++){
             for(int yy=0; yy<ysize+1; yy++){
                 uint16_t cc = 0;
-                if(font_data[xx + xoff] & (1<<(yy + yoff)))
+                if(font_buf[xx + xoff] & (1<<(yy + yoff)))
                     cc = 0xf83f;
 
-                int ws = FONT_WIDE * scale;
+                int ws = font_wide * scale;
                 int sx = (xx * scale);
                 int sy = ((ytarget+yy) * ws * scale);
                 for(int iy=0; iy<scale; iy++){
@@ -216,7 +220,7 @@ void driver_print_escape_value(char ch, uint16_t *buf, uint8_t scale){
     }
 }
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale){
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, font_t* font){
 	
     if(scale > 4) {
 //        DEBUG_printf("scale too large %d",scale);
@@ -231,6 +235,19 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
     uint16_t bg = (_bg>>8) | (_bg&0xff)<<8;
     uint16_t color = (_color>>8) | (_color&0xff)<<8;
 
+    int ychar = Y_CHAR;
+    int xchar = X_CHAR;
+    int font_wide = FONT_WIDE;
+    int font_tall = FONT_TALL;
+    uint16_t *font_buf = (uint16_t*)font_data;
+    if(font){
+        xchar = X_SIZE / font->xfWide;
+        ychar = Y_SIZE / font->xfTall;
+        font_wide = font->xfWide;
+        font_tall = font->xfTall;
+        font_buf = font->xfData;
+    }
+
     int i=0;
     for(i=0; i<len; i++){
 
@@ -238,16 +255,16 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
         if(c == '\n'){
             *line += 1.f;
-			if(*line >= (float)(Y_CHAR/scale)){
+			if(*line >= (float)(ychar/scale)){
 				*line = 0;
 			}
             // if(LFCR)
             // 	*col = 0;
 			driver_fill(
                 0,
-                (uint16_t)(*line * (float)(FONT_TALL * scale)),
+                (uint16_t)(*line * (float)(font_tall * scale)),
                 X_SIZE,
-                (uint16_t)FONT_TALL * scale, 
+                (uint16_t)font_tall * scale, 
                 _bg);
             continue;
         }
@@ -259,10 +276,10 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
 		if(driver_ansiIsErase(&text[i],&i)) {
 			driver_fill(
-				(uint16_t)(*col * ((float)FONT_WIDE * scale)),
-				(uint16_t)(*line * ((float)FONT_TALL * scale)), 
+				(uint16_t)(*col * ((float)font_wide * scale)),
+				(uint16_t)(*line * ((float)font_tall * scale)), 
 				X_SIZE,
-				(int)FONT_TALL * scale,
+				(int)font_tall * scale,
 				_bg
 			);
 			continue;
@@ -272,19 +289,19 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
         if(c == '\b' || driver_ansiIsLeft(&text[i],&i,&back)){
             *col -= back ? (float)back : 1.f;
 			if(*col < 0){
-				*col = (float)(X_CHAR/scale);
+				*col = (float)(xchar/scale);
 				*line -= 1.f;
 				if(*line < 0){
-					*line = (float)(Y_CHAR/scale);
+					*line = (float)(ychar/scale);
 				}
 			}
 			continue;
         }
 		
-		int xx = (int)(*col  * (float)(FONT_WIDE * scale));
-		int yy = (int)(*line * (float)(FONT_TALL * scale));
-        int xw = xx + (FONT_WIDE * scale) - 1;
-        int yh = yy + (FONT_TALL * scale) - 1;
+		int xx = (int)(*col  * (float)(font_wide * scale));
+		int yy = (int)(*line * (float)(font_tall * scale));
+        int xw = xx + (font_wide * scale) - 1;
+        int yh = yy + (font_tall * scale) - 1;
 
         driver_send_cmd(0x2A); 
         driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
@@ -305,29 +322,29 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
         //print escape character code
         if(!ch){
-            driver_print_escape_value(c,buf,scale);
+            driver_print_escape_value(c,buf,scale, font_wide, font_tall, font_buf);
         }
         //print character from font map
         else{
-            driver_print_font_value(ch,buf,scale, bg,color);
+            driver_print_font_value(ch,buf,scale, bg,color, font_wide, font_tall, font_buf);
         }
 
         driver_start_pixel();
-        driver_send_pixel_data(buf,16 * FONT_WIDE * FONT_TALL * scale * scale);
+        driver_send_pixel_data(buf,16 * font_wide * font_tall * scale * scale);
         driver_end_pixel();
 
 		*col += 1;
-		if(*col >= X_CHAR/scale){
+		if(*col >= xchar/scale){
 			*col = 0;
 			*line += 1.f;
-			if(*line >= (float)(Y_CHAR/scale)){
+			if(*line >= (float)(ychar/scale)){
 				*line = 0;
 			}			
 			driver_fill(
                 0,
-                (uint16_t)(*line * ((float)FONT_TALL * scale))
+                (uint16_t)(*line * ((float)font_tall * scale))
                 ,X_SIZE,
-                (int)FONT_TALL * scale,
+                (int)font_tall * scale,
                 _bg);
 		}
     

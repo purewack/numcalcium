@@ -5,6 +5,5 @@
 #define FONT_NAME "gohu13"
 #define FONT_TALL 13
 #define FONT_WIDE 8
-#define FONT_COUNT 104
 extern const uint16_t font_data [832];
 #endif //_FONT_HEADER

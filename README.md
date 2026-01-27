@@ -39,6 +39,6 @@ Tasks:
 [x] terminal redirection `os.dupterm`
 [x] battery monitoring
 [x] rename `board` module to `numcalc`
+[x] allow loading custom fonts, in py file form
 [ ] cartridge code loading of .mpy code testing
-[ ] allow loading custom fonts, in py file form
 [ ] clean up debug prints from modules and cmodules

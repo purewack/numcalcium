@@ -5,6 +5,10 @@
 #include "py/builtin.h"
 #include "py/objstr.h"
 
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -12,7 +16,7 @@
 #include "vt100.h"
 #include "lcd_bmp.h"
 #include "board.h"
-#include "../generated/font.h"
+#include "font.h"
 
 typedef struct _lcd_obj_t {
     mp_obj_base_t base;
@@ -27,6 +31,9 @@ typedef struct _lcd_obj_t {
     bool printLFCR;
 	bool rgbSwap;
     bool invert;
+
+    bool extFont;
+    font_t* font;
 } lcd_obj_t;
 
 const mp_obj_type_t lcd_type;
@@ -162,13 +169,77 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
+static mp_obj_t unloadFont(mp_obj_t self_in) {
+    lcd_obj_t *self = &lcd_instance;
+    self->font = NULL;
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(unload_font_obj, unloadFont);
 
+static mp_obj_t loadFont(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_self,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_width,   MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_height,  MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_data,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_name,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+    lcd_obj_t *self = &lcd_instance;
+    
+    uint8_t cWidth = args[1].u_int;
+    uint8_t cHeight = args[2].u_int;
+    
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(args[3].u_obj, &bufinfo, MP_BUFFER_RW);
+    
+    size_t expected_size = CHARSET_COUNT_LIMIT * cWidth * sizeof(uint16_t);
+    if (bufinfo.len != expected_size) {
+        mp_raise_ValueError(MP_ERROR_TEXT("data length mismatch"));
+        return mp_const_none;
+    }
+    
+    font_t *new_font = (font_t *)malloc(sizeof(font_t));
+    if (new_font == NULL) {
+        mp_raise_OSError(MP_ENOMEM);
+        return mp_const_none;
+    }
+    
+    uint16_t *font_buf = (uint16_t *)bufinfo.buf;
+    
+    const char *font_name = "external";
+    if (args[4].u_obj != mp_const_none && mp_obj_is_str(args[4].u_obj)) {
+        font_name = mp_obj_str_get_str(args[4].u_obj);
+    }
+    
+    snprintf(new_font->xfName, sizeof(new_font->xfName), "%s", font_name);
+    new_font->xfWide = cWidth;
+    new_font->xfTall = cHeight;
+    new_font->xfData = font_buf;
+
+    if (self->extFont && self->font != NULL) {
+        if (self->font->xfData != NULL) {
+            free(self->font->xfData);
+        }
+        free(self->font);
+    }
+    
+    // Set new font
+    self->font = new_font;
+    self->extFont = true;
+    
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(load_font_obj, 4, loadFont);
 
 // Custom print handler for LCD like the built-in print()
 static void lcd_print_strn(void *data, const char *str, size_t len) {
     (void)data;  
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale);
+    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
 }
 
 static const mp_print_t lcd_printer = {NULL, lcd_print_strn};
@@ -203,13 +274,13 @@ static mp_obj_t lcd_print(size_t n_args, const mp_obj_t *args) {
         my_obj_print_helper(&lcd_printer, args[i], PRINT_REPR);
         // Add space between arguments (except the last one)
         if (i < n_args - 1) {
-            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale);
+            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
         }
     }
 
     // Print newline at the end (if required)
     if(n_args > 2 && self->printLFCR)
-        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale);
+        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
 
     return mp_const_none;
 }
@@ -219,7 +290,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lcd_print_obj, 1, MP_OBJ_FUN_ARGS_MAX
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale);
+    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
     return size; 
 }
 
@@ -245,6 +316,7 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         lcd_instance.bg = COL_BLACK;
         lcd_instance.printLFCR = true;
         lcd_instance.new = true;
+        lcd_instance.font = NULL;
 
     }
     return (mp_obj_t)&lcd_instance;
@@ -287,6 +359,8 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buffer), MP_ROM_PTR(&buffer_obj) },
     { MP_ROM_QSTR(MP_QSTR_options), MP_ROM_PTR(&options_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_parseBMP), MP_ROM_PTR(&parse_bmp_obj)  }, 
+    { MP_ROM_QSTR(MP_QSTR_loadFont), MP_ROM_PTR(&load_font_obj)  }, 
+    { MP_ROM_QSTR(MP_QSTR_unloadFont), MP_ROM_PTR(&unload_font_obj)  }, 
 };
 static MP_DEFINE_CONST_DICT(lcd_module_locals, lcd_module_locals_table);
 

@@ -12,7 +12,7 @@ _board.init()
 __sleep.exitLowPowerSleep()
 
 def shutdown():
-    # clearLeds()
+    clearLeds()
     __sleep.enterLowPowerSleep()
 
 class Keys(__keys.Keys):
@@ -32,6 +32,7 @@ class LCD(_board.Terminal):
         self._bl = None
         self.reset()
         self.setBacklight(127)
+        super().unloadFont()
 
     def __del__(self):
         self.setBacklight(0)
@@ -206,6 +207,13 @@ class LCD(_board.Terminal):
         sys.print_exception(e)
         os.dupterm(None)
         self.__lock.release()
+        
+    def font(self, font=None):
+        if(font == None):
+            super().unloadFont()
+            return
+        
+        super().loadFont(font['width'],font['height'],font['data'])
 
 
 def tone(note=None, velocity=None):
