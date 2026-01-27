@@ -1,5 +1,5 @@
-import board
+import numcalc
 
-board.clearLeds()
-board.tone()
-board.Keys().clearAll()
+numcalc.clearLeds()
+numcalc.tone()
+numcalc.Keys().clearAll()

@@ -2,7 +2,7 @@ import math
 import time
 import esp32
 import machine
-import board
+import numcalc
 import os
 
 u = esp32.ULP()
@@ -10,11 +10,11 @@ u.pause()
 u.run_embedded()
 u.resume()
 
-lcd = board.LCD()
+lcd = numcalc.LCD()
 lcd.clear()
 lcd.print("audio stream test")
 
-keys = board.Keys()
+keys = numcalc.Keys()
 
 b_size = 512
 buffer_a = bytearray(b_size)
@@ -28,11 +28,11 @@ def buffer_callback(active_buffer):
     need_refil = True
     #print("b",cur_buf)
 
-sdm = board.DAC(buffer_a, buffer_callback, [machine.Pin.board.A_OUT_L,machine.Pin.board.A_OUT_R])  # Start playback
+sdm = numcalc.DAC(buffer_a, buffer_callback, [machine.Pin.board.A_OUT_L,machine.Pin.board.A_OUT_R])  # Start playback
 print("ready")
 
 s = time.time()
-sd = board.SD()
+sd = numcalc.SD()
 os.mount(sd,'/sd')
 with open("/sd/stereo.raw","rb") as f:
 

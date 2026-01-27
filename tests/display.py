@@ -1,8 +1,8 @@
-import board
+import numcalc
 import framebuf
 # import bmp
 
-terminal = board.LCD()
+terminal = numcalc.LCD()
 terminal.background(terminal.BLACK)
 terminal.color(terminal.BLACK)
 terminal.clear()

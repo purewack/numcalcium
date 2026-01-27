@@ -1,16 +1,16 @@
 import machine
-import board
+import numcalc
 import os
 import framebuf
 from microbmp import MicroBMP
 
 print("starting")
 
-terminal = board.LCD()
+terminal = numcalc.LCD()
 
 print("mounting")
 
-sd = board.SD()
+sd = numcalc.SD()
 os.mount(sd,'/sd')
 
 path = "/sd/hellomiki.bmp"

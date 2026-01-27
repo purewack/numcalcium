@@ -3,7 +3,7 @@ import asyncio
 import framebuf
 import random
 import time
-import board
+import numcalc
 import neopixel
 import machine
 import __keys
@@ -77,7 +77,7 @@ class KeypadDriver():
 
     def __init__(self, mode='ble'):
         self.switchMappings('numpad')
-        self.scanner = board.Keys()
+        self.scanner = numcalc.Keys()
         self.usb = USBHID()
         self.ble = BLEHID('NumCalcium Numpad')
         self.mode = mode
@@ -216,7 +216,7 @@ def loadFrame(path, scale = 1):
     return frame
 
 def screen():
-    lcd = board.LCD()
+    lcd = numcalc.LCD()
     lcd.clear()
     
     global frames, k, key_presses, lock

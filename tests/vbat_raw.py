@@ -1,4 +1,4 @@
-import board
+import numcalc
 import time
 import os
 import machine
@@ -6,16 +6,16 @@ import machine
 vbat = machine.ADC(machine.Pin.board.VBAT_MON)
 chrg = machine.Pin.board.CHR_STATE
 chrg.init(machine.Pin.IN,pull=machine.Pin.PULL_UP)
-lcd = board.LCD()
-k = board.Keys()
+lcd = numcalc.LCD()
+k = numcalc.Keys()
 
 def dischargeCycle():
     for i in range(20):
         time.sleep(0.01)
-        board.led(i,200,200,200)
+        numcalc.led(i,200,200,200)
     for i in range(20):
         time.sleep(0.01)
-        board.led(i,0,0,0)
+        numcalc.led(i,0,0,0)
 
 discharing = False
 

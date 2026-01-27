@@ -1,8 +1,8 @@
-import board
+import numcalc
 import time
-lcd = board.LCD()
+lcd = numcalc.LCD()
 lcd.clear()
 lcd.print("Goind to sleep, 3s")
 time.sleep(3)
 
-board.enterLowPowerSleep()
+numcalc.enterLowPowerSleep()

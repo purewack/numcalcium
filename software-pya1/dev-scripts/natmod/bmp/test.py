@@ -1,10 +1,10 @@
 import time
 import bmp
 import framebuf
-import board
+import numcalc
 
 
-lcd = board.LCD()
+lcd = numcalc.LCD()
 lcd.clear()
 
 with open("test4.bmp","rb") as f:

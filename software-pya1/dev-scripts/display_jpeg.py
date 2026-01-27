@@ -1,12 +1,12 @@
 import machine
-import board
+import numcalc
 import terminal
 import os
 import framebuf
 from JPEGdecoder import jpeg
 
 
-sd = board.SD()
+sd = numcalc.SD()
 os.mount(sd, "/sd")
 
 # Path to the PNG file on the SD card

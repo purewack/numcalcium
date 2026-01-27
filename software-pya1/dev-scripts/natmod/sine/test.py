@@ -2,7 +2,7 @@ import math
 import time
 import esp32
 import machine
-import board
+import numcalc
 import nat_sine
 import gc
 
@@ -11,11 +11,11 @@ u.pause()
 u.run_embedded()
 u.resume()
 
-lcd = board.LCD()
+lcd = numcalc.LCD()
 lcd.clear()
 lcd.print("audio test")
 
-keys = board.Keys()
+keys = numcalc.Keys()
 
 b_size = 1024
 buffer_a = bytearray(b_size)
@@ -29,8 +29,8 @@ def buffer_callback(active_buffer):
     need_refil = True
     #print("b",cur_buf)
 
-sdm = board.DAC(buffer_a, buffer_callback, [6,7])  # Start playback
-sdm = board.DAC(buffer_a, buffer_callback)  # Start playback
+sdm = numcalc.DAC(buffer_a, buffer_callback, [6,7])  # Start playback
+sdm = numcalc.DAC(buffer_a, buffer_callback)  # Start playback
 gc.collect()
 nat_sine.buffer(buffer_a)
 print("ready")

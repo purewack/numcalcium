@@ -4,9 +4,9 @@ import random
 
 import _board
 _board.init()
-import board
+import numcalc
 
-terminal = board.LCD()
+terminal = numcalc.LCD()
 
 xx = 320
 yy = 170

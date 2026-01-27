@@ -1,11 +1,11 @@
 import machine
-import board
+import numcalc
 import os
 import framebuf
 
-board.init()
+numcalc.init()
 
-sd = board.SD()
+sd = numcalc.SD()
 os.mount(sd,'/sd')
 
 p = machine.Pin(21)

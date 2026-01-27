@@ -1,4 +1,4 @@
-import board
+import numcalc
 import network
 import requests
 import time
@@ -7,7 +7,7 @@ def cb(b):
     print(b)
 
 buf = bytearray(4000)
-dac = board.DAC(buf,cb)
+dac = numcalc.DAC(buf,cb)
 
 n = network.WLAN()
 n.active(True)
@@ -22,12 +22,12 @@ with open("local.psk.txt","r") as f:
 
 n.connect(ssid,psk)
 while not n.isconnected():
-    board.statusLed(10,10,10)
+    numcalc.statusLed(10,10,10)
     time.sleep(0.1)
-    board.statusLed(0,0,0)
+    numcalc.statusLed(0,0,0)
     time.sleep(0.1)
 
-lcd = board.LCD()
+lcd = numcalc.LCD()
 lcd.clear()
 lcd.print("Connected\n\r")
 lcd.print(str(n.ifconfig()))
@@ -39,10 +39,10 @@ for i in range(10):
     lcd.print(t[0:250])
     r.close()
     for l in range(20):
-        board.led(l,250,250,250)
+        numcalc.led(l,250,250,250)
         time.sleep(0.1)
     for l in range(20):
-        board.led(l,0,0,0)
+        numcalc.led(l,0,0,0)
         time.sleep(0.1)
 
 dac.deinit()

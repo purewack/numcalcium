@@ -1,6 +1,6 @@
-import board
+import numcalc
 import os
 
-sd = board.SD()
+sd = numcalc.SD()
 os.mount(sd,'/sd')
 print(os.listdir('/sd'))

@@ -1,22 +1,22 @@
-import board
+import numcalc
 import time
 import os
 
-lcd = board.LCD()
+lcd = numcalc.LCD()
 os.dupterm(lcd)
-k = board.Keys()
+k = numcalc.Keys()
 
 def dischargeCycle():
     for i in range(20):
         time.sleep(0.01)
-        board.led(i,200,200,200)
+        numcalc.led(i,200,200,200)
     for i in range(20):
         time.sleep(0.01)
-        board.led(i,0,0,0)
+        numcalc.led(i,0,0,0)
 
 discharing = False
 
-bat = board.Battery()
+bat = numcalc.Battery()
 
 while True:
     if(k.isAnyDown()):

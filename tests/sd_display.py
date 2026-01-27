@@ -1,11 +1,11 @@
-import board
+import numcalc
 import os
 
-sd = board.SD()
+sd = numcalc.SD()
 os.mount(sd,'/sd')
 items = os.listdir('/sd')
 
-lcd = board.LCD()
+lcd = numcalc.LCD()
 lcd.color(lcd.WHITE)
 lcd.background(lcd.BLACK)
 
