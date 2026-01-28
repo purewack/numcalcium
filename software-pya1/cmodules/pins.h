@@ -55,8 +55,8 @@
 #define BOARD_PIN_PORT11    43
 #define BOARD_PIN_PORT12    44
 
-#define BOARD_PIN_PORT_SCL  44
-#define BOARD_PIN_PORT_SDA  43
+#define BOARD_PIN_PORT_SCL  18
+#define BOARD_PIN_PORT_SDA  17
 
 // IO keypad + encoder
 #define BOARD_PIN_IO_OE     11

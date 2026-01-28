@@ -16,3 +16,6 @@ for i in range(20):
 
 numcalc.statusLed(0,0,0)
 a = 42
+
+with open("dest.txt","w") as f:
+    print({'data':a},file=f)

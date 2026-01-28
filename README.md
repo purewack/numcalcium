@@ -40,5 +40,5 @@ Tasks:
 [x] battery monitoring
 [x] rename `board` module to `numcalc`
 [x] allow loading custom fonts, in py file form
-[ ] cartridge code loading of .mpy code testing
+[x] cartridge code loading of .mpy code testing
 [ ] clean up debug prints from modules and cmodules

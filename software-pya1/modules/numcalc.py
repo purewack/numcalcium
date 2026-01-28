@@ -1,6 +1,7 @@
 import _board
 import __keys 
 import __sleep
+import __cartridge
 import machine
 import neopixel
 import os
@@ -14,6 +15,14 @@ __sleep.exitLowPowerSleep()
 def shutdown():
     clearLeds()
     __sleep.enterLowPowerSleep()
+
+def runFromCartridge():
+    __cartridge.run()
+
+def burnToCartridge(data):
+    __cartridge.burn(data)
+    if(not __cartridge.check() == True):
+        raise Exception('Error during burning, check wiring and chip')
 
 class Keys(__keys.Keys):
     pass
