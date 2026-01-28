@@ -3,6 +3,8 @@
 VARIANT   := pya1
 FONT := gohu13
 
+VERSION_NUMCALC := "A1"
+
 PORT ?=
 
 # runtime ids
@@ -12,10 +14,11 @@ CURRENT_GID := $(shell id -g)
 export CURRENT_UID
 export CURRENT_GID
 
-BOARD_DIR_REL := software-$(VARIANT)
-BOARD_DIR := $(CURDIR)/$(BOARD_DIR_REL)
-DOCKER_BOARD_DIR := /project/$(BOARD_DIR_REL)
-DOCKER_MPY_DIR := /project/micropython/ports/esp32
+MPY_DIR_REL 		:= micropython/ports/esp32
+BOARD_DIR_REL 		:= software-$(VARIANT)
+BOARD_DIR 			:= $(CURDIR)/$(BOARD_DIR_REL)
+DOCKER_BOARD_DIR 	:= /project/$(BOARD_DIR_REL)
+DOCKER_MPY_DIR 		:= /project/$(MPY_DIR_REL)
 
 IDF_VERSION := espressif/idf:v5.5.1
 DOCKER_CMD := docker run --rm --privileged -v $(CURDIR):/project -w /project -u $(CURRENT_UID) -e HOME=/tmp $(IDF_VERSION)
@@ -23,7 +26,7 @@ DOCKER_CMD := docker run --rm --privileged -v $(CURDIR):/project -w /project -u 
 # main target
 .PHONY: all ulp pins font flash clean fullclean
 
-all: 
+all: gen-version
 	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT)
 
 firmware-no-freeze: 
@@ -36,14 +39,18 @@ NAME="__ulpio"
 	cp $(BOARD_DIR)/generated/__ulpio.py $(BOARD_DIR)/modules/__ulpio.py
 
 gen-pins: gen-dir
-	python3 $(BOARD_DIR)/generators/generate_pins.py $(BOARD_DIR)/cmodules/pins.h  $(BOARD_DIR)/pins.csv $(BOARD_DIR)/generated/pins.py
+	python3 $(BOARD_DIR)/generators/pins.py $(BOARD_DIR)/cmodules/pins.h  $(BOARD_DIR)/pins.csv $(BOARD_DIR)/generated/pins.py
     
 gen-font: gen-dir
 	mkdir -p $(BOARD_DIR)/fonts
-	python3 $(BOARD_DIR)/generators/generate_font.py  $(BOARD_DIR)/fonts/$(FONT) $(BOARD_DIR)/fonts
+	python3 $(BOARD_DIR)/generators/font.py  $(BOARD_DIR)/fonts/$(FONT) $(BOARD_DIR)/fonts
 
 gen-dir:
 	mkdir -p $(BOARD_DIR)/generated
+
+gen-version:
+	mkdir -p $(BOARD_DIR)/modules-build
+	python3 $(BOARD_DIR)/generators/version.py $(VERSION_NUMCALC) $(BOARD_DIR)/modules-build/__numcalcium_version.py
 
 deploy:
 	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) deploy
@@ -55,8 +62,8 @@ erase:
 	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) erase
 
 clean:
-	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT) 
-	rm -rf ${CURDIR}/micropython/ports/esp32/build-$(VARIANT)-no_freeze
+	rm -rf ${CURDIR}/$(MPY_DIR_REL)/build-$(VARIANT) 
+	rm -rf ${CURDIR}/$(MPY_DIR_REL)/build-$(VARIANT)-no_freeze
 	rm -rf ${CURDIR}/micropython-ulp-compiler/build
 	rm -rf ${CURDIR}/micropython-ulp-compiler/.cache
 	rm -rf ${CURDIR}/micropython-ulp-compiler/ulp-compiler/build
@@ -64,6 +71,10 @@ clean:
 fullclean: clean
 	rm -rf ${CURDIR}/software-$(VARIANT)/generated
 
+distribute: clean all
+	mkdir -p $(CURDIR)/dist
+	cp ${CURDIR}/$(MPY_DIR_REL)/build-$(VARIANT)/firmware.bin \
+${CURDIR}/dist/numcalcium-$(VERSION_NUMCALC)-`cd $(BOARD_DIR)/generated && python3 -c 'import __versioning; print(__versioning._build)'`.bin
 
 # mount local dirs for dev mode for py files
 dev:

@@ -8,6 +8,10 @@ import os
 import sys
 import time
 import _thread
+import __numcalcium_version
+
+NUMCALC_VER = __numcalcium_version._version
+NUMCALC_BUILD = __numcalcium_version._build
 
 _board.init()
 __sleep.exitLowPowerSleep()

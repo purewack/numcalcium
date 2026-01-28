@@ -4,7 +4,7 @@ import sys
 
 #python 'name' height width
 if not len(sys.argv) == 3 or sys.argv[0] == '--help':
-    print("usage: 'filename' 'outpath'")
+    print("Usage: python font.py <filename> <output_path>")
     sys.exit()
 
 

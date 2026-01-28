@@ -42,7 +42,7 @@ def extract_pins_from_header(header_file, output_csv, output_py):
 
 # Command-line argument handling
 if len(sys.argv) != 4:
-    print("Usage: python generate_pins.py <input_header> <output_csv> <output_py>")
+    print("Usage: python pins.py <input_header> <output_csv> <output_py>")
 else:
     _, header_file, output_csv, output_py = sys.argv
     extract_pins_from_header(header_file, output_csv, output_py)
