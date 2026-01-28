@@ -73,7 +73,7 @@ static sdcard_card_obj_t sd_instance = {{&board_sdcard_type},0};
 
 static esp_err_t sdcard_ensure_card_init(sdcard_card_obj_t *self, bool force) {
     if (force || !(self->flags & SDCARD_CARD_FLAGS_CARD_INIT_DONE)) {
-        DEBUG_printf("  Calling card init\n");
+        //DEBUG_printf("  Calling card init\n");
 
         esp_err_t err = sdmmc_card_init(&(self->host), &(self->card));
         if (err == ESP_OK) {
@@ -81,7 +81,7 @@ static esp_err_t sdcard_ensure_card_init(sdcard_card_obj_t *self, bool force) {
         } else {
             self->flags &= ~SDCARD_CARD_FLAGS_CARD_INIT_DONE;
         }
-        DEBUG_printf("  Card init returned: %d\n", self->flags);
+        //DEBUG_printf("  Card init returned: %d\n", self->flags);
         
         return err;
     } else {
@@ -114,8 +114,8 @@ static mp_obj_t board_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, 
     mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
     mp_map_t kw_args;
 
-    DEBUG_printf("Making new SDCard\n");
-    DEBUG_printf("  Unpacking arguments\n");
+    //DEBUG_printf("Making new SDCard\n");
+    //DEBUG_printf("  Unpacking arguments\n");
 
     mp_map_init_fixed_table(&kw_args, n_kw, args + n_args);
 
@@ -124,7 +124,7 @@ static mp_obj_t board_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     if((sd_instance.flags & SDCARD_CARD_FLAGS_HOST_INIT_DONE)) return (mp_obj_t)&sd_instance;
 
-    DEBUG_printf("  Setting up host configuration\n");
+    //DEBUG_printf("  Setting up host configuration\n");
 
     sd_instance.flags = 0;
     // Note that these defaults are macros that expand to structure
@@ -135,19 +135,19 @@ static mp_obj_t board_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, 
     _temp_host.slot = BOARD_SPI_SLOT_INTERNAL;
     sd_instance.host = _temp_host;
 
-    DEBUG_printf("  Calling host.init()\n");
+    //DEBUG_printf("  Calling host.init()\n");
 
     check_esp_err(sd_instance.host.init());
     sd_instance.flags |= SDCARD_CARD_FLAGS_HOST_INIT_DONE;
 
-    DEBUG_printf("  Returning new card object: %p\n", &sd_instance);
+    //DEBUG_printf("  Returning new card object: %p\n", &sd_instance);
     return (mp_obj_t)&sd_instance;
 }
 
 static mp_obj_t sd_deinit(mp_obj_t self_in) {
     sdcard_card_obj_t *self = self_in;
 
-    DEBUG_printf("De-init host\n");
+    //DEBUG_printf("De-init host\n");
 
     if (self->flags & SDCARD_CARD_FLAGS_HOST_INIT_DONE) {
         if (self->host.flags & SDMMC_HOST_FLAG_DEINIT_ARG) {

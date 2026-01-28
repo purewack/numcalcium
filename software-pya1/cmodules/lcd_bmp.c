@@ -73,7 +73,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     mp_buffer_info_t dib_header;
     mp_get_buffer_raise(file_reader, &dib_header, MP_BUFFER_READ);
     dib_header_size = (uint32_t)((uint32_t *)dib_header.buf)[0];
-    DEBUG_printf("DIB size %d\n", dib_header_size);
+    //DEBUG_printf("DIB size %d\n", dib_header_size);
 
     file_reader = mp_call_function_n_kw(read_meth, 1, 0, (mp_obj_t[]){ MP_OBJ_NEW_SMALL_INT(dib_header_size - 1) });
     mp_get_buffer_raise(file_reader, &dib_header, MP_BUFFER_READ);
@@ -92,7 +92,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     int abs_height = height < 0 ? -height : height;
     int flipped = height > 0;
 
-    DEBUG_printf("Details %d %d %d %d Rows %d %d Scale %d\n", width, height, flipped, bpp, row_size, abs_height,scale);
+    //DEBUG_printf("Details %d %d %d %d Rows %d %d Scale %d\n", width, height, flipped, bpp, row_size, abs_height,scale);
             
     mp_obj_t img_dict = mp_obj_new_dict(0);
     mp_obj_dict_store(img_dict, mp_obj_new_str("width", strlen("width")), mp_obj_new_int(width * scale)); 
@@ -118,7 +118,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
         mp_get_buffer_raise(palette_data, &palette_buf, MP_BUFFER_READ);
         uint8_t *palette = (uint8_t *)palette_buf.buf;
         
-        DEBUG_printf("Palette colors %d %p, Pixel offset %d\n", palette_buf.len / 4, palette_buf.buf, pixel_offset);
+        //DEBUG_printf("Palette colors %d %p, Pixel offset %d\n", palette_buf.len / 4, palette_buf.buf, pixel_offset);
             
         mp_obj_t seek_pixel_args[2] = { MP_OBJ_NEW_SMALL_INT(pixel_offset), MP_OBJ_NEW_SMALL_INT(0) };
         mp_call_function_n_kw(seek_meth, 2, 0, seek_pixel_args);
@@ -130,7 +130,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             uint8_t *row_buf = (uint8_t *)row_info.buf;
             
             if (row_info.len == 0) {
-                DEBUG_printf("Failed to read row data\n");
+                //DEBUG_printf("Failed to read row data\n");
                 mp_raise_ValueError(MP_ERROR_TEXT("Failed to read row data"));
             }
             
@@ -189,9 +189,9 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             mp_get_buffer_raise(row_data, &row_info, MP_BUFFER_READ);
             uint8_t *row_buf = (uint8_t *)row_info.buf;
             
-            DEBUG_printf("ROW %d %p\n", row_info.len, row_info.buf);
+            //DEBUG_printf("ROW %d %p\n", row_info.len, row_info.buf);
             if (row_info.len == 0) {
-                DEBUG_printf("Failed to read row data\n");
+                //DEBUG_printf("Failed to read row data\n");
                 mp_raise_ValueError(MP_ERROR_TEXT("Failed to read row data"));
             }
             
@@ -215,9 +215,9 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
             mp_get_buffer_raise(row_data, &row_info, MP_BUFFER_READ);
             uint8_t *row_buf = (uint8_t *)row_info.buf;
             
-            DEBUG_printf("ROW %d %p\n", row_info.len, row_info.buf);
+            //DEBUG_printf("ROW %d %p\n", row_info.len, row_info.buf);
             if (row_info.len == 0) {
-                DEBUG_printf("Failed to read row data\n");
+                //DEBUG_printf("Failed to read row data\n");
                 mp_raise_ValueError(MP_ERROR_TEXT("Failed to read row data"));
             }
             
@@ -242,7 +242,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
         int fb_size = dst_width * dst_height * sizeof(uint16_t);
         
         if (fb_buf.len < fb_size) {
-            DEBUG_printf("%d %d\n",fb_buf.len , fb_size);
+            //DEBUG_printf("%d %d\n",fb_buf.len , fb_size);
             mp_raise_ValueError(MP_ERROR_TEXT("Framebuffer too small for scaled image"));
         }
         

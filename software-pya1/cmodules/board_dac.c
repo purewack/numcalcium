@@ -1,7 +1,13 @@
-#include "py/builtin.h"
 #include "py/runtime.h"
+#include "py/objstr.h"
 #include "py/obj.h"
-#include "py/mphal.h"
+#include "py/stream.h"
+#include "py/builtin.h"
+#include "py/objstr.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "driver/gptimer.h"
 #include "driver/sdm.h"
@@ -67,21 +73,21 @@ static bool IRAM_ATTR buffer_sample_feed_unibuf_cb(gptimer_handle_t timer, const
 static mp_obj_t sdm_deinit(mp_obj_t self_in) {
     sdm_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (self->_timer_handle) {
-        DEBUG_printf("stop timer\n");
+        //DEBUG_printf("stop timer\n");
         check_esp_err(gptimer_stop(self->_timer_handle));  // Stop the timer first
-        DEBUG_printf("disable timer\n");
+        //DEBUG_printf("disable timer\n");
         check_esp_err(gptimer_disable(self->_timer_handle));  // Disable timer first
-        DEBUG_printf("deleting of timer\n");
+        //DEBUG_printf("deleting of timer\n");
         check_esp_err(gptimer_del_timer(self->_timer_handle));
         self->_timer_handle = NULL;
     }
 
-    DEBUG_printf("deleting of channels\n");
+    //DEBUG_printf("deleting of channels\n");
     for (int i = 0; i < 2; i++) {
         if (self->channels[i] != NULL) {
-            DEBUG_printf("disable channel %d\n",self->channels[i]);
+            //DEBUG_printf("disable channel %d\n",self->channels[i]);
             check_esp_err(sdm_channel_disable(self->channels[i]));
-            DEBUG_printf("deleting channel %d\n",self->channels[i]);
+            //DEBUG_printf("deleting channel %d\n",self->channels[i]);
             check_esp_err(sdm_del_channel(self->channels[i]));
             self->channels[i] = NULL;
         }
@@ -91,7 +97,7 @@ static mp_obj_t sdm_deinit(mp_obj_t self_in) {
     self->channel_count = 0;  // Reset count
     self->callback = mp_const_none;
 
-    DEBUG_printf("deinit sigma-delta\n");
+    //DEBUG_printf("deinit sigma-delta\n");
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(sdm_deinit_obj, sdm_deinit);
@@ -143,12 +149,12 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         if(bufinfo[0].len != bufinfo[1].len){
             mp_raise_ValueError(MP_ERROR_TEXT("buffers must have equal size"));
         }
-        DEBUG_printf("dual buffers\n");
+        //DEBUG_printf("dual buffers\n");
     }
     else{
         self->buf_dual = 0;
         mp_get_buffer_raise(args[0], &bufinfo[0], MP_BUFFER_RW);
-        DEBUG_printf("single buffer\n");
+        //DEBUG_printf("single buffer\n");
     }
 
     mp_obj_t callback = args[1];
@@ -207,19 +213,19 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
             .sample_rate_hz = trate,
             .gpio_num = pin,
         };
-        DEBUG_printf("ch: %d\n", pin);
+        //DEBUG_printf("ch: %d\n", pin);
 
         esp_err_t err = sdm_new_channel(&config, &chan);
         if (err != ESP_OK) {
             mp_raise_OSError(err);  // Raise error if allocation fails
         }
 
-        DEBUG_printf("ch enable %d\n", pin);
+        //DEBUG_printf("ch enable %d\n", pin);
         check_esp_err(sdm_channel_enable(chan));
         self->channels[self->channel_count++] = chan;
-        DEBUG_printf("Channel configured to use pin: %d\n", pin);
+        //DEBUG_printf("Channel configured to use pin: %d\n", pin);
     }
-    DEBUG_printf("Channel config done, active channels %d\n",self->channel_count);
+    //DEBUG_printf("Channel config done, active channels %d\n",self->channel_count);
     
     /* Allocate GPTimer handle */
     gptimer_handle_t timer_handle;
@@ -228,7 +234,7 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         .direction = GPTIMER_COUNT_UP,
         .resolution_hz = srate,
     };
-    DEBUG_printf("Timer setup\n");
+    //DEBUG_printf("Timer setup\n");
     check_esp_err(gptimer_new_timer(&timer_cfg, &timer_handle));
     
     /* Set the timer alarm configuration */
@@ -238,12 +244,12 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         .flags.auto_reload_on_alarm = true,
     };
     
-    DEBUG_printf("Alarm setup");
+    //DEBUG_printf("Alarm setup");
     check_esp_err(gptimer_set_alarm_action(timer_handle, &alarm_cfg));
 
     /* Register the alarm callback */
    
-    DEBUG_printf("Callback setup");
+    //DEBUG_printf("Callback setup");
     gptimer_event_callbacks_t cbs = {
         .on_alarm = buffer_sample_feed_unibuf_cb,
     };
@@ -260,7 +266,7 @@ static mp_obj_t sdm_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
     self->buf_size = bufinfo[0].len;
     self->callback = callback;
     self->_timer_handle = timer_handle;
-    DEBUG_printf("Started sigma-delta audio\n");
+    //DEBUG_printf("Started sigma-delta audio\n");
 
     return MP_OBJ_FROM_PTR(self);
 }

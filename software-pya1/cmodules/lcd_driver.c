@@ -223,12 +223,12 @@ void driver_print_escape_value(char ch, uint16_t *buf, uint8_t scale, int font_w
 void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, font_t* font){
 	
     if(scale > 4) {
-//        DEBUG_printf("scale too large %d",scale);
+//        //DEBUG_printf("scale too large %d",scale);
         return;
     }
 
     if(scale < 1) {
-//        DEBUG_printf("scale too small %d",scale);
+//        //DEBUG_printf("scale too small %d",scale);
         return;
     }
 
@@ -367,7 +367,7 @@ void driver_send_buffer(buffer_data_t buffer_data){
     int size = buffer_data.size;// buffer_data.width * buffer_data.height * 2 * 8;
     int xferred = 0;
     int limit = 32000;
-//            DEBUG_printf("buffer stats: %d %d %d %d %p\n",buffer_data.x,buffer_data.y,buffer_data.width,buffer_data.height,buffer_data.buffer);
+//            //DEBUG_printf("buffer stats: %d %d %d %d %p\n",buffer_data.x,buffer_data.y,buffer_data.width,buffer_data.height,buffer_data.buffer);
     do{
         int count = size - xferred;
         if(count > limit) count = limit;

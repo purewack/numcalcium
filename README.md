@@ -1,7 +1,5 @@
 # Numcalcium32 
-An ESP32 calculator
-
-*under construction*
+An ESP32 calculator running MicroPython
 
 Dev patterns:
 
@@ -25,20 +23,3 @@ Dev patterns:
 - Update pin definitions:
         make gen-pins
 
-
-
-Tasks:
-
-[x] lcd driver
-[x] keypad and encoder driver
-[x] deepsleep and wake
-[x] headphone SDM dac
-[x] buzzer driver
-[x] rgb
-[x] BMP decoder
-[x] terminal redirection `os.dupterm`
-[x] battery monitoring
-[x] rename `board` module to `numcalc`
-[x] allow loading custom fonts, in py file form
-[x] cartridge code loading of .mpy code testing
-[ ] clean up debug prints from modules and cmodules

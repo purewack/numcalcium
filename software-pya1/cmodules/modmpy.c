@@ -28,24 +28,24 @@ static mp_uint_t mpy_stream_readbyte(void *data) {
             mp_raise_OSError(err);
         }
         if (rs->len == 0) {
-            DEBUG_printf("eof\n\r");
+            //DEBUG_printf("eof\n\r");
             return MP_READER_EOF; // End of stream
         }
-        DEBUG_printf("refill\n\r");
+        //DEBUG_printf("refill\n\r");
     }
 
     // Return the next byte from the buffer
     byte rbyte = rs->buf[rs->pos++];
-    DEBUG_printf("read %d\n\r",rbyte);
+    //DEBUG_printf("read %d\n\r",rbyte);
     return rbyte;
 }
 
 static void mpy_stream_close(void *data) {
-    DEBUG_printf("close req\n");
+    //DEBUG_printf("close req\n");
     mpy_streamer_t *rs = (mpy_streamer_t *)data;
     mp_stream_close(rs->stream);
     m_del_obj(mpy_streamer_t, rs);
-    DEBUG_printf("closed\n\r");
+    //DEBUG_printf("closed\n\r");
 }
 
 static mp_obj_t load_stream(size_t n_args, const mp_obj_t *args) {
@@ -84,7 +84,7 @@ static mp_obj_t load_stream(size_t n_args, const mp_obj_t *args) {
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
     
-    DEBUG_printf("ended\n\r");
+    //DEBUG_printf("ended\n\r");
     m_del(byte, bufpointer, bufpointer_size);
     return mp_const_none;
 }
