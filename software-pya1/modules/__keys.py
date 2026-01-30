@@ -2,6 +2,8 @@ import esp32
 import __ulpio
 from machine import mem32
 
+exclusive_home = True
+
 class Keys:
 
     SHIFT = 0
@@ -51,7 +53,7 @@ class Keys:
     KEY_SIDE_C  = C
     KEY_SIDE_D  = D
     KEY_SIDE_E  = E
-
+    
     def __eq__(self, check):
         return self.raw() & (1<<check)
 
@@ -154,7 +156,6 @@ class Keys:
         return False
     
 
-
     def raw(self):
         return self.__rw('bscan')
     
@@ -165,6 +166,22 @@ class Keys:
         return self.__rw('turns')
 
 
+    def acquireHomeButton(self):
+        global exclusive_home
+        exclusive_home = False
+
+    def releaseHomeButton(self):
+        global exclusive_home
+        exclusive_home = True
+    
+    def exclusiveHomeState(self):
+        global exclusive_home
+        return exclusive_home
+    
+    def setExclusiveHomeState(self, value):
+        global exclusive_home
+        exclusive_home = value
+    
 
     def __rw(self,key,val=None):
         if(not val == None):
