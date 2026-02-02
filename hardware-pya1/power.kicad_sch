@@ -2657,6 +2657,12 @@
 		(uuid "2c8a418c-9f34-4a65-9354-1a80531cb1c2")
 	)
 	(junction
+		(at 130.81 93.98)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2e078ac8-7c50-4aab-b004-e421be45a4e0")
+	)
+	(junction
 		(at 130.81 153.67)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2699,12 +2705,6 @@
 		(uuid "6636691f-0507-4eed-a844-7eb78211302d")
 	)
 	(junction
-		(at 184.15 92.71)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "66a8cb80-88eb-4e0a-8491-4de23635e28e")
-	)
-	(junction
 		(at 180.34 109.22)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2729,16 +2729,16 @@
 		(uuid "9f1661c6-20e8-46f0-aad3-869bc140269f")
 	)
 	(junction
+		(at 184.15 88.9)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a2c7bd9c-1149-46d1-8803-d129faec3f6b")
+	)
+	(junction
 		(at 60.96 119.38)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "aa183467-1af2-48cc-af98-ad29bb9d3412")
-	)
-	(junction
-		(at 124.46 153.67)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "ab964a7f-0a40-4c26-9399-041f65dba6a3")
 	)
 	(junction
 		(at 83.82 80.01)
@@ -2757,12 +2757,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "c6e0b2c3-5b49-4ec0-ac11-87449f753456")
-	)
-	(junction
-		(at 130.81 99.06)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "c79eb342-8aa8-4d5f-b605-086a44ad2db7")
 	)
 	(junction
 		(at 97.79 80.01)
@@ -2860,16 +2854,6 @@
 	)
 	(wire
 		(pts
-			(xy 184.15 104.14) (xy 184.15 109.22)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "071caf44-dea7-4d6e-aa38-80df18b87cad")
-	)
-	(wire
-		(pts
 			(xy 163.83 114.3) (xy 163.83 116.84)
 		)
 		(stroke
@@ -2877,6 +2861,16 @@
 			(type default)
 		)
 		(uuid "076e512b-29b5-44b6-b82d-d914abd2943e")
+	)
+	(wire
+		(pts
+			(xy 184.15 107.95) (xy 184.15 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "08ee2958-64cc-447c-b9e5-0c1e86dcef32")
 	)
 	(wire
 		(pts
@@ -2970,7 +2964,7 @@
 	)
 	(wire
 		(pts
-			(xy 104.14 99.06) (xy 130.81 99.06)
+			(xy 104.14 93.98) (xy 130.81 93.98)
 		)
 		(stroke
 			(width 0)
@@ -3080,7 +3074,7 @@
 	)
 	(wire
 		(pts
-			(xy 184.15 92.71) (xy 184.15 93.98)
+			(xy 184.15 80.01) (xy 184.15 88.9)
 		)
 		(stroke
 			(width 0)
@@ -3090,17 +3084,7 @@
 	)
 	(wire
 		(pts
-			(xy 184.15 80.01) (xy 184.15 92.71)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5767e128-9d77-43f0-bfb3-f0ab1c63b2a5")
-	)
-	(wire
-		(pts
-			(xy 104.14 87.63) (xy 104.14 99.06)
+			(xy 104.14 87.63) (xy 104.14 93.98)
 		)
 		(stroke
 			(width 0)
@@ -3150,7 +3134,7 @@
 	)
 	(wire
 		(pts
-			(xy 130.81 99.06) (xy 176.53 99.06)
+			(xy 130.81 93.98) (xy 176.53 93.98)
 		)
 		(stroke
 			(width 0)
@@ -3180,7 +3164,7 @@
 	)
 	(wire
 		(pts
-			(xy 184.15 92.71) (xy 198.12 92.71)
+			(xy 184.15 88.9) (xy 198.12 88.9)
 		)
 		(stroke
 			(width 0)
@@ -3210,7 +3194,7 @@
 	)
 	(wire
 		(pts
-			(xy 130.81 99.06) (xy 130.81 153.67)
+			(xy 130.81 93.98) (xy 130.81 153.67)
 		)
 		(stroke
 			(width 0)
@@ -3267,6 +3251,16 @@
 			(type default)
 		)
 		(uuid "94f8b768-b251-4778-bbb7-79ef847d53b3")
+	)
+	(wire
+		(pts
+			(xy 184.15 99.06) (xy 184.15 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "95e927aa-9585-46d0-8794-e44e3d861ca4")
 	)
 	(wire
 		(pts
@@ -3624,7 +3618,7 @@
 	)
 	(hierarchical_label "VDD_AON"
 		(shape input)
-		(at 198.12 92.71 0)
+		(at 198.12 88.9 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3657,7 +3651,7 @@
 	)
 	(symbol
 		(lib_id "Transistor_FET:AO3401A")
-		(at 181.61 99.06 0)
+		(at 181.61 93.98 0)
 		(mirror x)
 		(unit 1)
 		(exclude_from_sim no)
@@ -3666,7 +3660,7 @@
 		(dnp no)
 		(uuid "08a63d86-02af-4adc-8e27-c4f33abb511b")
 		(property "Reference" "Q3"
-			(at 180.34 94.996 90)
+			(at 180.34 89.916 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3674,7 +3668,7 @@
 			)
 		)
 		(property "Value" "AO3401A"
-			(at 191.008 98.552 0)
+			(at 191.008 93.472 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3682,7 +3676,7 @@
 			)
 		)
 		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
-			(at 186.69 97.155 0)
+			(at 186.69 92.075 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3693,7 +3687,7 @@
 			)
 		)
 		(property "Datasheet" "http://www.aosmd.com/pdfs/datasheet/AO3401A.pdf"
-			(at 181.61 99.06 0)
+			(at 181.61 93.98 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3703,7 +3697,7 @@
 			)
 		)
 		(property "Description" "-4.0A Id, -30V Vds, P-Channel MOSFET, SOT-23"
-			(at 181.61 99.06 0)
+			(at 181.61 93.98 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3871,71 +3865,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GND")
-		(at 124.46 161.29 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "10ce6aff-5f35-4761-acfd-d3db67c1ca67")
-		(property "Reference" "#PWR21"
-			(at 124.46 167.64 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 124.46 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 124.46 161.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 124.46 161.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 124.46 161.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "3c83d19b-218b-4790-b87e-c1fe6e75bee4")
-		)
-		(instances
-			(project "numcalcium"
-				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34/94b3147a-b22b-4e06-91e3-a2640188c514"
-					(reference "#PWR21")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 180.34 114.3 0)
 		(mirror y)
@@ -4000,6 +3929,76 @@
 			(project "numcalcium"
 				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34/94b3147a-b22b-4e06-91e3-a2640188c514"
 					(reference "C5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 184.15 104.14 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "2c3798a8-f5af-4b89-b4dd-c9e393af7573")
+		(property "Reference" "R13"
+			(at 181.61 102.87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "22R"
+			(at 178.054 105.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
+			(at 185.928 104.14 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 184.15 104.14 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 184.15 104.14 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "75d2a7d0-6162-4fba-b6a0-204d9e5cce90")
+		)
+		(pin "1"
+			(uuid "40438295-33b2-4eba-8018-50af260665e7")
+		)
+		(instances
+			(project "numcalcium"
+				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34/94b3147a-b22b-4e06-91e3-a2640188c514"
+					(reference "R13")
 					(unit 1)
 				)
 			)
@@ -5974,75 +5973,6 @@
 			(project "numcalcium"
 				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34/94b3147a-b22b-4e06-91e3-a2640188c514"
 					(reference "C3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C")
-		(at 124.46 157.48 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "ea35cf52-a28e-4153-9a90-906ff62730d5")
-		(property "Reference" "C24"
-			(at 115.062 156.464 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "470n"
-			(at 115.062 159.004 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
-			(at 125.4252 161.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 124.46 157.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 124.46 157.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "2b5eaa16-9c8a-4618-8f69-91103741d578")
-		)
-		(pin "2"
-			(uuid "37224898-0d51-4802-bb41-8a72f6b6ab7a")
-		)
-		(instances
-			(project "numcalcium"
-				(path "/842c0813-91d3-4f68-bc1f-ac3ce07be478/b6a1d74e-f5bd-4c1c-9567-b593baf30f34/94b3147a-b22b-4e06-91e3-a2640188c514"
-					(reference "C24")
 					(unit 1)
 				)
 			)
