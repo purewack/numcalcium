@@ -86,6 +86,32 @@ class LCD(_board.Terminal):
         else:
             super().plot(x,y,color)
 
+    def line(self, x,y,x2,y2,color):
+        dy = (y2-y)
+        dx = (x2-x)
+        nx = dx*-1 if dx < 0 else dx
+        ny = dy*-1 if dy < 0 else dy
+
+        if(nx > ny):
+            if(dx < 0):
+                for i in range(dx,0,-1):
+                    yy = ((i)*dy)//dx
+                    self.plot((i+x),yy+y,color)
+            else:
+                for i in range(dx):
+                    yy = ((i)*dy)//dx
+                    self.plot((i+x),yy+y,color)
+            
+        else:
+            if(dy < 0):
+                for i in range(dy,0,-1):
+                    xx = ((i)*dx)//dy
+                    self.plot(xx+x,(i+y),color)
+            else:
+                for i in range(dy):
+                    xx = ((i)*dx)//dy
+                    self.plot(xx+x,(i+y),color)
+          
     def buffer(self,buf,x,y,width,height):
         if not self.__lock.acquire(False): return
         self.__lock.release()
@@ -110,18 +136,22 @@ class LCD(_board.Terminal):
             raise ValueError("Need both x and y positions")
         x = args[0]
         y = args[1]
+        s = super().options()['scale'] 
+        ww = self.WIDTH
+        hh = self.HEIGHT
+        fh = self.FONT_H
+        fw = self.FONT_W
         if(kwargs.get('pixels',False)):
-            s = super().options()['scale']
-            ww = self.WIDTH
-            hh = self.HEIGHT
-            fh = self.FONT_H
-            fw = self.FONT_W
             xx = (x/ww)*((ww/fw)/s)
             yy = (y/hh)*((hh/fh)/s)
+            if(kwargs.get('bottom',False)):
+                yy = ((hh-y-(fh*s))/hh)*((hh/fh)/s)
             return super().cursor(xx,yy)
         else:
+            if(kwargs.get('bottom',False)):
+                y = (hh/(fh*s)) - (y+1)
             return super().cursor(x,y)
-
+        
     def scale(self, scale=None):
         if scale == None:
             return super().options()['scale']
@@ -130,6 +160,15 @@ class LCD(_board.Terminal):
         self.__lock.release()
         currentCursor = self.cursor()
         super().options(scale=scale)
+        
+    def measure_text(self, text, pixels=False):
+        s = self.scale()
+        fh = self.FONT_H
+        fw = self.FONT_W
+        text = text.strip('\r').split('\n')
+        cx = max(len(t) for t in text)
+        cy = len(text)
+        return (cx*fw*s,cy*fh*s) if pixels else (cx,cy)
     
     def background(self, color=None):
         if color == None:
