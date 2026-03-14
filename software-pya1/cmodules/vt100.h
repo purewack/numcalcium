@@ -31,13 +31,13 @@
 #define X_CHAR      (X_SIZE/FONT_WIDE)
 #define Y_CHAR      (Y_SIZE/FONT_TALL)
 
-#define CHARSET_COUNT_LIMIT 104
+#define FONT_COUNT_REDUCED 96
 
 typedef struct {
-    char xfName[64];
+    uint8_t xfCount;
     uint8_t xfWide;
     uint8_t xfTall;
-    uint16_t *xfData; 
+    uint8_t *xfData; 
 } font_t;
 
 typedef struct {

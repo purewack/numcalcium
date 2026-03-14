@@ -6,7 +6,7 @@
 
 #define MICROPY_HW_ENABLE_UART_REPL         (1)
 
-#define MICROPY_DEBUG_PRINTERS              (0)
+#define MICROPY_DEBUG_PRINTERS              (1)
 
 #define MICROPY_HW_I2C0_SCL                 (BOARD_PIN_PORT_SCL)
 #define MICROPY_HW_I2C0_SDA                 (BOARD_PIN_PORT_SDA)

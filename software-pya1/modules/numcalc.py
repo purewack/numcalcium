@@ -45,7 +45,6 @@ class LCD(_board.Terminal):
         self._bl = None
         self.reset()
         self.setBacklight(127)
-        super().unloadFont()
 
     def __del__(self):
         self.setBacklight(0)
@@ -57,6 +56,7 @@ class LCD(_board.Terminal):
         pass
 
     def reset(self):
+        self.setFont()
         self.options(background=self.BLACK,foreground=self.WHITE,scale=1)
         self.clear()
 
@@ -139,8 +139,8 @@ class LCD(_board.Terminal):
         s = super().options()['scale'] 
         ww = self.WIDTH
         hh = self.HEIGHT
-        fh = self.FONT_H
-        fw = self.FONT_W
+        fh = self.FH
+        fw = self.FW
         if(kwargs.get('pixels',False)):
             xx = (x/ww)*((ww/fw)/s)
             yy = (y/hh)*((hh/fh)/s)
@@ -263,9 +263,20 @@ class LCD(_board.Terminal):
     def font(self, font=None):
         if(font == None):
             super().unloadFont()
+            self.FW = self.FONT_W
+            self.FH = self.FONT_H
+            self.FN = self.FONT_NAME
+            self.F_EXT = False
             return
-        
-        super().loadFont(font['width'],font['height'],font['data'])
+        try:
+            data = font.data
+            self.FW = data['width']
+            self.FH = data['height']
+            self.FN = data.get('name','EXT')
+            super().loadFont(data['width'],data['height'],data['data'],data['count'])
+            self.F_EXT = True
+        except:
+            raise ValueError('module missing "data" attribute')
 
 
 def tone(note=None, velocity=None):

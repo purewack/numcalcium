@@ -2,6 +2,7 @@
 
 VARIANT   := pya1
 FONT := gohu13
+FONT_CHAR_COUNT = 96
 
 VERSION_NUMCALC := "A1"
 
@@ -32,6 +33,8 @@ all: gen-version
 firmware-no-freeze: 
 	$(DOCKER_CMD) make -C $(DOCKER_MPY_DIR) BOARD_DIR=$(DOCKER_BOARD_DIR) PORT=$(PORT) BOARD=$(VARIANT) BOARD_VARIANT=no_freeze
 
+generated: gen-ulp gen-pins
+
 gen-ulp: gen-dir
 	cd micropython-ulp-compiler && make SOURCES="../software-pya1/ulp/io.c" PRE_CMD="cd micropython-ulp-compiler" IDF_VERSION="$(IDF_VERSION)" DOCKER_CMD="$(DOCKER_CMD)" \
 OUTPUT_DIR="${DOCKER_BOARD_DIR}/generated" \
@@ -43,7 +46,7 @@ gen-pins: gen-dir
     
 gen-font: gen-dir
 	mkdir -p $(BOARD_DIR)/fonts
-	python3 $(BOARD_DIR)/generators/font.py  $(BOARD_DIR)/fonts/$(FONT) $(BOARD_DIR)/fonts
+	python3 $(BOARD_DIR)/generators/font.py  $(BOARD_DIR)/fonts/$(FONT) $(BOARD_DIR)/generated $(FONT_CHAR_COUNT)
 
 gen-dir:
 	mkdir -p $(BOARD_DIR)/generated
@@ -64,12 +67,12 @@ erase:
 clean:
 	rm -rf ${CURDIR}/$(MPY_DIR_REL)/build-$(VARIANT) 
 	rm -rf ${CURDIR}/$(MPY_DIR_REL)/build-$(VARIANT)-no_freeze
-	rm -rf ${CURDIR}/micropython-ulp-compiler/build
-	rm -rf ${CURDIR}/micropython-ulp-compiler/.cache
-	rm -rf ${CURDIR}/micropython-ulp-compiler/ulp-compiler/build
 
 fullclean: clean
 	rm -rf ${CURDIR}/software-$(VARIANT)/generated
+	rm -rf ${CURDIR}/micropython-ulp-compiler/build
+	rm -rf ${CURDIR}/micropython-ulp-compiler/.cache
+	rm -rf ${CURDIR}/micropython-ulp-compiler/ulp-compiler/build
 
 distribute: clean all
 	mkdir -p $(CURDIR)/dist

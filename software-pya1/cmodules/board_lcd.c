@@ -182,7 +182,7 @@ static mp_obj_t loadFont(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
         { MP_QSTR_width,   MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_height,  MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_data,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
-        { MP_QSTR_name,    MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_count,   MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -192,15 +192,11 @@ static mp_obj_t loadFont(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
     
     uint8_t cWidth = args[1].u_int;
     uint8_t cHeight = args[2].u_int;
+    uint8_t cCount = args[4].u_int;
     
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(args[3].u_obj, &bufinfo, MP_BUFFER_RW);
     
-    size_t expected_size = CHARSET_COUNT_LIMIT * cWidth * sizeof(uint16_t);
-    if (bufinfo.len != expected_size) {
-        mp_raise_ValueError(MP_ERROR_TEXT("data length mismatch"));
-        return mp_const_none;
-    }
     
     font_t *new_font = (font_t *)malloc(sizeof(font_t));
     if (new_font == NULL) {
@@ -208,17 +204,12 @@ static mp_obj_t loadFont(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
         return mp_const_none;
     }
     
-    uint16_t *font_buf = (uint16_t *)bufinfo.buf;
+    uint8_t *font_buf = (uint8_t *)bufinfo.buf;
     
-    const char *font_name = "external";
-    if (args[4].u_obj != mp_const_none && mp_obj_is_str(args[4].u_obj)) {
-        font_name = mp_obj_str_get_str(args[4].u_obj);
-    }
-    
-    snprintf(new_font->xfName, sizeof(new_font->xfName), "%s", font_name);
     new_font->xfWide = cWidth;
     new_font->xfTall = cHeight;
     new_font->xfData = font_buf;
+    new_font->xfCount = cCount;
 
     if (self->extFont && self->font != NULL) {
         if (self->font->xfData != NULL) {
@@ -233,7 +224,7 @@ static mp_obj_t loadFont(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
     
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_KW(load_font_obj, 4, loadFont);
+static MP_DEFINE_CONST_FUN_OBJ_KW(load_font_obj, 5, loadFont);
 
 // Custom print handler for LCD like the built-in print()
 static void lcd_print_strn(void *data, const char *str, size_t len) {
@@ -285,7 +276,6 @@ static mp_obj_t lcd_print(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lcd_print_obj, 1, MP_OBJ_FUN_ARGS_MAX, lcd_print);
-
 
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
@@ -343,6 +333,7 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_CYAN), MP_ROM_INT(COL_CYAN) },
     { MP_ROM_QSTR(MP_QSTR_FONT_H), MP_ROM_INT(FONT_TALL) },
     { MP_ROM_QSTR(MP_QSTR_FONT_W), MP_ROM_INT(FONT_WIDE) },
+    { MP_ROM_QSTR(MP_QSTR_FONT_NAME), MP_OBJ_NEW_QSTR(FONT_NAME_Q) },
     { MP_ROM_QSTR(MP_QSTR_CHARS_Y), MP_ROM_INT(Y_CHAR) },
     { MP_ROM_QSTR(MP_QSTR_CHARS_X), MP_ROM_INT(X_CHAR) },
     { MP_ROM_QSTR(MP_QSTR_WIDTH), MP_ROM_INT(X_SIZE) },
