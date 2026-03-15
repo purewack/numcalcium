@@ -28,9 +28,10 @@ typedef struct _lcd_obj_t {
     float line;
     uint8_t scale;
     bool LFCR;
-    bool printLFCR;
+    bool addLFCR;
 	bool rgbSwap;
     bool invert;
+    bool autoWrap;
 
     bool extFont;
     font_t* font;
@@ -131,7 +132,8 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         { MP_QSTR_rgbSwap, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1 } },
         { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_invert, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_printLFCR, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_addLFCR, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_autoWrap, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -156,15 +158,17 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 			driver_send_cmd(0x21);
 		}
 	}
-    if((int)(args[6].u_int) >= 0) {self->printLFCR = args[6].u_int;}
+    if((int)(args[6].u_int) >= 0) {self->addLFCR = args[6].u_int;}
+    if((int)(args[7].u_int) >= 0) {self->autoWrap  = args[7].u_int;}
 
     mp_obj_t current_options = mp_obj_new_dict(0);
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_background), mp_obj_new_int(self->bg));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_foreground), mp_obj_new_int(self->color));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_scale), mp_obj_new_int(self->scale));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_invert), mp_obj_new_int(self->invert));
-    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_printLFCR), mp_obj_new_int(self->printLFCR));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_addLFCR), mp_obj_new_int(self->addLFCR));
     mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_rgbSwap), mp_obj_new_int(self->rgbSwap));
+    mp_obj_dict_store(current_options, MP_OBJ_NEW_QSTR(MP_QSTR_autoWrap), mp_obj_new_int(self->autoWrap));
     return current_options;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
@@ -230,7 +234,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(load_font_obj, 5, loadFont);
 static void lcd_print_strn(void *data, const char *str, size_t len) {
     (void)data;  
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
+    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->font);
 }
 
 static const mp_print_t lcd_printer = {NULL, lcd_print_strn};
@@ -265,13 +269,13 @@ static mp_obj_t lcd_print(size_t n_args, const mp_obj_t *args) {
         my_obj_print_helper(&lcd_printer, args[i], PRINT_REPR);
         // Add space between arguments (except the last one)
         if (i < n_args - 1) {
-            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
+            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->font);
         }
     }
 
     // Print newline at the end (if required)
-    if(n_args > 2 && self->printLFCR)
-        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
+    if(n_args > 2 && self->addLFCR && self->autoWrap)
+        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale, true, self->font);
 
     return mp_const_none;
 }
@@ -280,7 +284,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lcd_print_obj, 1, MP_OBJ_FUN_ARGS_MAX
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale, self->font);
+    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->font);
     return size; 
 }
 
@@ -304,7 +308,8 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         lcd_instance.scale = 1;
         lcd_instance.color = COL_WHITE;
         lcd_instance.bg = COL_BLACK;
-        lcd_instance.printLFCR = true;
+        lcd_instance.addLFCR = true;
+        lcd_instance.autoWrap = true;
         lcd_instance.new = true;
         lcd_instance.font = NULL;
 

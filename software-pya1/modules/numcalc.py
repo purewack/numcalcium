@@ -260,7 +260,7 @@ class LCD(_board.Terminal):
         os.dupterm(None)
         self.__lock.release()
         
-    def font(self, font=None):
+    def setFont(self, font=None):
         if(font == None):
             super().unloadFont()
             self.FW = self.FONT_W

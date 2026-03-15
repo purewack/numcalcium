@@ -216,7 +216,7 @@ void driver_print_escape_value(unsigned char ch, uint16_t *buf, int fws, int fts
     }
 }
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, font_t* font){
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, const bool autoWrap, font_t* font){
 	
     if(scale > 4) {
 //        //DEBUG_printf("scale too large %d",scale);
@@ -247,6 +247,13 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
     }
     float fts = (float)(font_tall * scale);
     float fws = (float)(font_wide * scale);
+
+    if(*col >= xchar/scale && !autoWrap){
+        return;
+    }
+    if(*line >= ychar/scale && !autoWrap){
+        return;
+    }
 
     int i=0;
     for(i=0; i<len; i++){
@@ -332,6 +339,9 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
 		*col += 1;
 		if(*col >= xchar/scale){
+            if(!autoWrap){
+                return;
+            }
 			*col = 0;
 			*line += 1.f;
 			if(*line >= (float)(ychar/scale)){
