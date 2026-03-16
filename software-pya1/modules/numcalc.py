@@ -38,11 +38,30 @@ class DAC(_board.DAC):
     pass
 
 class LCD(_board.Terminal):
+    RED    = 0xf800
+    GREEN  = 0x07e0
+    BLUE   = 0x001f
+    PURPLE = 0xf81f
+    YELLOW = 0xffe0
+    CYAN   = 0x07ff
+    BLACK  = 0x0000
+    WHITE  = 0xffff
+    GRAY   = 0x8410
+    
+    WIDTH  = 320
+    HEIGHT = 170
+    
     def __init__(self):
         super().__init__()
         if not hasattr(self,'__lock'):
             self.__lock = _thread.allocate_lock()
         self._bl = None
+        self.XN = self._CHARS_X
+        self.YN = self._CHARS_Y
+        self.FW = self.FONT_W
+        self.FH = self.FONT_H
+        self.FN = self.FONT_NAME
+        self.current_font = None
         self.reset()
         self.setBacklight(127)
 
@@ -56,8 +75,7 @@ class LCD(_board.Terminal):
         pass
 
     def reset(self):
-        self.setFont()
-        self.options(background=self.BLACK,foreground=self.WHITE,scale=1)
+        self.options(font=None,background=self.BLACK,foreground=self.WHITE,scale=1)
         self.clear()
 
     def clear(self):
@@ -130,17 +148,27 @@ class LCD(_board.Terminal):
     def cursor(self, *args, **kwargs):
         if not self.__lock.acquire(False): return
         self.__lock.release()
-        if(not len(args)):
-            return super().cursor()
-        if(not len(args) == 2):
-            raise ValueError("Need both x and y positions")
-        x = args[0]
-        y = args[1]
         s = super().options()['scale'] 
         ww = self.WIDTH
         hh = self.HEIGHT
         fh = self.FH
         fw = self.FW
+        
+        if(not len(args)):
+            c = super().cursor()
+            if(kwargs.get('pixels',False)):
+                xx = (c[0]*fw*s)
+                yy = (c[1]*fh*s)
+                # if(kwargs.get('bottom',False)):
+                #     yy = ((hh-c[1]-(fh*s))/hh)*((hh/fh)/s)
+                return [xx,yy]
+            return c
+        if(not len(args) == 2):
+            raise ValueError("Need both x and y positions")
+        
+        x = args[0]
+        y = args[1]
+        
         if(kwargs.get('pixels',False)):
             xx = (x/ww)*((ww/fw)/s)
             yy = (y/hh)*((hh/fh)/s)
@@ -211,19 +239,44 @@ class LCD(_board.Terminal):
         if not self.__lock.acquire(False): return
         self.__lock.release()
 
-        if(kwargs.get('foreground',False)):
+        if('foreground' in kwargs):
             if isinstance(kwargs['foreground'], str):
                 kwargs['foreground'] = self.htmlTo565(kwargs['foreground'])
             elif isinstance(kwargs['foreground'], tuple):
                 kwargs['foreground'] = self.rgbTo565(*kwargs['foreground'])
 
-        if(kwargs.get('background',False)):
+        if('background' in kwargs):
             if isinstance(kwargs['background'], str):
                 kwargs['background'] = self.htmlTo565(kwargs['background'])
             elif isinstance(kwargs['background'], tuple):
                 kwargs['background'] = self.rgbTo565(*kwargs['background'])
-
-        return super().options(**kwargs)
+        
+        if('font' in kwargs):
+            cur = self.cursor(pixels=True)
+            font = kwargs['font']
+            kwargs.pop('font')
+            if(font == None):
+                super().unloadFont()
+                self.FW = self.FONT_W
+                self.FH = self.FONT_H
+                self.FN = self.FONT_NAME
+                self.XN = self._CHARS_X
+                self.YN = self._CHARS_Y
+                self.current_font = None
+            else:
+                try:
+                    data = font.data
+                    self.FW = data['width']
+                    self.FH = data['height']
+                    self.FN = data.get('name','EXT')
+                    self.XN = self.WIDTH//self.FW
+                    self.YN = self.HEIGHT//self.FH
+                    super().loadFont(data['width'],data['height'],data['data'],data['count'])
+                    self.current_font = font
+                except:
+                    raise ValueError('font module missing "data" attribute')
+            self.cursor(*cur,pixels=True)
+        return dict({'font': self.current_font},**super().options(**kwargs))
 
     # brightness 0-127
     def setBacklight(self, brightness):
@@ -260,23 +313,6 @@ class LCD(_board.Terminal):
         os.dupterm(None)
         self.__lock.release()
         
-    def setFont(self, font=None):
-        if(font == None):
-            super().unloadFont()
-            self.FW = self.FONT_W
-            self.FH = self.FONT_H
-            self.FN = self.FONT_NAME
-            self.F_EXT = False
-            return
-        try:
-            data = font.data
-            self.FW = data['width']
-            self.FH = data['height']
-            self.FN = data.get('name','EXT')
-            super().loadFont(data['width'],data['height'],data['data'],data['count'])
-            self.F_EXT = True
-        except:
-            raise ValueError('module missing "data" attribute')
 
 
 def tone(note=None, velocity=None):

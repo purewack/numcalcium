@@ -5,7 +5,7 @@ l.print('test default font')
 
 import font_mono22
 
-l.setFont(font_mono22.data)
+l.options(font=font_mono22)
 
 l.cursor(0,3)
 l.print('Testing Mono22')

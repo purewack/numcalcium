@@ -65,7 +65,7 @@ void driver_init() {
     gpio_config(&io_conf);
     
     driver_setup();
-    driver_fill(0,0,X_SIZE,Y_SIZE, COL_BLACK);
+    driver_fill(0,0,X_SIZE,Y_SIZE, 0);
 }
 
 void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color){

@@ -306,8 +306,8 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
 
         lcd_instance.base.type = type;
         lcd_instance.scale = 1;
-        lcd_instance.color = COL_WHITE;
-        lcd_instance.bg = COL_BLACK;
+        lcd_instance.color = 0xffff;
+        lcd_instance.bg = 0;
         lcd_instance.addLFCR = true;
         lcd_instance.autoWrap = true;
         lcd_instance.new = true;
@@ -328,21 +328,21 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(parse_bmp_obj, 2, parse_bmp);
 static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_Terminal) },
 
-    { MP_ROM_QSTR(MP_QSTR_BLACK), MP_ROM_INT(COL_BLACK) },
-    { MP_ROM_QSTR(MP_QSTR_WHITE), MP_ROM_INT(COL_WHITE) },
-    { MP_ROM_QSTR(MP_QSTR_RED), MP_ROM_INT(COL_RED) },
-    { MP_ROM_QSTR(MP_QSTR_GREEN), MP_ROM_INT(COL_GREEN) },
-    { MP_ROM_QSTR(MP_QSTR_BLUE), MP_ROM_INT(COL_BLUE) },
-    { MP_ROM_QSTR(MP_QSTR_PURPLE), MP_ROM_INT(COL_PURPLE) },
-    { MP_ROM_QSTR(MP_QSTR_YELLOW), MP_ROM_INT(COL_YELLOW) },
-    { MP_ROM_QSTR(MP_QSTR_CYAN), MP_ROM_INT(COL_CYAN) },
+    // { MP_ROM_QSTR(MP_QSTR_BLACK), MP_ROM_INT(COL_BLACK) },
+    // { MP_ROM_QSTR(MP_QSTR_WHITE), MP_ROM_INT(COL_WHITE) },
+    // { MP_ROM_QSTR(MP_QSTR_RED), MP_ROM_INT(COL_RED) },
+    // { MP_ROM_QSTR(MP_QSTR_GREEN), MP_ROM_INT(COL_GREEN) },
+    // { MP_ROM_QSTR(MP_QSTR_BLUE), MP_ROM_INT(COL_BLUE) },
+    // { MP_ROM_QSTR(MP_QSTR_PURPLE), MP_ROM_INT(COL_PURPLE) },
+    // { MP_ROM_QSTR(MP_QSTR_YELLOW), MP_ROM_INT(COL_YELLOW) },
+    // { MP_ROM_QSTR(MP_QSTR_CYAN), MP_ROM_INT(COL_CYAN) },
     { MP_ROM_QSTR(MP_QSTR_FONT_H), MP_ROM_INT(FONT_TALL) },
     { MP_ROM_QSTR(MP_QSTR_FONT_W), MP_ROM_INT(FONT_WIDE) },
     { MP_ROM_QSTR(MP_QSTR_FONT_NAME), MP_OBJ_NEW_QSTR(FONT_NAME_Q) },
-    { MP_ROM_QSTR(MP_QSTR_CHARS_Y), MP_ROM_INT(Y_CHAR) },
-    { MP_ROM_QSTR(MP_QSTR_CHARS_X), MP_ROM_INT(X_CHAR) },
-    { MP_ROM_QSTR(MP_QSTR_WIDTH), MP_ROM_INT(X_SIZE) },
-    { MP_ROM_QSTR(MP_QSTR_HEIGHT), MP_ROM_INT(Y_SIZE) },
+    { MP_ROM_QSTR(MP_QSTR__CHARS_Y), MP_ROM_INT(Y_CHAR) },
+    { MP_ROM_QSTR(MP_QSTR__CHARS_X), MP_ROM_INT(X_CHAR) },
+    // { MP_ROM_QSTR(MP_QSTR_WIDTH), MP_ROM_INT(X_SIZE) },
+    // { MP_ROM_QSTR(MP_QSTR_HEIGHT), MP_ROM_INT(Y_SIZE) },
     
     { MP_ROM_QSTR(MP_QSTR__sendcmd), MP_ROM_PTR(&send_cmd_obj) },
     { MP_ROM_QSTR(MP_QSTR__senddata), MP_ROM_PTR(&send_data_obj) },
