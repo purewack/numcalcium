@@ -65,19 +65,39 @@ void driver_init() {
     gpio_config(&io_conf);
     
     driver_setup();
-    driver_fill(0,0,X_SIZE,Y_SIZE, 0);
+    driver_fill(0,0,X_SIZE,Y_SIZE, 0,NULL);
 }
 
-void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color){
-	if(w + x > X_SIZE) w -= x;
-	if(h + y > Y_SIZE) h -= y;
+void driver_fill(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color, uint16_t* canvas){
+    if(x >= X_SIZE) return;
+    if(y >= Y_SIZE) return;
+    if(x < 0) {
+        w -= x;
+        x = 0;
+    }
+    if(y < 0) {
+        h -= y;
+        y = 0;
+    }
 	if(w > X_SIZE) w = X_SIZE;
 	if(h > Y_SIZE) h = Y_SIZE;
 
     int xx = x;
-    int xw = x + w - 1;
+    int xw = x + w;
     int yy = y;
-    int yh = y + h - 1;
+    int yh = y + h;
+
+    if(canvas){
+        for(int iy=yy; iy<yh; iy++){
+            for(int ix=xx; ix<xw; ix++){
+                driver_pixel(ix,iy,color,canvas);
+            }
+        }
+        return;
+    }
+
+    xw -= 1;
+    yh -= 1;
 
     driver_send_cmd(0x2A); 
     driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
@@ -109,7 +129,16 @@ void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
     driver_end_pixel();
 }
 
-void driver_pixel(uint16_t x, uint16_t y, uint16_t color) {
+void driver_pixel(int16_t x, int16_t y, uint16_t color, uint16_t* canvas) {
+    if(canvas){
+        uint32_t c0 = (color & 0xFF);
+        uint32_t c1 = (color & 0xFF00) >> 8;
+
+        int ii = (x + y*X_SIZE);
+        canvas[ii] = c1 + (c0<<8);
+        return;
+    }
+
     int xx = x;
     int xw = x;
     int yy = y;
@@ -167,10 +196,22 @@ bool driver_ansiIsErase(const unsigned char* text, int *ii){
 }
 
 
-void driver_print_font_value(unsigned char ch, uint16_t *buf, uint8_t scale, uint16_t bg, uint16_t color, int font_wide, int font_tall, uint8_t *font_buf){
+void driver_print_font_value(unsigned char ch, uint16_t *buf, uint8_t scale, uint16_t bg, uint16_t color, int font_wide, int font_tall, uint8_t *font_buf, int x_off, int y_off){
 
     uint8_t bytes_per_height = (font_tall/8+1);
     uint32_t charStart = ch * font_wide;
+
+    uint16_t ws = font_wide * scale;
+    uint16_t lws = ws;
+
+    if(x_off != -1 && y_off != -1){
+        color = ((color & 0xFF)<<8) + ((color&0xFF00)>>8);
+        lws = X_SIZE;
+    }
+    else{
+        x_off = 0;
+        y_off = 0;
+    }
     
     for(int xx=0; xx<font_wide; xx++){
         for(int yy=0; yy<font_tall; yy++){
@@ -179,12 +220,11 @@ void driver_print_font_value(unsigned char ch, uint16_t *buf, uint8_t scale, uin
             if(b & (1<<(yy%8)))
                 cc = color;
             
-            uint16_t ws = font_wide * scale;
             uint16_t sx = (xx * scale);
-            uint16_t sy = (yy * ws * scale);
+            uint16_t sy = (yy * lws * scale);
             for(int iy=0; iy<scale; iy++){
                 for(int ix=0; ix<scale; ix++)
-                    buf[sx+ix + sy+(iy*ws)] = cc;
+                    buf[sx+ix+x_off + (y_off*lws)+sy+(iy*lws)] = cc;
             }
         }
     }
@@ -192,15 +232,25 @@ void driver_print_font_value(unsigned char ch, uint16_t *buf, uint8_t scale, uin
 
 
 // for printing hex numbers for invisible ascii characters
-void driver_print_escape_value(unsigned char ch, uint16_t *buf, int fws, int fts){
+void driver_print_escape_value(unsigned char ch, uint16_t *buf, int fws, int fts, int x_off, int y_off){
  
     const int font_divide_bound = (FONT_TALL_HEX_CODES>>1);
     const int hw = FONT_WIDE_HEX_CODES;
     const int hh = FONT_TALL_HEX_CODES;
-    
+    int lws = fws;
+    uint16_t color = 0xeefd;
+    if(x_off != -1 && y_off != -1){
+        color = 0xfdee;
+        lws = X_SIZE;
+    }
+    else{
+        x_off = 0;
+        y_off = 0;
+    }
+
     for(uint16_t xx=0; xx<fws; xx++){
         for(uint16_t yy=0; yy<fts; yy++){
-            uint16_t cc = 0xeefd;
+            uint16_t cc = color;
 
             if(xx < hw && yy < hh){
                 uint16_t a = (yy >= font_divide_bound) ? ch&0xf : (ch >> 4);
@@ -211,12 +261,12 @@ void driver_print_escape_value(unsigned char ch, uint16_t *buf, int fws, int fts
                     cc = 0;
             }
             
-            buf[xx + yy*fws] = cc;
+            buf[(xx+x_off) + (yy+y_off)*lws] = cc;
         }
     }
 }
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, const bool autoWrap, font_t* font){
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, const bool autoWrap, font_t* font, uint16_t* canvas){
 	
     if(scale > 4) {
 //        //DEBUG_printf("scale too large %d",scale);
@@ -269,10 +319,10 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
             // 	*col = 0;
 			driver_fill(
                 0,
-                (uint16_t)(*line * fts),
+                (int16_t)(*line * fts),
                 X_SIZE,
                 (uint16_t)fts, 
-                _bg);
+                _bg, canvas);
             continue;
         }
 
@@ -283,11 +333,11 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
 		if(driver_ansiIsErase(&text[i],&i)) {
 			driver_fill(
-				(uint16_t)(*col * fws),
-				(uint16_t)(*line * fts), 
+				(int16_t)(*col * fws),
+				(int16_t)(*line * fts), 
 				X_SIZE,
 				(uint16_t)fts,
-				_bg
+				_bg, canvas
 			);
 			continue;
 		}
@@ -305,11 +355,14 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			continue;
         }
 		
+        char ch = (c < ' ' || c > 126) ? 0 : (c-' '+1);
 		int xx = (int)(*col  * fws);
 		int yy = (int)(*line * fts);
         int xw = xx + ((int)fws) - 1;
         int yh = yy + ((int)fts) - 1;
+        uint16_t *buf = canvas;
 
+        if(!canvas){
         driver_send_cmd(0x2A); 
         driver_send_data((xx & 0x100) >> 8); driver_send_data(xx & 0xff); 
         driver_send_data((xw & 0x100) >> 8); driver_send_data(xw & 0xff); 
@@ -320,22 +373,25 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 
         driver_send_cmd(0x2C);
         
-        uint16_t *buf = (uint16_t*)lineBuf;
+        buf = (uint16_t*)lineBuf;
+        xx = -1;
+        yy = -1;
+        }
 
-        char ch = (c < ' ' || c > 126) ? 0 : (c-' '+1);
-            
         //print escape character code
         if(!ch){
-            driver_print_escape_value((unsigned char )c,buf,(int)fws,(int)fts);
+            driver_print_escape_value((unsigned char )c,buf,(int)fws,(int)fts, xx,yy);
         }
         //print character from font map
         else{
-            driver_print_font_value(ch,buf,scale, bg,color, font_wide, font_tall, font_buf);
+            driver_print_font_value(ch,buf,scale, bg,color, font_wide, font_tall, font_buf, xx,yy);
         }
-
+        
+        if(!canvas){
         driver_start_pixel();
         driver_send_pixel_data(buf,16 * font_wide * fts * scale);
         driver_end_pixel();
+        }
 
 		*col += 1;
 		if(*col >= xchar/scale){
@@ -349,10 +405,10 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			}			
 			driver_fill(
                 0,
-                (uint16_t)(*line * ((float)fts))
+                (int16_t)(*line * ((float)fts))
                 ,X_SIZE,
                 (uint16_t)fts,
-                _bg);
+                _bg, canvas);
 		}
     
     }
@@ -360,26 +416,43 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 }
 
 void driver_send_buffer(buffer_data_t buffer_data){
+    int ww = buffer_data.x + buffer_data.width - 1;
+    int hh = buffer_data.y + buffer_data.height - 1;
     driver_send_cmd(0x2A); 
     driver_send_data((buffer_data.x & 0x100) >> 8); driver_send_data(buffer_data.x & 0xff); 
-    driver_send_data((buffer_data.width & 0x100) >> 8); driver_send_data(buffer_data.width & 0xff); 
+    driver_send_data((ww & 0x100) >> 8); driver_send_data(ww & 0xff); 
 
     driver_send_cmd(0x2B); 
     driver_send_data(0x00); driver_send_data(buffer_data.y + Y_OFFSET);
-    driver_send_data(0x00); driver_send_data(buffer_data.height + Y_OFFSET);
+    driver_send_data(0x00); driver_send_data(hh + Y_OFFSET);
  
     driver_send_cmd(0x2C); 
 
     driver_start_pixel();
-    int size = buffer_data.size;// buffer_data.width * buffer_data.height * 2 * 8;
-    int xferred = 0;
-    int limit = 32000;
-//            //DEBUG_printf("buffer stats: %d %d %d %d %p\n",buffer_data.x,buffer_data.y,buffer_data.width,buffer_data.height,buffer_data.buffer);
-    do{
-        int count = size - xferred;
-        if(count > limit) count = limit;
-        driver_send_pixel_data(buffer_data.buffer + xferred,8*count);
-        xferred += count;
-    }while(xferred != size);
+
+    if(buffer_data.partial){
+        for(int tx_y=0; tx_y<buffer_data.height; tx_y++){
+            const void* adr = buffer_data.buffer + (tx_y * X_SIZE * sizeof(uint16_t));
+            uint32_t sz = 8 * buffer_data.width * sizeof(uint16_t);
+            // DEBUG_printf("line(%d) @%p for sz%d \n",tx_y,adr,sz);
+    
+            driver_send_pixel_data(
+                adr,
+                sz
+            );
+        }
+    }
+    else{
+        int size = buffer_data.size;
+        int xferred = 0;
+        int limit = 32000;
+        do{
+            int count = size - xferred;
+            if(count > limit) count = limit;
+            driver_send_pixel_data(buffer_data.buffer + xferred,8*count);
+            xferred += count;
+        }
+        while(xferred != size);
+    }
     driver_end_pixel();
 }

@@ -62,6 +62,7 @@ class LCD(_board.Terminal):
         self.FH = self.FONT_H
         self.FN = self.FONT_NAME
         self.current_font = None
+        self.canvas = None
         self.reset()
         self.setBacklight(127)
 
@@ -75,7 +76,7 @@ class LCD(_board.Terminal):
         pass
 
     def reset(self):
-        self.options(font=None,background=self.BLACK,foreground=self.WHITE,scale=1)
+        self.options(font=None,canvas=None,background=self.BLACK,foreground=self.WHITE,scale=1)
         self.clear()
 
     def clear(self):
@@ -129,16 +130,37 @@ class LCD(_board.Terminal):
                 for i in range(dy):
                     xx = ((i)*dx)//dy
                     self.plot(xx+x,(i+y),color)
-          
+    
+    def createCanvas(self):
+        if(self.canvas):
+            self.options(canvas=None)
+        self.canvas = bytearray(self.WIDTH*self.HEIGHT*2)
+        self.options(canvas=self.canvas)
+        return self.canvas
+    
+    def update(self,*args):
+        if(self.canvas):
+            if(len(args) == 4):
+                x,y,w,h = args
+                if(x >= self.WIDTH): return
+                if(y >= self.HEIGHT): return
+                if(x+w > self.WIDTH):
+                    w -= x
+                if(y+h > self.HEIGHT):
+                    h -= y
+                super().buffer(self.canvas,x,y,w,h,True)
+            else:
+                super().buffer(self.canvas,0,0,self.WIDTH,self.HEIGHT)
+    
     def buffer(self,buf,x,y,width,height):
         if not self.__lock.acquire(False): return
-        self.__lock.release()
         super().buffer(buf,x,y,width,height)
+        self.__lock.release()
 
     def bitmap(self,x,y,image):
         if not self.__lock.acquire(False): return
-        self.__lock.release()
         super().buffer(image['buffer'],x,y,image['width'],image['height'])
+        self.__lock.release()
     
     def print(self, *args):
         if not self.__lock.acquire(False): return
@@ -251,6 +273,14 @@ class LCD(_board.Terminal):
             elif isinstance(kwargs['background'], tuple):
                 kwargs['background'] = self.rgbTo565(*kwargs['background'])
         
+        if('canvas' in kwargs):
+            self.canvas = kwargs['canvas']
+            kwargs.pop('canvas')
+            if(self.canvas == None):
+                super()._unset_canvas()
+            else:
+                super()._set_canvas(self.canvas)
+            
         if('font' in kwargs):
             cur = self.cursor(pixels=True)
             font = kwargs['font']
@@ -276,7 +306,7 @@ class LCD(_board.Terminal):
                 except:
                     raise ValueError('font module missing "data" attribute')
             self.cursor(*cur,pixels=True)
-        return dict({'font': self.current_font},**super().options(**kwargs))
+        return dict({'font': self.current_font, 'canvas':self.canvas},**super().options(**kwargs))
 
     # brightness 0-127
     def setBacklight(self, brightness):

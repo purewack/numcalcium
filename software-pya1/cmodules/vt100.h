@@ -42,6 +42,7 @@ typedef struct {
 
 typedef struct {
     const uint8_t *buffer;
+    bool partial;
     int size;
     int x;
     int y;
@@ -55,14 +56,14 @@ extern uint8_t lineBuf[1024*2];
 void driver_send_cmd(uint8_t cmd);
 void driver_send_data(uint8_t data);
 
-void driver_fill(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
-void driver_pixel(uint16_t x, uint16_t y, uint16_t color);
+void driver_fill(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color, uint16_t* canvas);
+void driver_pixel(int16_t x, int16_t y, uint16_t color, uint16_t* canvas);
 
 void lcd_reset();
 void driver_init();
 void driver_setup();
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t color, const uint16_t bg, const uint8_t scale, const bool autoWrap, font_t *font);
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t color, const uint16_t bg, const uint8_t scale, const bool autoWrap, font_t *font, uint16_t* canvas);
 
 void driver_send_buffer(buffer_data_t buffer_data);
 void driver_buffer_task(void *pvParameters);
