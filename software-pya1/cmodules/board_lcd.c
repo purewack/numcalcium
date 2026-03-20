@@ -34,7 +34,7 @@ typedef struct _lcd_obj_t {
     bool autoWrap;
 
     bool extFont;
-    font_t* font;
+    font_t font;
     uint16_t* canvas_buf;
 } lcd_obj_t;
 
@@ -198,9 +198,15 @@ static mp_obj_t options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(options_obj, 1, options);
 
+static mp_obj_t isFontExt(mp_obj_t self_in) {
+    lcd_obj_t *self = &lcd_instance;
+    return mp_obj_new_bool(self->extFont);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(is_font_ext_obj, isFontExt);
+
 static mp_obj_t unloadFont(mp_obj_t self_in) {
     lcd_obj_t *self = &lcd_instance;
-    self->font = NULL;
+    self->extFont = false;
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(unload_font_obj, unloadFont);
@@ -227,28 +233,12 @@ static mp_obj_t loadFont(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
     mp_get_buffer_raise(args[3].u_obj, &bufinfo, MP_BUFFER_RW);
     
     
-    font_t *new_font = (font_t *)malloc(sizeof(font_t));
-    if (new_font == NULL) {
-        mp_raise_OSError(MP_ENOMEM);
-        return mp_const_none;
-    }
-    
     uint8_t *font_buf = (uint8_t *)bufinfo.buf;
     
-    new_font->xfWide = cWidth;
-    new_font->xfTall = cHeight;
-    new_font->xfData = font_buf;
-    new_font->xfCount = cCount;
-
-    if (self->extFont && self->font != NULL) {
-        if (self->font->xfData != NULL) {
-            free(self->font->xfData);
-        }
-        free(self->font);
-    }
-    
-    // Set new font
-    self->font = new_font;
+    self->font.xfWide = cWidth;
+    self->font.xfTall = cHeight;
+    self->font.xfData = font_buf;
+    self->font.xfCount = cCount;
     self->extFont = true;
     
     return mp_const_none;
@@ -259,7 +249,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(load_font_obj, 5, loadFont);
 static void lcd_print_strn(void *data, const char *str, size_t len) {
     (void)data;  
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->font, self->canvas_buf);
+    driver_print((const unsigned char*)str, len, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->extFont ? &self->font : NULL, self->canvas_buf);
 }
 
 static const mp_print_t lcd_printer = {NULL, lcd_print_strn};
@@ -294,13 +284,13 @@ static mp_obj_t lcd_print(size_t n_args, const mp_obj_t *args) {
         my_obj_print_helper(&lcd_printer, args[i], PRINT_REPR);
         // Add space between arguments (except the last one)
         if (i < n_args - 1) {
-            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->font, self->canvas_buf);
+            driver_print((const unsigned char*)" ", 1, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->extFont ? &self->font : NULL, self->canvas_buf);
         }
     }
 
     // Print newline at the end (if required)
     if(n_args > 2 && self->addLFCR && self->autoWrap)
-        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale, true, self->font, self->canvas_buf);
+        driver_print((const unsigned char*)"\n\r", 2, &self->col, &self->line, self->color, self->bg, self->scale, true, self->extFont ? &self->font : NULL, self->canvas_buf);
 
     return mp_const_none;
 }
@@ -309,7 +299,8 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(lcd_print_obj, 1, MP_OBJ_FUN_ARGS_MAX
 
 static mp_uint_t lcd_stream_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
     lcd_obj_t *self = &lcd_instance;
-    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->font, self->canvas_buf);
+
+    driver_print((const unsigned char *)buf, size, &self->col, &self->line, self->color, self->bg, self->scale, self->autoWrap, self->extFont ? &self->font : NULL, self->canvas_buf);
     return size; 
 }
 
@@ -336,7 +327,13 @@ static mp_obj_t lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         lcd_instance.addLFCR = true;
         lcd_instance.autoWrap = true;
         lcd_instance.new = true;
-        lcd_instance.font = NULL;
+        lcd_instance.extFont = false;
+        lcd_instance.font = (font_t){
+            .xfCount=FONT_COUNT,
+            .xfWide=FONT_WIDE,
+            .xfTall=FONT_TALL,
+            .xfData=(uint8_t*)font_data
+        };
 
     }
     return (mp_obj_t)&lcd_instance;
@@ -378,10 +375,11 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_cursor), MP_ROM_PTR(&cursor_obj) },
     { MP_ROM_QSTR(MP_QSTR_print), MP_ROM_PTR(&lcd_print_obj) },
     { MP_ROM_QSTR(MP_QSTR_buffer), MP_ROM_PTR(&buffer_obj) },
-    { MP_ROM_QSTR(MP_QSTR__set_canvas), MP_ROM_PTR(&set_canvas_obj) },
-    { MP_ROM_QSTR(MP_QSTR__unset_canvas), MP_ROM_PTR(&unset_canvas_obj) },
+    { MP_ROM_QSTR(MP_QSTR_setCanvas), MP_ROM_PTR(&set_canvas_obj) },
+    { MP_ROM_QSTR(MP_QSTR_unsetCanvas), MP_ROM_PTR(&unset_canvas_obj) },
     { MP_ROM_QSTR(MP_QSTR_options), MP_ROM_PTR(&options_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_parseBMP), MP_ROM_PTR(&parse_bmp_obj)  }, 
+    { MP_ROM_QSTR(MP_QSTR_isFontExt), MP_ROM_PTR(&is_font_ext_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_loadFont), MP_ROM_PTR(&load_font_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_unloadFont), MP_ROM_PTR(&unload_font_obj)  }, 
 };

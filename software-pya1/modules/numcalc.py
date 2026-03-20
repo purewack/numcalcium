@@ -68,13 +68,7 @@ class LCD(_board.Terminal):
 
     def __del__(self):
         self.setBacklight(0)
-
-    def _sendcmd(self):
-        pass
-
-    def _senddata(self):
-        pass
-
+        
     def reset(self):
         self.options(font=None,canvas=None,background=self.BLACK,foreground=self.WHITE,scale=1)
         self.clear()
@@ -277,9 +271,9 @@ class LCD(_board.Terminal):
             self.canvas = kwargs['canvas']
             kwargs.pop('canvas')
             if(self.canvas == None):
-                super()._unset_canvas()
+                super().unsetCanvas()
             else:
-                super()._set_canvas(self.canvas)
+                super().setCanvas(self.canvas)
             
         if('font' in kwargs):
             cur = self.cursor(pixels=True)
@@ -302,7 +296,6 @@ class LCD(_board.Terminal):
                     self.XN = self.WIDTH//self.FW
                     self.YN = self.HEIGHT//self.FH
                     super().loadFont(data['width'],data['height'],data['data'],data['count'])
-                    self.current_font = font
                 except:
                     raise ValueError('font module missing "data" attribute')
             self.cursor(*cur,pixels=True)
