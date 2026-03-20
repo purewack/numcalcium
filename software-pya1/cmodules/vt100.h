@@ -63,7 +63,7 @@ void lcd_reset();
 void driver_init();
 void driver_setup();
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t color, const uint16_t bg, const uint8_t scale, const bool autoWrap, font_t *font, uint16_t* canvas);
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t color, const uint16_t bg, const uint8_t scale, const bool autoWrap, font_t *font, uint16_t* canvas, const uint16_t cvW, const uint16_t cvH );
 
 void driver_send_buffer(buffer_data_t buffer_data);
 void driver_buffer_task(void *pvParameters);

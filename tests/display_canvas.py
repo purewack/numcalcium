@@ -3,7 +3,7 @@ import framebuf
 # import bmp
 
 terminal = numcalc.LCD()
-
+print(terminal.options())
 terminal.createCanvas()
 
 terminal.background(terminal.GRAY)
@@ -54,10 +54,14 @@ terminal.foreground(0)
 terminal.clear()
 terminal.plot(0,0,0)
 terminal.plot(10,10,0)
+print(terminal.options())
+print(terminal.options())
+terminal.options(canvasWrapRegion=(100,80))
 terminal.cursor(3,3,pixels=True)
-terminal.print('canvas')
+print(terminal.options())
+terminal.print('canvas wrap test')
 
-terminal.update(64,64,100,20)
+terminal.update(64,64,100,80)
 
 # terminal.update()
 

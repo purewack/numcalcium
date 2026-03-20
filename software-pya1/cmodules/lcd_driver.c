@@ -266,7 +266,7 @@ void driver_print_escape_value(unsigned char ch, uint16_t *buf, int fws, int fts
     }
 }
 
-void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, const bool autoWrap, font_t* font, uint16_t* canvas){
+void driver_print(const unsigned char* text, const uint32_t len, float *col, float *line, const uint16_t _color, const uint16_t _bg, const uint8_t scale, const bool autoWrap, font_t* font, uint16_t* canvas, const uint16_t cvW, const uint16_t cvH){
 	
     if(scale > 4) {
 //        //DEBUG_printf("scale too large %d",scale);
@@ -281,20 +281,24 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
     uint16_t bg = (_bg>>8) | (_bg&0xff)<<8;
     uint16_t color = (_color>>8) | (_color&0xff)<<8;
 
-    int ychar = Y_CHAR;
-    int xchar = X_CHAR;
+    int xsize = canvas ? cvW : X_SIZE;
+    int ysize = canvas ? cvH : Y_SIZE;
+    int xchar = xsize / FONT_WIDE;
+    int ychar = ysize / FONT_TALL;
     uint8_t font_wide = FONT_WIDE;
     uint8_t font_tall = FONT_TALL;
     uint8_t *font_buf = (uint8_t*)font_data;
     // uint8_t font_count = FONT_COUNT;
     if(font){
-        xchar = X_SIZE / font->xfWide;
-        ychar = Y_SIZE / font->xfTall;
+        xchar = xsize / font->xfWide;
+        ychar = ysize / font->xfTall;
         font_wide = font->xfWide;
         font_tall = font->xfTall;
         font_buf = font->xfData;
         // font_count = font->xfCount;
     }
+
+
     float fts = (float)(font_tall * scale);
     float fws = (float)(font_wide * scale);
 
@@ -320,7 +324,7 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			driver_fill(
                 0,
                 (int16_t)(*line * fts),
-                X_SIZE,
+                xsize,
                 (uint16_t)fts, 
                 _bg, canvas);
             continue;
@@ -335,7 +339,7 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			driver_fill(
 				(int16_t)(*col * fws),
 				(int16_t)(*line * fts), 
-				X_SIZE,
+				xsize,
 				(uint16_t)fts,
 				_bg, canvas
 			);
@@ -406,7 +410,7 @@ void driver_print(const unsigned char* text, const uint32_t len, float *col, flo
 			driver_fill(
                 0,
                 (int16_t)(*line * ((float)fts))
-                ,X_SIZE,
+                ,xsize,
                 (uint16_t)fts,
                 _bg, canvas);
 		}

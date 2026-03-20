@@ -61,8 +61,6 @@ class LCD(_board.Terminal):
         self.FW = self.FONT_W
         self.FH = self.FONT_H
         self.FN = self.FONT_NAME
-        self.current_font = None
-        self.canvas = None
         self.reset()
         self.setBacklight(127)
 
@@ -70,7 +68,9 @@ class LCD(_board.Terminal):
         self.setBacklight(0)
         
     def reset(self):
-        self.options(font=None,canvas=None,background=self.BLACK,foreground=self.WHITE,scale=1)
+        self.canvas = None
+        self.current_font = None
+        self.options(font=None,canvas=None,canvasWrapRegion=None,autoWrap=True,background=self.BLACK,foreground=self.WHITE,scale=1)
         self.clear()
 
     def clear(self):
@@ -275,6 +275,14 @@ class LCD(_board.Terminal):
             else:
                 super().setCanvas(self.canvas)
             
+        if('canvasWrapRegion' in kwargs):
+            region = kwargs['canvasWrapRegion']
+            kwargs.pop('canvasWrapRegion')
+            if(region == None):
+                super().canvasWrapRegion(self.WIDTH,self.HEIGHT)
+            else:
+                super().canvasWrapRegion(*region)
+                
         if('font' in kwargs):
             cur = self.cursor(pixels=True)
             font = kwargs['font']
@@ -299,7 +307,7 @@ class LCD(_board.Terminal):
                 except:
                     raise ValueError('font module missing "data" attribute')
             self.cursor(*cur,pixels=True)
-        return dict({'font': self.current_font, 'canvas':self.canvas},**super().options(**kwargs))
+        return dict({'font': self.current_font, 'canvas': f"len:{len(self.canvas)}" if self.canvas else None, 'canvasWrapRegion': super().canvasWrapRegion()},**super().options(**kwargs))
 
     # brightness 0-127
     def setBacklight(self, brightness):
