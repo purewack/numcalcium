@@ -164,37 +164,53 @@ class LCD(_board.Terminal):
     def cursor(self, *args, **kwargs):
         if not self.__lock.acquire(False): return
         self.__lock.release()
+        
         s = super().options()['scale'] 
         ww = self.WIDTH
         hh = self.HEIGHT
         fh = self.FH
         fw = self.FW
         
+        if('bottom' in kwargs and not isinstance(kwargs['bottom'],bool)):
+            hh = kwargs['bottom']
+        
+        sfY = hh / (fh*s)
+        
+        ## GET
         if(not len(args)):
             c = super().cursor()
+            x = c[0]
+            y = c[1]
             if(kwargs.get('pixels',False)):
-                xx = (c[0]*fw*s)
-                yy = (c[1]*fh*s)
-                # if(kwargs.get('bottom',False)):
-                #     yy = ((hh-c[1]-(fh*s))/hh)*((hh/fh)/s)
-                return [xx,yy]
-            return c
+                # get from raw to px
+                xx = (x*fw*s)
+                yy = (y*fh*s)
+                if(kwargs.get('bottom',False)):
+                    yy = hh - yy + 0.0000001
+                return (int(xx),int(yy))
+    
+            if(kwargs.get('bottom',False)):
+                y = sfY - y
+            return (float(x),float(y))
         if(not len(args) == 2):
             raise ValueError("Need both x and y positions")
         
+        
+        ## SET
         x = args[0]
         y = args[1]
         
         if(kwargs.get('pixels',False)):
-            xx = (x/ww)*((ww/fw)/s)
-            yy = (y/hh)*((hh/fh)/s)
+            # set from px to raw
+            x = x / fw / s
+            y = y / fh / s
             if(kwargs.get('bottom',False)):
-                yy = ((hh-y-(fh*s))/hh)*((hh/fh)/s)
-            return super().cursor(xx,yy)
-        else:
-            if(kwargs.get('bottom',False)):
-                y = (hh/(fh*s)) - (y+1)
+                y = sfY - y
             return super().cursor(x,y)
+        
+        if(kwargs.get('bottom',False)):
+            y = sfY - y
+        return super().cursor(x,y)
         
     def scale(self, scale=None):
         if scale == None:
