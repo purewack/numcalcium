@@ -53,14 +53,15 @@ class LCD(_board.Terminal):
     
     def __init__(self):
         super().__init__()
-        if not hasattr(self,'__lock'):
-            self.__lock = _thread.allocate_lock()
         self._bl = None
         self.XN = self._CHARS_X
         self.YN = self._CHARS_Y
         self.FW = self.FONT_W
         self.FH = self.FONT_H
-        self.FN = self.FONT_NAME
+        self._XN_S1 = self._CHARS_X
+        self._YN_S1 = self._CHARS_Y
+        self._FW_S1 = self.FONT_W
+        self._FH_S1 = self.FONT_H
         self.reset()
         self.setBacklight(127)
 
@@ -69,19 +70,15 @@ class LCD(_board.Terminal):
         
     def reset(self):
         self.canvas = None
-        self.current_font = None
+        self.font = None
         self.options(font=None,canvas=None,canvasWrapRegion=None,autoWrap=True,background=self.BLACK,foreground=self.WHITE,scale=1)
         self.clear()
 
     def clear(self):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         super().clear()
         self.cursor(0,0)
 
     def fill(self, x,y,w,h,color):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         if isinstance(color, str):
             super().fill(x,y,w,h,self.htmlTo565(color))
         elif isinstance(color, tuple):
@@ -90,8 +87,6 @@ class LCD(_board.Terminal):
             super().fill(x,y,w,h,color)
 
     def plot(self, x,y,color):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         if isinstance(color, str):
             super().plot(x,y,self.htmlTo565(color))
         elif isinstance(color, tuple):
@@ -126,8 +121,6 @@ class LCD(_board.Terminal):
                     self.plot(xx+x,(i+y),color)
     
     def createCanvas(self):
-        if(self.canvas):
-            self.options(canvas=None)
         self.canvas = bytearray(self.WIDTH*self.HEIGHT*2)
         self.options(canvas=self.canvas)
         return self.canvas
@@ -147,29 +140,21 @@ class LCD(_board.Terminal):
                 super().buffer(self.canvas,0,0,self.WIDTH,self.HEIGHT)
     
     def buffer(self,buf,x,y,width,height):
-        if not self.__lock.acquire(False): return
         super().buffer(buf,x,y,width,height)
-        self.__lock.release()
 
     def bitmap(self,x,y,image):
-        if not self.__lock.acquire(False): return
         super().buffer(image['buffer'],x,y,image['width'],image['height'])
-        self.__lock.release()
     
     def print(self, *args):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         super().print(*args)
 
     def cursor(self, *args, **kwargs):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         
         s = super().options()['scale'] 
         ww = self.WIDTH
         hh = self.HEIGHT
-        fh = self.FH
-        fw = self.FW
+        fh = self._FH_S1
+        fw = self._FW_S1
         
         if('bottom' in kwargs and not isinstance(kwargs['bottom'],bool)):
             hh = kwargs['bottom']
@@ -215,10 +200,11 @@ class LCD(_board.Terminal):
     def scale(self, scale=None):
         if scale == None:
             return super().options()['scale']
-
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
-        currentCursor = self.cursor()
+        
+        self.XN = self._XN_S1 // scale
+        self.YN = self._YN_S1 // scale
+        self.FW = self._FW_S1 *  scale
+        self.FH = self._FH_S1 *  scale
         super().options(scale=scale)
         
     def measure_text(self, text, pixels=False):
@@ -234,8 +220,6 @@ class LCD(_board.Terminal):
         if color == None:
             return super().options()['background']
 
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         if isinstance(color, str):
             super().options(background=self.htmlTo565(color))
         elif isinstance(color, tuple):
@@ -247,8 +231,6 @@ class LCD(_board.Terminal):
         if color == None:
             return super().options()['foreground']
 
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         if isinstance(color, str):
             super().options(foreground=self.htmlTo565(color))
         elif isinstance(color, tuple):
@@ -263,13 +245,9 @@ class LCD(_board.Terminal):
         return self.background(color)
 
     def invert(self, state):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         super().options(invert=state)
     
     def options(self, **kwargs):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
 
         if('foreground' in kwargs):
             if isinstance(kwargs['foreground'], str):
@@ -283,13 +261,21 @@ class LCD(_board.Terminal):
             elif isinstance(kwargs['background'], tuple):
                 kwargs['background'] = self.rgbTo565(*kwargs['background'])
         
+        if('scale' in kwargs):
+            _s = kwargs['scale']
+            kwargs.pop('scale')
+            self.scale(_s)
+        
         if('canvas' in kwargs):
-            self.canvas = kwargs['canvas']
+            _cv = kwargs['canvas']
             kwargs.pop('canvas')
-            if(self.canvas == None):
+            if(not _cv):
                 super().unsetCanvas()
-            else:
+            elif(_cv == True):
                 super().setCanvas(self.canvas)
+            else:
+                super().setCanvas(_cv)
+                self.canvas = _cv
             
         if('canvasWrapRegion' in kwargs):
             region = kwargs['canvasWrapRegion']
@@ -305,30 +291,36 @@ class LCD(_board.Terminal):
             kwargs.pop('font')
             if(font == None):
                 super().unloadFont()
-                self.FW = self.FONT_W
-                self.FH = self.FONT_H
-                self.FN = self.FONT_NAME
                 self.XN = self._CHARS_X
                 self.YN = self._CHARS_Y
-                self.current_font = None
+                self.FW = self.FONT_W
+                self.FH = self.FONT_H
+                self._XN_S1 = self._CHARS_X
+                self._YN_S1 = self._CHARS_Y
+                self._FW_S1 = self.FONT_W
+                self._FH_S1 = self.FONT_H
+                self.font = None
             else:
                 try:
                     data = font.data
+                    self.font = font
+                    self.FN = data.get('name','EXT')
                     self.FW = data['width']
                     self.FH = data['height']
-                    self.FN = data.get('name','EXT')
                     self.XN = self.WIDTH//self.FW
                     self.YN = self.HEIGHT//self.FH
+                    self._FW_S1 = data['width']
+                    self._FH_S1 = data['height']
+                    self._XN_S1 = self.WIDTH//self.FW
+                    self._YN_S1 = self.HEIGHT//self.FH
                     super().loadFont(data['width'],data['height'],data['data'],data['count'])
                 except:
                     raise ValueError('font module missing "data" attribute')
             self.cursor(*cur,pixels=True)
-        return dict({'font': self.current_font, 'canvas': f"len:{len(self.canvas)}" if self.canvas else None, 'canvasWrapRegion': super().canvasWrapRegion()},**super().options(**kwargs))
+        return dict({'font': self.font, 'canvas': f"len:{len(self.canvas)}" if self.canvas else None, 'canvasWrapRegion': super().canvasWrapRegion()},**super().options(**kwargs))
 
     # brightness 0-127
     def setBacklight(self, brightness):
-        if not self.__lock.acquire(False): return
-        self.__lock.release()
         if(not self._bl):
             self._bl = machine.PWM(machine.Pin.board.LCD_LED)
         self._bl.duty(brightness<<3)
@@ -350,16 +342,6 @@ class LCD(_board.Terminal):
         g = int(html_color[2:4], 16)
         b = int(html_color[4:6], 16)
         return self.rgbTo565(r, g, b)
-
-    def printException(self,e):
-        self.scale(1)
-        self.cursor(0,0)
-        self.__lock.acquire()
-        os.dupterm(self)
-        sys.print_exception(e)
-        os.dupterm(None)
-        self.__lock.release()
-        
 
 
 def tone(note=None, velocity=None):
