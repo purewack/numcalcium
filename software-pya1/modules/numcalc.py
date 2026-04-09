@@ -4,10 +4,7 @@ import __sleep
 import __cartridge
 import machine
 import neopixel
-import os
-import sys
 import time
-import _thread
 import __numcalcium_version
 
 NUMCALC_VER = __numcalcium_version._version
@@ -141,10 +138,18 @@ class LCD(_board.Terminal):
     
     def buffer(self,buf,x,y,width,height):
         super().buffer(buf,x,y,width,height)
-
-    def bitmap(self,x,y,image):
-        super().buffer(image['buffer'],x,y,image['width'],image['height'])
     
+    def loadBMP(self,file,headerOnly=False):
+        return super().parseBMP(file,header_only=headerOnly)
+    
+    def bitmap(self, x, y, image, scale=1):
+        if not self.canvas and scale > 1:
+            raise ValueError('can only plot scaled bitmap on canvas')
+        if isinstance(scale,int):
+            return super().bitmap_scaled_integer(x, y, image, scale=scale)
+        else:
+            return super().bitmap_scaled_float(x, y, image, scale=scale)
+   
     def print(self, *args):
         super().print(*args)
 

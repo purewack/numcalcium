@@ -146,6 +146,110 @@ static mp_obj_t plot(size_t n_args, const mp_obj_t *args) {
 static MP_DEFINE_CONST_FUN_OBJ_VAR(plot_obj, 4, plot);
 
 
+
+static mp_obj_t lcd_bitmap(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_self, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_x, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_y, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_image, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1} },
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+    lcd_obj_t *self = &lcd_instance;
+    if (!self->canvas_buf) {
+        mp_raise_ValueError(MP_ERROR_TEXT("can only plot bitmap on canvas"));
+    }
+
+    mp_obj_t image_obj = args[3].u_obj;
+    if (!mp_obj_is_dict_or_ordereddict(image_obj)) {
+        mp_raise_TypeError(MP_ERROR_TEXT("image must be a dict"));
+    }
+
+    mp_obj_t buffer_obj = mp_obj_dict_get(image_obj, MP_OBJ_NEW_QSTR(MP_QSTR_buffer));
+    mp_obj_t width_obj = mp_obj_dict_get(image_obj, MP_OBJ_NEW_QSTR(MP_QSTR_width));
+    mp_obj_t height_obj = mp_obj_dict_get(image_obj, MP_OBJ_NEW_QSTR(MP_QSTR_height));
+
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(buffer_obj, &bufinfo, MP_BUFFER_READ);
+    const uint8_t *src_buf = bufinfo.buf;
+
+    int src_width = mp_obj_get_int(width_obj);
+    int src_height = mp_obj_get_int(height_obj);
+    int scale = (int)(args[4].u_int);
+    int dst_x0 = (int)(args[1].u_int);
+    int dst_y0 = (int)(args[2].u_int);
+
+    if (scale < 1) {
+        mp_raise_ValueError(MP_ERROR_TEXT("scale must be >= 1"));
+    }
+
+    int canvas_w = self->canvas_wide;
+    int canvas_h = self->canvas_high;
+
+    integer_scale_plot(dst_x0,dst_y0,src_height,src_width,canvas_h,canvas_w,src_buf,self->canvas_buf,scale);
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(bitmap_obj, 4, lcd_bitmap);
+
+static mp_obj_t lcd_bitmap_scaled_float(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_self, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_x, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_y, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
+        { MP_QSTR_image, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NEW_SMALL_INT(1)} },
+        { MP_QSTR_dither, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false} },
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+    lcd_obj_t *self = &lcd_instance;
+    if (!self->canvas_buf) {
+        mp_raise_ValueError(MP_ERROR_TEXT("can only plot scaled bitmap on canvas"));
+    }
+
+    mp_obj_t image_obj = args[3].u_obj;
+    if (!mp_obj_is_dict_or_ordereddict(image_obj)) {
+        mp_raise_TypeError(MP_ERROR_TEXT("image must be a dict"));
+    }
+
+    mp_obj_t buffer_obj = mp_obj_dict_get(image_obj, MP_OBJ_NEW_QSTR(MP_QSTR_buffer));
+    mp_obj_t width_obj = mp_obj_dict_get(image_obj, MP_OBJ_NEW_QSTR(MP_QSTR_width));
+    mp_obj_t height_obj = mp_obj_dict_get(image_obj, MP_OBJ_NEW_QSTR(MP_QSTR_height));
+
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(buffer_obj, &bufinfo, MP_BUFFER_READ);
+    const uint8_t *src_buf = bufinfo.buf;
+
+    int src_width = mp_obj_get_int(width_obj);
+    int src_height = mp_obj_get_int(height_obj);
+    float scale = mp_obj_get_float(args[4].u_obj);
+    int dst_x0 = (int)(args[1].u_int);
+    int dst_y0 = (int)(args[2].u_int);
+
+    if (scale <= 0.0f) {
+        return mp_const_none;
+    }
+
+
+    int dst_width = (int)(src_width * scale);
+    int dst_height = (int)(src_height * scale);
+    if (dst_width <= 0 || dst_height <= 0) {
+        return mp_const_none;
+    }
+
+    float_scale_plot(dst_x0,dst_y0,src_height,src_width,dst_height,dst_width,self->canvas_high,self->canvas_wide,src_buf,self->canvas_buf,scale,(bool)(args[5].u_bool));
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(bitmap_scaled_float_obj, 2, lcd_bitmap_scaled_float);
+
 static mp_obj_t cursor(size_t n_args, const mp_obj_t *args) {
     lcd_obj_t *self = &lcd_instance;
 	if(n_args > 1)
@@ -398,6 +502,8 @@ static const mp_rom_map_elem_t lcd_module_locals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_setCanvas), MP_ROM_PTR(&set_canvas_obj) },
     { MP_ROM_QSTR(MP_QSTR_unsetCanvas), MP_ROM_PTR(&unset_canvas_obj) },
     { MP_ROM_QSTR(MP_QSTR_options), MP_ROM_PTR(&options_obj)  }, 
+    { MP_ROM_QSTR(MP_QSTR_bitmap_scaled_integer), MP_ROM_PTR(&bitmap_obj) },
+    { MP_ROM_QSTR(MP_QSTR_bitmap_scaled_float), MP_ROM_PTR(&bitmap_scaled_float_obj) },
     { MP_ROM_QSTR(MP_QSTR_parseBMP), MP_ROM_PTR(&parse_bmp_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_isFontExt), MP_ROM_PTR(&is_font_ext_obj)  }, 
     { MP_ROM_QSTR(MP_QSTR_loadFont), MP_ROM_PTR(&load_font_obj)  }, 

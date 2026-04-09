@@ -2,8 +2,6 @@ import esp32
 import __ulpio
 from machine import mem32
 
-exclusive_home = True
-
 class Keys:
 
     SHIFT = 0
@@ -166,23 +164,6 @@ class Keys:
         return self.__rw('turns')
 
 
-    def acquireHomeButton(self):
-        global exclusive_home
-        exclusive_home = False
-
-    def releaseHomeButton(self):
-        global exclusive_home
-        exclusive_home = True
-    
-    def exclusiveHomeState(self):
-        global exclusive_home
-        return exclusive_home
-    
-    def setExclusiveHomeState(self, value):
-        global exclusive_home
-        exclusive_home = value
-    
-
     def __rw(self,key,val=None):
         if(not val == None):
             mem32[__ulpio.data['symbols'][key]] = val
@@ -196,16 +177,18 @@ class Keys:
         return self.__rw('bdown',val)
         
         
-    _u = esp32.ULP_RV()
-        
     def __driver_load(self):
         self._u.load_binary(__ulpio.data['binary'])
         self._u.run()
+        i = self.__rw('ulp_tick')
+        while i == self.__rw('ulp_tick'):
+            continue
 
     def __driver_mux_period(self,period):
         self._u.set_wakeup_period(0,period)
 
     def __init__(self, period = None):
+        self._u = esp32.ULP_RV()
         self.__driver_load()
         if(period):
             self.__driver_mux_period(period)

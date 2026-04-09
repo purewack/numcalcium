@@ -47,6 +47,9 @@ gen-pins: gen-dir
 gen-font: gen-dir
 	mkdir -p $(BOARD_DIR)/fonts
 	python3 $(BOARD_DIR)/generators/font.py  $(BOARD_DIR)/fonts/$(FONT) $(BOARD_DIR)/generated $(FONT_CHAR_COUNT)
+	for file in $(BOARD_DIR)/generated/font_*.py; do \
+		mpy-cross -march=xtensawin "$$file"; \
+	done
 
 gen-dir:
 	mkdir -p $(BOARD_DIR)/generated
@@ -80,11 +83,9 @@ distribute: clean all
 ${CURDIR}/dist/numcalcium-$(VERSION_NUMCALC)-`cd $(BOARD_DIR)/generated && python3 -c 'import __versioning; print(__versioning._build)'`.bin
 
 # mount local dirs for dev mode for py files
-dev:
-	mpremote mount ../numcalcium-software run ./main.py
 
 dev-modules:
-	mpremote mount $(BOARD_DIR)/modules
+	mpremote mount $(BOARD_DIR) run $(BOARD_DIR)/dev-modules.py
 
 dev-generated:
 	mpremote mount $(BOARD_DIR)/generated

@@ -22,12 +22,13 @@ static void scale_bmp_in_place(uint16_t *fb_pixels, int width, int height, int s
 }
 
 mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
-    enum { ARG_self, ARG_file, ARG_fb, ARG_scale };
+    enum { ARG_self, ARG_file, ARG_fb, ARG_scale, ARG_header_only };
     mp_arg_t allowed_args[] = {
         { MP_QSTR_self, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_file, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_fb, MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_scale, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1} },
+        { MP_QSTR_header_only, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false} },
     };
 
     mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
@@ -36,6 +37,7 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     mp_obj_t file_obj = arg_vals[ARG_file].u_obj;
     mp_obj_t fb_obj = arg_vals[ARG_fb].u_obj;
     int scale = arg_vals[ARG_scale].u_int;
+    bool header_only = arg_vals[ARG_header_only].u_bool;
 
     if (scale < 1) {
         mp_raise_ValueError(MP_ERROR_TEXT("Scale must be >= 1"));
@@ -98,6 +100,10 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     mp_obj_dict_store(img_dict, mp_obj_new_str("width", strlen("width")), mp_obj_new_int(width * scale)); 
     mp_obj_dict_store(img_dict, mp_obj_new_str("height", strlen("height")), mp_obj_new_int(height * scale));
     mp_obj_dict_store(img_dict, mp_obj_new_str("bpp", strlen("bpp")), mp_obj_new_int(bpp));
+    
+    if (header_only) {
+        return img_dict;
+    }
 
     if (fb_pixels == NULL) {
         uint32_t size = scale * scale * width * abs_height * sizeof(uint16_t);
@@ -254,4 +260,142 @@ mp_obj_t parse_bmp(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     }
 
     return mp_const_none;
+}
+
+
+
+uint8_t apply_dither(uint8_t val, int x, int y) {
+    // 4x4 Bayer matrix for ordered dithering
+    static const uint8_t bayer[16] = {
+        0,  8,  2, 10,
+        12, 4, 14,  6,
+        3, 11,  1,  9,
+        15, 7, 13,  5
+    };
+    int dither_val = bayer[(x & 3) | ((y & 3) << 2)];
+    int result = (int)val + dither_val - 8;
+    return result < 0 ? 0 : (result > 255 ? 255 : (uint8_t)result);
+}
+
+uint16_t read_rgb565_pixel(const uint8_t *src, int idx) {
+    const uint8_t *p = src + idx * 2;
+    // Stored image buffer uses display byte order, so swap bytes back to native RGB565.
+    return (uint16_t)p[1] | ((uint16_t)p[0] << 8);
+}
+
+ static inline uint16_t swap_rgb565_bytes(uint16_t pixel) {
+    return (pixel >> 8) | (pixel << 8);
+}
+
+ uint8_t rgb565_to_r8(uint16_t pixel) {
+    return (uint8_t)((((pixel >> 11) * 527) + 23) >> 6);
+}
+
+uint8_t rgb565_to_g8(uint16_t pixel) {
+    return (uint8_t)(((((pixel >> 5) & 0x3F) * 259) + 33) >> 6);
+}
+
+uint8_t rgb565_to_b8(uint16_t pixel) {
+    return (uint8_t)(((pixel & 0x1F) * 527 + 23) >> 6);
+}
+
+uint16_t rgb8_to_rgb565(uint8_t r, uint8_t g, uint8_t b) {
+    uint16_t rgb565 = ((uint16_t)(r >> 3) << 11) | ((uint16_t)(g >> 2) << 5) | (uint16_t)(b >> 3);
+    // Store pixels in display byte order for the swapped display.
+    return swap_rgb565_bytes(rgb565);
+}
+
+void integer_scale_plot(int dst_x0, int dst_y0, int src_height, int src_width, int canvas_h, int canvas_w, const uint8_t* src_buf, uint16_t* canvas_buf, int scale){
+    for (int sy = 0; sy < src_height; sy++) {
+        int row_base = sy * src_width;
+        int dst_base_y = dst_y0 + sy * scale;
+        if (dst_base_y + scale <= 0 || dst_base_y >= canvas_h) {
+            continue;
+        }
+        for (int sx = 0; sx < src_width; sx++) {
+            uint16_t pixel = read_rgb565_pixel(src_buf, row_base + sx);
+            pixel = swap_rgb565_bytes(pixel);
+            int dst_base_x = dst_x0 + sx * scale;
+            if (dst_base_x + scale <= 0 || dst_base_x >= canvas_w) {
+                continue;
+            }
+            for (int dy = 0; dy < scale; dy++) {
+                int dst_y = dst_base_y + dy;
+                if (dst_y < 0 || dst_y >= canvas_h) {
+                    continue;
+                }
+                uint16_t *dst_row = canvas_buf + dst_y * canvas_w;
+                for (int dx = 0; dx < scale; dx++) {
+                    int dst_x = dst_base_x + dx;
+                    if (dst_x >= 0 && dst_x < canvas_w) {
+                        dst_row[dst_x] = pixel;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void float_scale_plot(int dst_x0, int dst_y0, int src_height, int src_width, int dst_height, int dst_width, int canvas_h, int canvas_w, const uint8_t* src_buf, uint16_t* canvas_buf, float scale, bool dither){
+    float inv_scale = 1.0f / scale;
+
+    for (int dy = 0; dy < dst_height; dy++) {
+        float sy = dy * inv_scale;
+        int y0 = (int)sy;
+        if (y0 < 0) {
+            y0 = 0;
+            sy = 0.0f;
+        }
+        int y1 = y0 < src_height - 1 ? y0 + 1 : y0;
+        float fy = sy - y0;
+
+        int row0 = y0 * src_width;
+        int row1 = y1 * src_width;
+
+        for (int dx = 0; dx < dst_width; dx++) {
+            float sx = dx * inv_scale;
+            int x0 = (int)sx;
+            if (x0 < 0) {
+                x0 = 0;
+                sx = 0.0f;
+            }
+            int x1 = x0 < src_width - 1 ? x0 + 1 : x0;
+            float fx = sx - x0;
+
+            uint16_t p00 = read_rgb565_pixel(src_buf, row0 + x0);
+            uint16_t p01 = read_rgb565_pixel(src_buf, row0 + x1);
+            uint16_t p10 = read_rgb565_pixel(src_buf, row1 + x0);
+            uint16_t p11 = read_rgb565_pixel(src_buf, row1 + x1);
+
+            float r = (1.0f - fx) * (1.0f - fy) * rgb565_to_r8(p00)
+                    + fx * (1.0f - fy) * rgb565_to_r8(p01)
+                    + (1.0f - fx) * fy * rgb565_to_r8(p10)
+                    + fx * fy * rgb565_to_r8(p11);
+            float g = (1.0f - fx) * (1.0f - fy) * rgb565_to_g8(p00)
+                    + fx * (1.0f - fy) * rgb565_to_g8(p01)
+                    + (1.0f - fx) * fy * rgb565_to_g8(p10)
+                    + fx * fy * rgb565_to_g8(p11);
+            float b = (1.0f - fx) * (1.0f - fy) * rgb565_to_b8(p00)
+                    + fx * (1.0f - fy) * rgb565_to_b8(p01)
+                    + (1.0f - fx) * fy * rgb565_to_b8(p10)
+                    + fx * fy * rgb565_to_b8(p11);
+
+            uint8_t r8 = (uint8_t)(r < 0.0f ? 0.0f : (r > 255.0f ? 255.0f : r + 0.5f));
+            uint8_t g8 = (uint8_t)(g < 0.0f ? 0.0f : (g > 255.0f ? 255.0f : g + 0.5f));
+            uint8_t b8 = (uint8_t)(b < 0.0f ? 0.0f : (b > 255.0f ? 255.0f : b + 0.5f));
+
+            // Apply Bayer dithering to reduce color banding in gradients
+            int dst_x = dst_x0 + dx;
+            int dst_y = dst_y0 + dy;
+            r8 = dither ? apply_dither(r8, dst_x, dst_y) : r8;
+            g8 = dither ? apply_dither(g8, dst_x, dst_y) : g8;
+            b8 = dither ? apply_dither(b8, dst_x, dst_y) : b8;
+
+            uint16_t pixel = rgb8_to_rgb565(r8, g8, b8);
+
+            if (dst_x >= 0 && dst_x < canvas_w && dst_y >= 0 && dst_y < canvas_h) {
+                canvas_buf[dst_y * canvas_w + dst_x] = pixel;
+            }
+        }
+    }
 }
